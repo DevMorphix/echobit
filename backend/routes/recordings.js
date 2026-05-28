@@ -1,8 +1,135 @@
- import express from 'express';
+import express from 'express';
+import mongoose from 'mongoose';
 import Recording from '../models/Recording.js';
+import User from '../models/User.js';
 import { uploadAudio, getAudioUrl, deleteAudio, getUploadUrl } from '../config/storage.js';
 import { transcribeAudio, transcribeFromUrl } from '../config/transcription.js';
+import { transcribeAudioSarvam, transcribeFromUrlSarvam, translateText, LANG_TO_SARVAM_CODE } from '../config/sarvam.js';
 import { generateSummary, generateMeetingMinutes, extractActionItems, generateTitle } from '../config/gemini.js';
+import { getPlanLimits, getActivePlan } from '../utils/planLimits.js';
+
+// ─── Plan limit helpers ──────────────────────────────────────────────────────
+
+const startOfCurrentMonth = () => {
+  const d = new Date();
+  d.setDate(1); d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const getUserStorageUsed = async (userId) => {
+  const result = await Recording.aggregate([
+    { $match: { user: new mongoose.Types.ObjectId(userId) } },
+    { $group: { _id: null, total: { $sum: '$audioSize' } } },
+  ]);
+  return result[0]?.total || 0;
+};
+
+/**
+ * Checks recording count + duration + storage limits.
+ * Returns { ok: true } or { ok: false, status, error, code }.
+ */
+const checkCreateLimits = async (userId, userDoc, durationSecs, incomingBytes) => {
+  const limits = getPlanLimits(userDoc);
+
+  if (limits.recordingsPerMonth !== null) {
+    const count = await Recording.countDocuments({
+      user: userId,
+      createdAt: { $gte: startOfCurrentMonth() },
+    });
+    if (count >= limits.recordingsPerMonth) {
+      return {
+        ok: false, status: 403,
+        error: `You've reached the ${limits.recordingsPerMonth} recordings/month limit on your current plan. Upgrade to unlock more recordings.`,
+        code: 'PLAN_LIMIT_RECORDINGS',
+      };
+    }
+  }
+
+  if (durationSecs && durationSecs > limits.maxDurationSecs) {
+    const maxMins = Math.floor(limits.maxDurationSecs / 60);
+    return {
+      ok: false, status: 403,
+      error: `Recording is ${Math.ceil(durationSecs / 60)} min — exceeds the ${maxMins} min limit on your plan. Upgrade to Pro for up to 3 hours.`,
+      code: 'PLAN_LIMIT_DURATION',
+    };
+  }
+
+  if (incomingBytes > 0) {
+    const used = await getUserStorageUsed(userId);
+    if (used + incomingBytes > limits.maxStorageBytes) {
+      const limitGB = (limits.maxStorageBytes / 1_073_741_824).toFixed(0);
+      return {
+        ok: false, status: 403,
+        error: `Storage limit of ${limitGB} GB reached. Delete old recordings or upgrade your plan.`,
+        code: 'PLAN_LIMIT_STORAGE',
+      };
+    }
+  }
+
+  return { ok: true };
+};
+
+// ────────────────────────────────────────────────────────────────────────────
+
+// Returns true if this user should use Sarvam AI (Indian users or no country set)
+const isIndianUser = (user) => {
+  if (!user) return true; // no user record → default to Sarvam
+  const country = (user.country || '').toLowerCase().trim();
+  if (!country) return true; // no country set → default to Sarvam
+  return country === 'india' || country === 'in' || country === 'भारत';
+};
+
+// Translate transcript to English if user is Indian (so Gemini always gets English)
+const toEnglishTranscript = async (transcript, user) => {
+  if (!isIndianUser(user) || !user?.preferredLanguage) return transcript;
+  const lang = (user.preferredLanguage || '').toLowerCase().trim();
+  if (lang === 'english' || lang === 'en') return transcript; // already English
+  const sourceLangCode = LANG_TO_SARVAM_CODE[lang];
+  if (!sourceLangCode || !process.env.SARVAM_API_KEY) return transcript;
+  try {
+    console.log(`[Translate] Translating transcript from ${sourceLangCode} to en-IN`);
+    return await translateText(transcript, sourceLangCode, 'en-IN');
+  } catch (e) {
+    console.error('[Translate] Failed, using original transcript:', e.message);
+    return transcript;
+  }
+};
+
+// Translate AI output back to user's preferred summary language (if not English)
+const toPreferredLanguage = async (text, user) => {
+  if (!user?.summaryLanguage) return text; // default = English, no translation needed
+  const lang = user.summaryLanguage.toLowerCase().trim();
+  if (lang === 'english' || lang === 'en') return text;
+  const targetLangCode = LANG_TO_SARVAM_CODE[lang];
+  if (!targetLangCode || !process.env.SARVAM_API_KEY) return text;
+  try {
+    console.log(`[Translate] Translating output to ${targetLangCode}`);
+    return await translateText(text, 'en-IN', targetLangCode);
+  } catch (e) {
+    console.error('[Translate] Output translation failed, returning English:', e.message);
+    return text;
+  }
+};
+
+// Pick language code for Sarvam based on user's preferredLanguage
+const getSarvamLanguageCode = (user) => {
+  if (!user?.preferredLanguage) return null;
+  const lang = user.preferredLanguage.toLowerCase();
+  const map = {
+    hindi: 'hi-IN', hi: 'hi-IN',
+    bengali: 'bn-IN', bn: 'bn-IN',
+    kannada: 'kn-IN', kn: 'kn-IN',
+    malayalam: 'ml-IN', ml: 'ml-IN',
+    marathi: 'mr-IN', mr: 'mr-IN',
+    odia: 'od-IN', od: 'od-IN',
+    punjabi: 'pa-IN', pa: 'pa-IN',
+    tamil: 'ta-IN', ta: 'ta-IN',
+    telugu: 'te-IN', te: 'te-IN',
+    gujarati: 'gu-IN', gu: 'gu-IN',
+    english: 'en-IN', en: 'en-IN',
+  };
+  return map[lang] || null;
+};
 
 const router = express.Router();
 
@@ -53,6 +180,15 @@ router.post('/finalize-upload', async (req, res) => {
     if (!entry) return res.status(404).json({ error: 'Upload not found or expired' });
     if (entry.userId !== req.user.id) return res.status(403).json({ error: 'Forbidden' });
 
+    // Plan limit checks before assembling
+    const userDoc = await User.findById(req.user.id);
+    const assembledSize = entry.chunks.reduce((n, c) => n + (c ? c.length * 0.75 : 0), 0); // rough base64 decode size
+    const check = await checkCreateLimits(req.user.id, userDoc, duration || 0, assembledSize);
+    if (!check.ok) {
+      chunkStore.delete(uploadId);
+      return res.status(check.status).json({ error: check.error, code: check.code });
+    }
+
     const missing = entry.chunks.findIndex(c => c === null);
     if (missing !== -1) return res.status(400).json({ error: `Missing chunk ${missing}` });
 
@@ -88,6 +224,39 @@ router.post('/finalize-upload', async (req, res) => {
   }
 });
 // ────────────────────────────────────────────────────────────────────────────
+
+// GET /recordings/limits — current usage vs plan limits
+router.get('/limits', async (req, res) => {
+  try {
+    const userDoc = await User.findById(req.user.id);
+    const limits = getPlanLimits(userDoc);
+    const plan = getActivePlan(userDoc);
+
+    const [monthlyCount, storageUsed] = await Promise.all([
+      Recording.countDocuments({ user: req.user.id, createdAt: { $gte: startOfCurrentMonth() } }),
+      getUserStorageUsed(req.user.id),
+    ]);
+
+    res.json({
+      plan,
+      usage: {
+        recordingsThisMonth: monthlyCount,
+        storageUsedBytes: storageUsed,
+      },
+      limits: {
+        recordingsPerMonth: limits.recordingsPerMonth,
+        maxDurationSecs: limits.maxDurationSecs,
+        maxStorageBytes: limits.maxStorageBytes,
+        indianLanguages: limits.indianLanguages,
+        meetingMinutes: limits.meetingMinutes,
+        actionItems: limits.actionItems,
+      },
+    });
+  } catch (error) {
+    console.error('Error fetching limits:', error);
+    res.status(500).json({ error: 'Failed to fetch usage limits' });
+  }
+});
 
 // Get all recordings for user
 router.get('/', async (req, res) => {
@@ -148,9 +317,13 @@ router.get('/:id', async (req, res) => {
 // Get presigned upload URL (for direct client upload to R2)
 router.post('/upload-url', async (req, res) => {
   try {
-    const { mimeType } = req.body;
+    const { mimeType, duration } = req.body;
+    const userDoc = await User.findById(req.user.id);
+    const check = await checkCreateLimits(req.user.id, userDoc, duration || 0, 0);
+    if (!check.ok) return res.status(check.status).json({ error: check.error, code: check.code });
+
     const { uploadUrl, key } = await getUploadUrl(req.user.id, mimeType);
-    res.json({ uploadUrl, key });
+    res.json({ uploadUrl, key, plan: getActivePlan(userDoc) });
   } catch (error) {
     console.error('Error generating upload URL:', error);
     res.status(500).json({ error: 'Failed to generate upload URL' });
@@ -160,7 +333,7 @@ router.post('/upload-url', async (req, res) => {
 // Create new recording
 router.post('/', async (req, res) => {
   try {
-    const { title, audioData, audioKey, duration, transcript, mimeType, autoTranscribe } = req.body;
+    const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe } = req.body;
 
     console.log('Creating recording:', {
       title,
@@ -173,6 +346,16 @@ router.post('/', async (req, res) => {
       hasOpenAIKey: !!process.env.OPENAI_API_KEY
     });
 
+    // Plan limit checks
+    // For presigned-URL uploads, the client reports the file size since the server never saw the bytes.
+    const userDoc = await User.findById(req.user.id);
+    const incomingBytes = audioData
+      ? Buffer.byteLength(audioData, 'base64')
+      : (audioKey ? (clientAudioSize || 0) : 0);
+    const check = await checkCreateLimits(req.user.id, userDoc, duration || 0, incomingBytes);
+    if (!check.ok) return res.status(check.status).json({ error: check.error, code: check.code });
+    const limits = getPlanLimits(userDoc);
+
     let audioInfo = { audioKey: null, audioUrl: null, audioSize: 0 };
     let audioBuffer = null;
 
@@ -181,15 +364,18 @@ router.post('/', async (req, res) => {
       console.log('Using pre-uploaded file with key:', audioKey);
       audioInfo.audioKey = audioKey;
       audioInfo.audioUrl = await getAudioUrl(audioKey);
-      
+      audioInfo.audioSize = clientAudioSize || 0;
+
       // Download from R2 to transcribe
-      if (autoTranscribe !== false && process.env.OPENAI_API_KEY) {
+      if (autoTranscribe !== false && (process.env.OPENAI_API_KEY || process.env.SARVAM_API_KEY)) {
         try {
           console.log('Downloading audio from R2 for transcription...');
           const response = await fetch(audioInfo.audioUrl);
           if (response.ok) {
             const arrayBuffer = await response.arrayBuffer();
             audioBuffer = Buffer.from(arrayBuffer);
+            // Use actual downloaded size for accurate storage tracking
+            audioInfo.audioSize = audioBuffer.length;
             console.log('Downloaded audio buffer size:', audioBuffer.length);
           }
         } catch (downloadError) {
@@ -225,23 +411,33 @@ router.post('/', async (req, res) => {
     let transcriptionDuration = duration || 0;
     let recordingStatus = 'pending';
 
-    if (autoTranscribe !== false && audioBuffer && process.env.OPENAI_API_KEY) {
+    const hasSarvamKey = !!process.env.SARVAM_API_KEY;
+    const hasOpenAIKey = !!process.env.OPENAI_API_KEY;
+
+    if (autoTranscribe !== false && audioBuffer && (hasOpenAIKey || hasSarvamKey)) {
       try {
-        console.log('Starting auto-transcription with Whisper...');
-        console.log('Audio buffer size for transcription:', audioBuffer.length, 'bytes');
-        console.log('MIME type for transcription:', mimeType || 'audio/webm');
-        
-        // Validate buffer is not empty
         if (audioBuffer.length < 1000) {
-          console.error('Audio buffer too small, likely corrupted:', audioBuffer.length);
           throw new Error('Audio file is too small or corrupted');
         }
-        
-        const transcriptionResult = await transcribeAudio(audioBuffer, mimeType || 'audio/webm');
-        finalTranscript = transcriptionResult.text;
-        transcriptionDuration = transcriptionResult.duration || duration || 0;
+
+        // userDoc already fetched above (plan limits check)
+        const usesSarvam = isIndianUser(userDoc) && hasSarvamKey && limits.indianLanguages;
+        const langCode = getSarvamLanguageCode(userDoc);
+
+        if (usesSarvam) {
+          console.log('[Transcription] Using Sarvam AI for Indian user, lang:', langCode || 'auto-detect');
+          const transcriptionResult = await transcribeAudioSarvam(audioBuffer, mimeType || 'audio/webm', langCode);
+          finalTranscript = transcriptionResult.text;
+          transcriptionDuration = transcriptionResult.duration || duration || 0;
+        } else {
+          console.log('[Transcription] Using OpenAI Whisper');
+          const transcriptionResult = await transcribeAudio(audioBuffer, mimeType || 'audio/webm');
+          finalTranscript = transcriptionResult.text;
+          transcriptionDuration = transcriptionResult.duration || duration || 0;
+        }
+
         recordingStatus = 'transcribed';
-        console.log('Transcription complete:', finalTranscript.substring(0, 100) + '...');
+        console.log('Transcription complete:', finalTranscript.substring(0, 100));
       } catch (transcribeError) {
         console.error('Auto-transcription failed:', transcribeError);
         // Continue without transcript
@@ -362,8 +558,8 @@ router.post('/:id/transcribe', async (req, res) => {
       return res.status(400).json({ error: 'No audio file found for this recording' });
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return res.status(500).json({ error: 'OpenAI API key not configured' });
+    if (!process.env.OPENAI_API_KEY && !process.env.SARVAM_API_KEY) {
+      return res.status(500).json({ error: 'No transcription API key configured' });
     }
 
     // Update status to transcribing
@@ -376,9 +572,21 @@ router.post('/:id/transcribe', async (req, res) => {
       console.log('Getting audio URL for key:', recording.audioKey);
       const audioUrl = await getAudioUrl(recording.audioKey);
       console.log('Downloading and transcribing audio...');
-      
+
+      const userDoc = await User.findById(req.user.id);
+      const limits = getPlanLimits(userDoc);
+      const usesSarvam = isIndianUser(userDoc) && !!process.env.SARVAM_API_KEY && limits.indianLanguages;
+      const langCode = getSarvamLanguageCode(userDoc);
+
       const startTime = Date.now();
-      const result = await transcribeFromUrl(audioUrl, recording.audioMimeType);
+      let result;
+      if (usesSarvam) {
+        console.log('[Transcription] Using Sarvam AI, lang:', langCode || 'auto-detect');
+        result = await transcribeFromUrlSarvam(audioUrl, recording.audioMimeType, langCode);
+      } else {
+        console.log('[Transcription] Using OpenAI Whisper');
+        result = await transcribeFromUrl(audioUrl, recording.audioMimeType);
+      }
       console.log(`Transcription completed in ${(Date.now() - startTime) / 1000}s`);
 
       recording.transcript = result.text;
@@ -416,13 +624,16 @@ router.post('/:id/summarize', async (req, res) => {
     }
 
     const transcript = recording.transcript || req.body.transcript || '';
-    
+
     if (!transcript || transcript.length < 50) {
       return res.status(400).json({ error: 'Transcript too short to summarize' });
     }
 
     console.log('Generating summary for recording:', recording._id);
-    const summary = await generateSummary(transcript);
+    const userDoc = await User.findById(req.user.id);
+    const englishTranscript = await toEnglishTranscript(transcript, userDoc);
+    let summary = await generateSummary(englishTranscript);
+    summary = await toPreferredLanguage(summary, userDoc);
 
     recording.summary = summary;
     recording.status = 'summarized';
@@ -435,9 +646,18 @@ router.post('/:id/summarize', async (req, res) => {
   }
 });
 
-// Generate meeting minutes using Gemini AI
+// Generate meeting minutes using Gemini AI — Pro/Team only
 router.post('/:id/minutes', async (req, res) => {
   try {
+    const userDoc = await User.findById(req.user.id);
+    const limits = getPlanLimits(userDoc);
+    if (!limits.meetingMinutes) {
+      return res.status(403).json({
+        error: 'Meeting minutes require a Pro or Team plan. Upgrade to unlock this feature.',
+        code: 'PLAN_LIMIT_MINUTES',
+      });
+    }
+
     const recording = await Recording.findOne({
       _id: req.params.id,
       user: req.user.id
@@ -452,11 +672,13 @@ router.post('/:id/minutes', async (req, res) => {
     }
 
     console.log('Generating minutes for recording:', recording._id);
-    const minutes = await generateMeetingMinutes(
-      recording.transcript,
+    const englishTranscript2 = await toEnglishTranscript(recording.transcript, userDoc);
+    let minutes = await generateMeetingMinutes(
+      englishTranscript2,
       recording.summary,
       recording.title
     );
+    minutes = await toPreferredLanguage(minutes, userDoc);
 
     recording.minutes = minutes;
     recording.status = 'completed';
@@ -469,9 +691,18 @@ router.post('/:id/minutes', async (req, res) => {
   }
 });
 
-// Extract action items using Gemini AI
+// Extract action items using Gemini AI — Pro/Team only
 router.post('/:id/actions', async (req, res) => {
   try {
+    const userDoc = await User.findById(req.user.id);
+    const limits = getPlanLimits(userDoc);
+    if (!limits.actionItems) {
+      return res.status(403).json({
+        error: 'Action item extraction requires a Pro or Team plan. Upgrade to unlock this feature.',
+        code: 'PLAN_LIMIT_ACTIONS',
+      });
+    }
+
     const recording = await Recording.findOne({
       _id: req.params.id,
       user: req.user.id

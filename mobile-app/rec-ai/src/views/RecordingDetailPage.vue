@@ -85,44 +85,47 @@
 
               <button
                 class="ai-card"
-                :class="{ done: recording.summary, active: processingAction === 'summarize' }"
-                :disabled="processing || !recording.transcript || !!recording.summary"
+                :class="{ done: recording.summary && processingAction !== 'summarize', active: processingAction === 'summarize' }"
+                :disabled="processing || !recording.transcript"
                 @click="handleSummarize"
               >
-                <div class="ai-card-icon" :class="{ done: recording.summary }">
+                <div class="ai-card-icon" :class="{ done: recording.summary && processingAction !== 'summarize' }">
                   <ion-spinner v-if="processingAction === 'summarize'" name="crescent"></ion-spinner>
-                  <ion-icon v-else-if="recording.summary" :icon="checkmarkOutline"></ion-icon>
+                  <ion-icon v-else-if="recording.summary" :icon="refreshOutline"></ion-icon>
                   <ion-icon v-else :icon="sparklesOutline"></ion-icon>
                 </div>
-                <span class="ai-card-label">{{ recording.summary ? 'Summarized' : 'Summarize' }}</span>
+                <span class="ai-card-label">{{ processingAction === 'summarize' ? 'Generating...' : recording.summary ? 'Regenerate' : 'Summarize' }}</span>
+                <span v-if="recording.summary && generatedAt.summary" class="ai-card-date">{{ relativeTime(generatedAt.summary) }}</span>
               </button>
 
               <button
                 class="ai-card"
-                :class="{ done: recording.minutes, active: processingAction === 'minutes' }"
-                :disabled="processing || !recording.transcript || !!recording.minutes"
+                :class="{ done: recording.minutes && processingAction !== 'minutes', active: processingAction === 'minutes' }"
+                :disabled="processing || !recording.transcript"
                 @click="handleMinutes"
               >
-                <div class="ai-card-icon" :class="{ done: recording.minutes }">
+                <div class="ai-card-icon" :class="{ done: recording.minutes && processingAction !== 'minutes' }">
                   <ion-spinner v-if="processingAction === 'minutes'" name="crescent"></ion-spinner>
-                  <ion-icon v-else-if="recording.minutes" :icon="checkmarkOutline"></ion-icon>
+                  <ion-icon v-else-if="recording.minutes" :icon="refreshOutline"></ion-icon>
                   <ion-icon v-else :icon="listOutline"></ion-icon>
                 </div>
-                <span class="ai-card-label">{{ recording.minutes ? 'Minutes Ready' : 'Minutes' }}</span>
+                <span class="ai-card-label">{{ processingAction === 'minutes' ? 'Generating...' : recording.minutes ? 'Regenerate' : 'Minutes' }}</span>
+                <span v-if="recording.minutes && generatedAt.minutes" class="ai-card-date">{{ relativeTime(generatedAt.minutes) }}</span>
               </button>
 
               <button
                 class="ai-card"
-                :class="{ done: recording.actionItems?.length, active: processingAction === 'actions' }"
-                :disabled="processing || !recording.transcript || !!recording.actionItems?.length"
+                :class="{ done: recording.actionItems?.length && processingAction !== 'actions', active: processingAction === 'actions' }"
+                :disabled="processing || !recording.transcript"
                 @click="handleActionItems"
               >
-                <div class="ai-card-icon" :class="{ done: recording.actionItems?.length }">
+                <div class="ai-card-icon" :class="{ done: recording.actionItems?.length && processingAction !== 'actions' }">
                   <ion-spinner v-if="processingAction === 'actions'" name="crescent"></ion-spinner>
-                  <ion-icon v-else-if="recording.actionItems?.length" :icon="checkmarkOutline"></ion-icon>
+                  <ion-icon v-else-if="recording.actionItems?.length" :icon="refreshOutline"></ion-icon>
                   <ion-icon v-else :icon="checkmarkCircleOutline"></ion-icon>
                 </div>
-                <span class="ai-card-label">{{ recording.actionItems?.length ? 'Tasks Ready' : 'Tasks' }}</span>
+                <span class="ai-card-label">{{ processingAction === 'actions' ? 'Generating...' : recording.actionItems?.length ? 'Regenerate' : 'Tasks' }}</span>
+                <span v-if="recording.actionItems?.length && generatedAt.actions" class="ai-card-date">{{ relativeTime(generatedAt.actions) }}</span>
               </button>
             </div>
           </div>
@@ -163,7 +166,7 @@
                       <ion-icon :icon="copyOutline"></ion-icon>
                     </button>
                     <button
-                      v-if="activeTab === 'transcript' && recording.transcript && isTranscriptEnglish && !isTranscriptRepetitive"
+                      v-if="activeTab === 'transcript' && recording.transcript && !isTranscriptRepetitive"
                       class="action-btn"
                       @click="startEditTranscript"
                       title="Edit transcript"
@@ -204,7 +207,7 @@
 
               <!-- Transcript: editor or read-only -->
               <template v-if="activeTab === 'transcript'">
-                <template v-if="isTranscriptEnglish && !isTranscriptRepetitive">
+                <template v-if="!isTranscriptRepetitive">
                   <textarea
                     v-if="isEditingTranscript"
                     v-model="editedTranscript"
@@ -213,10 +216,6 @@
                   ></textarea>
                   <div v-else class="tab-body formatted" v-html="renderMarkdown(recording.transcript!)"></div>
                 </template>
-                <div v-else class="non-english-notice">
-                  <ion-icon :icon="languageOutline"></ion-icon>
-                  <p>Viewing and editing Transcript is only available for English</p>
-                </div>
               </template>
 
               <div class="tab-body formatted" v-else-if="activeTab === 'summary'" v-html="renderMarkdown(recording.summary!)"></div>
@@ -296,7 +295,7 @@ import {
   textOutline, sparklesOutline, listOutline, checkmarkOutline, copyOutline,
   alertCircleOutline, shareOutline, trashOutline, calendarOutline, timeOutline,
   downloadOutline, createOutline, addOutline, pencilOutline, closeOutline, saveOutline,
-  checkmarkCircleOutline, personOutline, languageOutline
+  checkmarkCircleOutline, personOutline, languageOutline, refreshOutline
 } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -320,6 +319,37 @@ const showOptions = ref(false);
 const showDeleteAlert = ref(false);
 const processingAction = ref('');
 const activeTab = ref('transcript');
+
+// Per-field generation timestamps (stored in localStorage per recording)
+interface GeneratedAt { summary?: string; minutes?: string; actions?: string; }
+const generatedAt = ref<GeneratedAt>({}); 
+
+function loadGeneratedAt(id: string) {
+  try {
+    const raw = localStorage.getItem(`recai_gen_${id}`);
+    generatedAt.value = raw ? JSON.parse(raw) : {};
+  } catch { generatedAt.value = {}; }
+}
+
+function saveGeneratedAt(id: string, field: keyof GeneratedAt) {
+  generatedAt.value = { ...generatedAt.value, [field]: new Date().toISOString() };
+  try { localStorage.setItem(`recai_gen_${id}`, JSON.stringify(generatedAt.value)); } catch {}
+}
+
+function relativeTime(iso?: string): string {
+  if (!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs / 24);
+  if (days < 7) return `${days}d ago`;
+  const weeks = Math.floor(days / 7);
+  if (weeks < 5) return `${weeks}w ago`;
+  return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
 
 // Audio
 const audioRef = ref<HTMLAudioElement | null>(null);
@@ -494,6 +524,7 @@ onMounted(() => {
   if (id) {
     recordingsStore.currentRecording = null;
     recordingsStore.fetchRecording(id);
+    loadGeneratedAt(id);
     mountedFetchId = id; // signal to onIonViewWillEnter that we already fetched
   }
   // Load templates & logo in background — non-critical for page render
@@ -515,6 +546,7 @@ onIonViewWillEnter(() => {
   isEditingTranscript.value = false;
   isPlaying.value = false;
   if (audioRef.value) audioRef.value.pause();
+  loadGeneratedAt(id);
 
   if (mountedFetchId === id) {
     // onMounted already fetched this recording — skip to avoid double call + flicker
@@ -637,24 +669,39 @@ async function handleTranscribe() {
 
 async function handleSummarize() {
   if (!recording.value) return;
+  // Clear existing so the store regenerates fresh
+  if (recording.value.summary) {
+    await recordingsStore.updateRecording(recording.value._id, { summary: '' } as any);
+  }
   processingAction.value = 'summarize';
   await recordingsStore.summarizeRecording(recording.value._id);
+  saveGeneratedAt(recording.value._id, 'summary');
   processingAction.value = '';
   activeTab.value = 'summary';
 }
 
 async function handleMinutes() {
   if (!recording.value) return;
+  // Clear existing so the store regenerates fresh
+  if (recording.value.minutes) {
+    await recordingsStore.updateRecording(recording.value._id, { minutes: '' } as any);
+  }
   processingAction.value = 'minutes';
   await recordingsStore.generateMinutes(recording.value._id);
+  saveGeneratedAt(recording.value._id, 'minutes');
   processingAction.value = '';
   activeTab.value = 'minutes';
 }
 
 async function handleActionItems() {
   if (!recording.value) return;
+  // Clear existing so the store regenerates fresh
+  if (recording.value.actionItems?.length) {
+    await recordingsStore.updateRecording(recording.value._id, { actionItems: [] } as any);
+  }
   processingAction.value = 'actions';
   await recordingsStore.generateActionItems(recording.value._id);
+  saveGeneratedAt(recording.value._id, 'actions');
   processingAction.value = '';
   activeTab.value = 'actions';
 }
@@ -714,10 +761,13 @@ async function downloadSummaryPDF() {
   if (!recording.value?.summary) return;
   generatingPDF.value = true;
   try {
+    const template = templates.value[selectedTemplate.value] || templates.value.professional;
     const blob = await generateSummaryPdf(
       recording.value.title,
       formatDate(recording.value.createdAt),
-      recording.value.summary
+      recording.value.summary,
+      template,
+      logoBase64.value
     );
     await downloadBlob(blob, `${recording.value.title}-summary.pdf`);
   } catch (err) {
@@ -763,7 +813,7 @@ async function downloadBlob(blob: Blob, filename: string) {
         // iOS — save to the app's Documents folder (visible in Files app)
         await Filesystem.writeFile({ path: filename, data: base64, directory: Directory.Documents, recursive: true });
         const toast = await toastController.create({
-          message: `"${filename}" saved to Files → On My iPhone → RecAI`,
+          message: `"${filename}" saved to Files → On My iPhone → Echobits`,
           duration: 3000,
           position: 'bottom',
           color: 'success'
@@ -1204,6 +1254,15 @@ function applyInlineFormatting(text: string): string {
   line-height: 1.3;
   width: 100%;
   padding: 0 2px;
+}
+
+.ai-card-date {
+  font-size: 9px;
+  font-weight: 500;
+  color: var(--app-text-muted);
+  text-align: center;
+  width: 100%;
+  margin-top: 1px;
 }
 
 /* Content Tabs */

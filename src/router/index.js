@@ -13,6 +13,9 @@ import PrivacyPolicy from '../views/PrivacyPolicy.vue'
 import AdminPanel from '../views/AdminPanel.vue'
 import ContactUs from '../views/ContactUs.vue'
 import RequestDeletion from '../views/RequestDeletion.vue'
+import Pricing from '../views/Pricing.vue'
+import VerifyEmail from '../views/VerifyEmail.vue'
+import ForgotPassword from '../views/ForgotPassword.vue'
 
 const routes = [
   {
@@ -42,6 +45,11 @@ const routes = [
     component: PrivacyPolicy,
   },
   {
+    path: '/pricing',
+    name: 'Pricing',
+    component: Pricing,
+  },
+  {
     path: '/admin',
     name: 'AdminPanel',
     component: AdminPanel,
@@ -57,6 +65,18 @@ const routes = [
     path: '/register',
     name: 'Register',
     component: Register,
+    meta: { guest: true }
+  },
+  {
+    path: '/verify-email',
+    name: 'VerifyEmail',
+    component: VerifyEmail,
+    meta: { guest: true }
+  },
+  {
+    path: '/forgot-password',
+    name: 'ForgotPassword',
+    component: ForgotPassword,
     meta: { guest: true }
   },
   {

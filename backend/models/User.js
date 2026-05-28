@@ -46,7 +46,16 @@ const userSchema = new mongoose.Schema({
   privacyAcceptedAt: { type: Date, default: null },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   lastLoginAt: { type: Date, default: null },
-  loginCount: { type: Number, default: 0 }
+  loginCount: { type: Number, default: 0 },
+  country: { type: String, default: null, trim: true },
+  profession: { type: String, default: null, trim: true },
+  preferredLanguage: { type: String, default: null, trim: true },
+  summaryLanguage: { type: String, default: null, trim: true }, // null = English
+  autoSave: { type: Boolean, default: true },
+  plan: { type: String, enum: ['free', 'starter', 'pro', 'growth', 'team'], default: 'free' },
+  planBillingCycle: { type: String, enum: ['monthly', 'annual'], default: null },
+  planStartDate: { type: Date, default: null },
+  planExpiresAt: { type: Date, default: null },
 }, {
   timestamps: true
 });

@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import Recording from '../models/Recording.js';
 import { requireAdmin } from '../middleware/auth.js';
+import { deleteAudio } from '../config/storage.js';
 
 const router = express.Router();
 
@@ -54,7 +55,7 @@ router.get('/users', async (req, res) => {
 
     const [users, total] = await Promise.all([
       User.find(query)
-        .select('name email isVerified privacyAccepted privacyAcceptedAt role createdAt lastLoginAt loginCount googleId')
+        .select('name email isVerified privacyAccepted privacyAcceptedAt role plan planBillingCycle planStartDate planExpiresAt createdAt lastLoginAt loginCount googleId')
         .sort({ createdAt: -1 })
         .skip((page - 1) * limit)
         .limit(limit)
@@ -82,7 +83,7 @@ router.get('/users', async (req, res) => {
 router.get('/users/:id', async (req, res) => {
   try {
     const user = await User.findById(req.params.id)
-      .select('name email isVerified privacyAccepted privacyAcceptedAt role createdAt lastLoginAt loginCount googleId');
+      .select('name email isVerified privacyAccepted privacyAcceptedAt role plan planBillingCycle planStartDate planExpiresAt createdAt lastLoginAt loginCount googleId');
     if (!user) return res.status(404).json({ error: 'User not found' });
 
     const recordings = await Recording.find({ user: user._id })
@@ -104,6 +105,13 @@ router.delete('/users/:id', async (req, res) => {
     if (!user) return res.status(404).json({ error: 'User not found' });
     // Prevent deleting other admins
     if (user.role === 'admin') return res.status(403).json({ error: 'Cannot delete admin accounts' });
+
+    // Delete audio files from R2 before removing DB records
+    if (process.env.R2_ACCESS_KEY_ID) {
+      const recordings = await Recording.find({ user: user._id }).select('audioKey').lean();
+      await Promise.allSettled(recordings.filter(r => r.audioKey).map(r => deleteAudio(r.audioKey)));
+    }
+
     await Recording.deleteMany({ user: user._id });
     await User.findByIdAndDelete(req.params.id);
     res.json({ ok: true });
@@ -243,6 +251,159 @@ router.get('/activity', async (req, res) => {
     res.json({ events });
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch activity' });
+  }
+});
+
+// ── API Costs & Company Expenses ─────────────────────────────────────────────
+router.get('/costs', async (req, res) => {
+  try {
+    const days = Math.min(90, Math.max(7, parseInt(req.query.days) || 30));
+    const startDate = new Date(Date.now() - (days - 1) * 24 * 60 * 60 * 1000);
+    startDate.setHours(0, 0, 0, 0);
+
+    // Pricing (USD) — overridable via env vars
+    const SARVAM_COST_PER_MIN   = parseFloat(process.env.SARVAM_COST_PER_MIN    || '0.003');
+    const GEMINI_INPUT_PER_1M   = parseFloat(process.env.GEMINI_INPUT_PER_1M    || '0.075');
+    const GEMINI_OUTPUT_PER_1M  = parseFloat(process.env.GEMINI_OUTPUT_PER_1M   || '0.30');
+    const R2_COST_PER_GB_MONTH  = parseFloat(process.env.R2_COST_PER_GB_MONTH   || '0.015');
+    const CHARS_PER_TOKEN = 4;
+
+    // ── All-time totals ──────────────────────────────────────────────────────
+    const [transcribedRecs, storageAgg] = await Promise.all([
+      Recording.find({ transcript: { $exists: true, $ne: '' } })
+        .select('duration transcript summary minutes audioSize createdAt user')
+        .lean(),
+      Recording.aggregate([{ $group: { _id: null, total: { $sum: '$audioSize' } } }]),
+    ]);
+
+    let totalSarvamMinutes = 0, totalGeminiIn = 0, totalGeminiOut = 0;
+    for (const rec of transcribedRecs) {
+      totalSarvamMinutes += (rec.duration || 0) / 60;
+      totalGeminiIn      += (rec.transcript?.length || 0) / CHARS_PER_TOKEN;
+      totalGeminiOut     += ((rec.summary?.length || 0) + (rec.minutes?.length || 0)) / CHARS_PER_TOKEN;
+    }
+    const totalStorageBytes = storageAgg[0]?.total || 0;
+
+    const sarvamCost        = totalSarvamMinutes * SARVAM_COST_PER_MIN;
+    const geminiCost        = (totalGeminiIn / 1e6) * GEMINI_INPUT_PER_1M + (totalGeminiOut / 1e6) * GEMINI_OUTPUT_PER_1M;
+    const storageCostMonthly = (totalStorageBytes / (1024 ** 3)) * R2_COST_PER_GB_MONTH;
+    const totalCost         = sarvamCost + geminiCost + storageCostMonthly;
+
+    // ── Per-day cost breakdown ───────────────────────────────────────────────
+    const recentRecs = await Recording.find({
+      createdAt: { $gte: startDate },
+      transcript: { $exists: true, $ne: '' },
+    }).select('duration transcript summary minutes createdAt').lean();
+
+    const dayMap = {};
+    for (let i = 0; i < days; i++) {
+      const d = new Date(startDate);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split('T')[0];
+      dayMap[key] = { date: key, sarvam: 0, gemini: 0, total: 0 };
+    }
+    for (const rec of recentRecs) {
+      const key = new Date(rec.createdAt).toISOString().split('T')[0];
+      if (!dayMap[key]) continue;
+      const s = ((rec.duration || 0) / 60) * SARVAM_COST_PER_MIN;
+      const g = ((rec.transcript?.length || 0) / CHARS_PER_TOKEN / 1e6) * GEMINI_INPUT_PER_1M
+              + (((rec.summary?.length || 0) + (rec.minutes?.length || 0)) / CHARS_PER_TOKEN / 1e6) * GEMINI_OUTPUT_PER_1M;
+      dayMap[key].sarvam += s;
+      dayMap[key].gemini += g;
+      dayMap[key].total  += s + g;
+    }
+
+    // ── Top users by cost ────────────────────────────────────────────────────
+    const topUserAgg = await Recording.aggregate([
+      { $match: { transcript: { $exists: true, $ne: '' } } },
+      { $group: {
+        _id: '$user',
+        totalMinutes:       { $sum: { $divide: ['$duration', 60] } },
+        transcriptChars:    { $sum: { $strLenCP: { $ifNull: ['$transcript', ''] } } },
+        summaryChars:       { $sum: { $add: [
+          { $strLenCP: { $ifNull: ['$summary',  ''] } },
+          { $strLenCP: { $ifNull: ['$minutes', ''] } },
+        ] } },
+        recordingCount: { $sum: 1 },
+      }},
+      { $lookup: { from: 'users', localField: '_id', foreignField: '_id', as: 'u' } },
+      { $unwind: { path: '$u', preserveNullAndEmptyArrays: true } },
+      { $project: { name: '$u.name', email: '$u.email', totalMinutes: 1, transcriptChars: 1, summaryChars: 1, recordingCount: 1 } },
+      { $sort: { totalMinutes: -1 } },
+      { $limit: 10 },
+    ]);
+
+    const topUsers = topUserAgg.map(u => {
+      const sarvam = u.totalMinutes * SARVAM_COST_PER_MIN;
+      const gemini = (u.transcriptChars / CHARS_PER_TOKEN / 1e6) * GEMINI_INPUT_PER_1M
+                   + (u.summaryChars    / CHARS_PER_TOKEN / 1e6) * GEMINI_OUTPUT_PER_1M;
+      return { ...u, sarvamCost: sarvam, geminiCost: gemini, totalCost: sarvam + gemini };
+    });
+
+    res.json({
+      allTime: {
+        sarvamCost, geminiCost, storageCostMonthly, totalCost,
+        sarvamMinutes:       Math.round(totalSarvamMinutes * 10) / 10,
+        geminiInputTokens:   Math.round(totalGeminiIn),
+        geminiOutputTokens:  Math.round(totalGeminiOut),
+        storageGB:           totalStorageBytes / (1024 ** 3),
+      },
+      costsPerDay: Object.values(dayMap),
+      topUsers,
+      pricing: { SARVAM_COST_PER_MIN, GEMINI_INPUT_PER_1M, GEMINI_OUTPUT_PER_1M, R2_COST_PER_GB_MONTH },
+    });
+  } catch (error) {
+    console.error('Admin costs error:', error);
+    res.status(500).json({ error: 'Failed to fetch costs' });
+  }
+});
+
+// ── Subscriptions / Revenue ───────────────────────────────────────────────────
+router.get('/subscriptions', async (req, res) => {
+  try {
+    const now = new Date();
+    const allUsers = await User.find()
+      .select('name email plan planBillingCycle planStartDate planExpiresAt createdAt isVerified')
+      .lean();
+
+    const activePaid = allUsers.filter(u =>
+      u.plan && u.plan !== 'free' && u.planExpiresAt && new Date(u.planExpiresAt) > now
+    );
+    const churned = allUsers.filter(u =>
+      u.plan && u.plan !== 'free' && u.planExpiresAt && new Date(u.planExpiresAt) <= now
+    );
+    const freeUsers = allUsers.filter(u => !u.plan || u.plan === 'free');
+
+    const MONTHLY_VALUE = { pro: 749, team: 1999 };
+    const ANNUAL_VALUE  = { pro: Math.round(7499 / 12), team: Math.round(19999 / 12) };
+    let mrr = 0;
+    for (const u of activePaid) {
+      mrr += ((u.planBillingCycle === 'annual' ? ANNUAL_VALUE : MONTHLY_VALUE)[u.plan] || 0);
+    }
+
+    res.json({
+      stats: {
+        totalUsers: allUsers.length,
+        activePaid: activePaid.length,
+        activePro:  activePaid.filter(u => u.plan === 'pro').length,
+        activeTeam: activePaid.filter(u => u.plan === 'team').length,
+        freeUsers:  freeUsers.length,
+        churnedUsers: churned.length,
+        mrrInr: Math.round(mrr),
+      },
+      planBreakdown: {
+        pro:     activePaid.filter(u => u.plan === 'pro').length,
+        team:    activePaid.filter(u => u.plan === 'team').length,
+        expired: churned.length,
+        free:    freeUsers.length,
+      },
+      subscribers:  activePaid.sort((a, b) => new Date(b.planStartDate || 0) - new Date(a.planStartDate || 0)),
+      churned:      churned.sort((a, b) => new Date(b.planExpiresAt) - new Date(a.planExpiresAt)).slice(0, 30),
+      freeUsersList: freeUsers.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)).slice(0, 50),
+    });
+  } catch (error) {
+    console.error('Admin subscriptions error:', error);
+    res.status(500).json({ error: 'Failed to fetch subscription data' });
   }
 });
 

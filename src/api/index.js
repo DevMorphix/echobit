@@ -2,8 +2,9 @@ import { reactive } from 'vue';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
-// Token expiration time in milliseconds (24 hours) - must match backend
-const TOKEN_EXPIRY_MS = 24 * 60 * 60 * 1000;
+// Fallback expiry used only when the server doesn't return expiresAt (e.g. old tokens).
+// Backend issues 7-day tokens; this constant is just the safety fallback.
+const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 
 // Check if token is expired
 const isTokenExpired = () => {
@@ -60,7 +61,9 @@ const apiRequest = async (endpoint, options = {}) => {
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Request failed');
+    const err = new Error(data.error || 'Request failed');
+    err.status = response.status;
+    throw err;
   }
 
   return data;
@@ -75,41 +78,81 @@ export const authApi = {
         method: 'POST',
         body: JSON.stringify({ email, password })
       });
-      
       authState.token = data.token;
       authState.user = data.user;
       authState.isAuthenticated = true;
-      
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      // Store expiration time from backend or calculate it
       const expiresAt = data.expiresAt || (Date.now() + TOKEN_EXPIRY_MS);
       localStorage.setItem('tokenExpiresAt', expiresAt.toString());
-      
       return data;
     } finally {
       authState.loading = false;
     }
   },
 
-  async register(name, email, password) {
+  async register(name, email, password, profile = {}) {
     authState.loading = true;
     try {
-      const data = await apiRequest('/auth/register', {
+      return await apiRequest('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name, email, password })
+        body: JSON.stringify({ name, email, password, ...profile })
       });
-      
+    } finally {
+      authState.loading = false;
+    }
+  },
+
+  async sendVerification(email) {
+    return apiRequest('/auth/send-verification', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  },
+
+  async verifyEmail(email, otp) {
+    const data = await apiRequest('/auth/verify-email', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp })
+    });
+    authState.token = data.token;
+    authState.user = data.user;
+    authState.isAuthenticated = true;
+    localStorage.setItem('token', data.token);
+    localStorage.setItem('user', JSON.stringify(data.user));
+    const expiresAt = data.expiresAt || (Date.now() + TOKEN_EXPIRY_MS);
+    localStorage.setItem('tokenExpiresAt', expiresAt.toString());
+    return data;
+  },
+
+  async forgotPassword(email) {
+    return apiRequest('/auth/forgot-password', {
+      method: 'POST',
+      body: JSON.stringify({ email })
+    });
+  },
+
+  async resetPassword(email, otp, newPassword) {
+    return apiRequest('/auth/reset-password', {
+      method: 'POST',
+      body: JSON.stringify({ email, otp, newPassword })
+    });
+  },
+
+  async googleLogin(idToken) {
+    authState.loading = true;
+    try {
+      const data = await apiRequest('/auth/google', {
+        method: 'POST',
+        body: JSON.stringify({ idToken })
+      });
       authState.token = data.token;
       authState.user = data.user;
       authState.isAuthenticated = true;
-      
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      // Store expiration time from backend or calculate it
       const expiresAt = data.expiresAt || (Date.now() + TOKEN_EXPIRY_MS);
       localStorage.setItem('tokenExpiresAt', expiresAt.toString());
-      
       return data;
     } finally {
       authState.loading = false;
@@ -247,5 +290,30 @@ export const adminApi = {
   },
   async getAnalytics(days = 30) {
     return apiRequest(`/admin/analytics?days=${days}`);
+  },
+  async getCosts(days = 30) {
+    return apiRequest(`/admin/costs?days=${days}`);
+  },
+  async getSubscriptions() {
+    return apiRequest('/admin/subscriptions');
+  },
+};
+
+// Payments API
+export const paymentsApi = {
+  async createOrder(plan) {
+    return apiRequest('/payments/create-order', {
+      method: 'POST',
+      body: JSON.stringify({ plan }),
+    });
+  },
+  async verifyPayment(payload, plan) {
+    return apiRequest('/payments/verify', {
+      method: 'POST',
+      body: JSON.stringify({ ...payload, plan }),
+    });
+  },
+  async getStatus() {
+    return apiRequest('/payments/status');
   },
 };

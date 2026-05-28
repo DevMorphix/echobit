@@ -8,6 +8,7 @@ import connectDB from './config/database.js';
 import authRoutes from './routes/auth.js';
 import recordingsRoutes from './routes/recordings.js';
 import adminRoutes from './routes/admin.js';
+import paymentsRoutes from './routes/payments.js';
 import { authenticateToken } from './middleware/auth.js';
 
 // Connect to MongoDB
@@ -16,12 +17,22 @@ connectDB();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// CORS - Allow all origins
+// CORS - Allow configured origins (comma-separated ALLOWED_ORIGINS env var, falls back to localhost in dev)
+const ALLOWED_ORIGINS = process.env.ALLOWED_ORIGINS
+  ? process.env.ALLOWED_ORIGINS.split(',').map(o => o.trim())
+  : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:4173'];
+
 app.use((req, res, next) => {
-  res.header('Access-Control-Allow-Origin', '*');
+  const origin = req.headers.origin;
+  if (origin && ALLOWED_ORIGINS.includes(origin)) {
+    res.header('Access-Control-Allow-Origin', origin);
+  } else if (!origin) {
+    // Same-origin or non-browser clients (mobile app, curl, etc.)
+    res.header('Access-Control-Allow-Origin', '*');
+  }
   res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
   res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept, Authorization');
-  
+
   if (req.method === 'OPTIONS') {
     return res.sendStatus(200);
   }
@@ -38,6 +49,7 @@ app.use('/api/auth', authRoutes);
 // Protected routes
 app.use('/api/recordings', authenticateToken, recordingsRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/payments', paymentsRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

@@ -357,7 +357,7 @@ async function handleGoogleLogin() {
 .google-btn-primary {
   width: 100%;
   height: 56px;
-  border: none;
+  border: 1.5px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-lg);
   background: white;
   color: #1f1f1f;
@@ -368,13 +368,13 @@ async function handleGoogleLogin() {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
   transition: all var(--transition-fast);
 }
 
 .google-btn-primary:active:not(:disabled) {
   transform: scale(0.98);
-  box-shadow: 0 1px 5px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 .google-btn-primary:disabled {
@@ -512,16 +512,16 @@ async function handleGoogleLogin() {
   80% { transform: translateX(4px); }
 }
 
-/* Email Sign-In Button (secondary) */
+/* Email Sign-In Button */
 .submit-btn {
   width: 100%;
-  height: 50px;
-  border: 1.5px solid var(--app-border);
+  height: 52px;
+  border: none;
   border-radius: var(--radius-lg);
-  background: transparent;
-  color: var(--app-text-secondary);
-  font-size: 15px;
-  font-weight: 600;
+  background: var(--app-gradient);
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -529,10 +529,12 @@ async function handleGoogleLogin() {
   gap: 8px;
   transition: all var(--transition-base);
   margin-top: 4px;
+  box-shadow: var(--shadow-primary);
 }
 
 .submit-btn:active:not(:disabled) {
-  background: var(--app-surface-hover);
+  transform: scale(0.98);
+  opacity: 0.9;
 }
 
 .submit-btn:disabled {
@@ -541,7 +543,7 @@ async function handleGoogleLogin() {
 }
 
 .submit-btn ion-icon { font-size: 18px; }
-.submit-btn ion-spinner { width: 20px; height: 20px; }
+.submit-btn ion-spinner { width: 20px; height: 20px; color: white; }
 
 /* Forgot password */
 .forgot-row {

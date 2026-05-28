@@ -27,11 +27,11 @@ export const useAuthStore = defineStore('auth', () => {
     }
   }
 
-  async function register(name: string, email: string, password: string) {
+  async function register(name: string, email: string, password: string, profile?: { country?: string; preferredLanguage?: string; profession?: string }) {
     loading.value = true;
     error.value = null;
     try {
-      const response = await api.register(name, email, password);
+      const response = await api.register(name, email, password, profile);
       return { success: true, email: response.email };
     } catch (err: any) {
       error.value = err.message || 'Registration failed';

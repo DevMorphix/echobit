@@ -404,9 +404,10 @@ const saveRecording = async () => {
 
     const recordingData = {
       title: autoTitle,
-      audioKey, // Just pass the key, not the entire file
+      audioKey,
       mimeType,
-      duration: recordingTime.value || 0
+      duration: recordingTime.value || 0,
+      audioSize: audioBlob.value?.size || 0
     };
 
     const result = await recordingsApi.create(recordingData);

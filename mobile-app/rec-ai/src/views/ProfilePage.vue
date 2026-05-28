@@ -44,6 +44,18 @@
         </div>
 
         <!-- Settings Sections -->
+        <!-- Upgrade Banner -->
+        <div class="upgrade-banner" @click="openPricing">
+          <div class="upgrade-icon">
+            <ion-icon :icon="flashOutline"></ion-icon>
+          </div>
+          <div class="upgrade-body">
+            <p class="upgrade-title">Upgrade to Pro</p>
+            <p class="upgrade-sub">Unlimited recordings · All languages · PDF export</p>
+          </div>
+          <ion-icon :icon="chevronForwardOutline" class="upgrade-chevron"></ion-icon>
+        </div>
+
         <div class="settings-group">
           <h3 class="group-label">Account</h3>
           <div class="settings-card">
@@ -97,6 +109,61 @@
               </div>
               <ion-toggle :checked="notifications" @ionChange="notifications = $event.detail.checked" mode="ios"></ion-toggle>
             </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="group-label">AI & Recording</h3>
+          <div class="settings-card">
+            <div class="setting-item">
+              <div class="setting-icon" style="background: rgba(16, 185, 129, 0.08);">
+                <ion-icon :icon="saveOutline" style="color: var(--app-primary);"></ion-icon>
+              </div>
+              <div class="setting-body">
+                <span class="setting-title">Auto-save & Transcribe</span>
+                <span class="setting-desc">Transcribe automatically after recording</span>
+              </div>
+              <ion-toggle :checked="autoSave" @ionChange="onAutoSaveChange($event.detail.checked)" mode="ios"></ion-toggle>
+            </div>
+
+            <div class="setting-item" v-if="isIndianUser">
+              <div class="setting-icon" style="background: rgba(99, 102, 241, 0.08);">
+                <ion-icon :icon="languageOutline" style="color: var(--ion-color-tertiary);"></ion-icon>
+              </div>
+              <div class="setting-body">
+                <span class="setting-title">Summary Language</span>
+                <span class="setting-desc">{{ summaryLanguageLabel }}</span>
+              </div>
+              <select v-model="summaryLanguage" @change="onSummaryLangChange" class="lang-select-inline">
+                <option value="">English</option>
+                <option value="hindi">Hindi (हिन्दी)</option>
+                <option value="tamil">Tamil (தமிழ்)</option>
+                <option value="telugu">Telugu (తెలుగు)</option>
+                <option value="bengali">Bengali (বাংলা)</option>
+                <option value="kannada">Kannada (ಕನ್ನಡ)</option>
+                <option value="malayalam">Malayalam (മലയാളം)</option>
+                <option value="marathi">Marathi (मराठी)</option>
+                <option value="gujarati">Gujarati (ગુજરાતી)</option>
+                <option value="punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
+                <option value="odia">Odia (ଓଡ଼ିଆ)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="settings-group">
+          <h3 class="group-label">Plans</h3>
+          <div class="settings-card">
+            <button class="setting-item" @click="openPricing">
+              <div class="setting-icon" style="background: rgba(16, 185, 129, 0.1);">
+                <ion-icon :icon="flashOutline" style="color: #10b981;"></ion-icon>
+              </div>
+              <div class="setting-body">
+                <span class="setting-title">Upgrade to Pro</span>
+                <span class="setting-desc">View plans &amp; pricing</span>
+              </div>
+              <ion-icon :icon="chevronForwardOutline" class="setting-chevron"></ion-icon>
+            </button>
           </div>
         </div>
 
@@ -262,7 +329,7 @@ import {
   chevronBackOutline, chevronForwardOutline, personOutline, cloudOutline,
   sunnyOutline, moonOutline, notificationsOutline, helpCircleOutline,
   informationCircleOutline, logOutOutline, closeOutline, micOutline,
-  documentTextOutline, mailOutline
+  documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -278,9 +345,23 @@ const showLogout = ref(false);
 const notifications = ref(true);
 const isDark = ref(false);
 const saving = ref(false);
+const autoSave = ref(true);
+const summaryLanguage = ref('');
 
 const editName = ref('');
 const editEmail = ref('');
+
+const isIndianUser = computed(() => {
+  const c = (user.value?.country || '').toLowerCase();
+  return c === 'india' || c === 'in';
+});
+
+const LANG_LABELS: Record<string, string> = {
+  '': 'English', hindi: 'Hindi', tamil: 'Tamil', telugu: 'Telugu',
+  bengali: 'Bengali', kannada: 'Kannada', malayalam: 'Malayalam',
+  marathi: 'Marathi', gujarati: 'Gujarati', punjabi: 'Punjabi', odia: 'Odia',
+};
+const summaryLanguageLabel = computed(() => LANG_LABELS[summaryLanguage.value] || 'English');
 
 const user = computed(() => authStore.user);
 
@@ -320,12 +401,13 @@ const logoutButtons = [
 
 onMounted(() => {
   recordingsStore.fetchRecordings();
-  // Reflect actual dark state: manual override OR system preference
   isDark.value = document.body.classList.contains('dark') ||
     (!localStorage.getItem('theme') && window.matchMedia('(prefers-color-scheme: dark)').matches);
   if (user.value) {
     editName.value = user.value.name;
     editEmail.value = user.value.email;
+    autoSave.value = (user.value as any).autoSave !== false;
+    summaryLanguage.value = (user.value as any).summaryLanguage || '';
   }
 });
 
@@ -356,8 +438,23 @@ async function saveProfile() {
   }
 }
 
+async function onAutoSaveChange(val: boolean) {
+  autoSave.value = val;
+  localStorage.setItem('autoSave', val ? 'true' : 'false');
+  await authStore.updateProfile({ autoSave: val } as any);
+}
+
+async function onSummaryLangChange() {
+  localStorage.setItem('summaryLanguage', summaryLanguage.value);
+  await authStore.updateProfile({ summaryLanguage: summaryLanguage.value } as any);
+}
+
 function openHelp() {
   window.open('mailto:no.reply.Echobits@gmail.com', '_blank');
+}
+
+function openPricing() {
+  window.open('https://echobit.badhusha.dev/pricing', '_system');
 }
 </script>
 
@@ -509,6 +606,67 @@ function openHelp() {
   background: var(--app-border);
 }
 
+/* Upgrade Banner */
+.upgrade-banner {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px;
+  margin-bottom: 24px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  border-radius: var(--radius-2xl);
+  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.35);
+  cursor: pointer;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.upgrade-banner:active {
+  transform: scale(0.97);
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.upgrade-icon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-lg);
+  background: rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.upgrade-icon ion-icon {
+  font-size: 22px;
+  color: white;
+}
+
+.upgrade-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.upgrade-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: white;
+  margin: 0 0 2px;
+  line-height: 1.2;
+}
+
+.upgrade-sub {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.8);
+  margin: 0;
+  line-height: 1.3;
+}
+
+.upgrade-chevron {
+  font-size: 20px;
+  color: rgba(255, 255, 255, 0.7);
+  flex-shrink: 0;
+}
+
 /* Settings Group */
 .settings-group {
   margin-bottom: 20px;
@@ -550,6 +708,18 @@ function openHelp() {
 
 .setting-item:active {
   background: var(--app-surface-hover);
+}
+
+.lang-select-inline {
+  background: var(--app-bg);
+  border: 1px solid var(--app-border);
+  color: var(--app-text);
+  border-radius: var(--radius-md);
+  padding: 4px 8px;
+  font-size: 13px;
+  outline: none;
+  cursor: pointer;
+  max-width: 130px;
 }
 
 .setting-icon {

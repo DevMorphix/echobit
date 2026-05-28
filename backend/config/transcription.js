@@ -7,6 +7,7 @@ import ffmpeg from 'fluent-ffmpeg';
 import ffmpegInstaller from '@ffmpeg-installer/ffmpeg';
 import ffprobeInstaller from '@ffprobe-installer/ffprobe';
 import { File as NodeFile } from 'node:buffer';
+import { getExtensionFromMimeType } from '../utils/mimeUtils.js';
 
 // Polyfill File global for Node.js < 20 (required by OpenAI SDK)
 if (typeof globalThis.File === 'undefined') {
@@ -247,26 +248,5 @@ export const transcribeFromUrl = async (audioUrl, mimeType = 'audio/webm') => {
   }
 };
 
-/**
- * Get file extension from MIME type
- */
-function getExtensionFromMimeType(mimeType) {
-  const mimeMap = {
-    'audio/webm': 'webm',
-    'audio/mp3': 'mp3',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/ogg': 'ogg',
-    'audio/flac': 'flac',
-    'audio/m4a': 'm4a',
-    'audio/mp4': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'video/webm': 'webm',
-    'video/mp4': 'mp4',
-    'video/quicktime': 'mov',
-  };
-  return mimeMap[mimeType] || 'webm';
-}
 
 export default openai;
