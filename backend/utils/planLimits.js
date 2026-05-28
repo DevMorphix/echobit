@@ -1,0 +1,67 @@
+export const PLAN_LIMITS = {
+  free: {
+    recordingsPerMonth: 3,
+    maxDurationSecs: 1200,            // 20 min
+    maxStorageBytes: 1_073_741_824,   // 1 GB
+    languageTier: 'basic_indian',     // English + Malayalam
+    indianLanguages: true,            // includes Malayalam via Sarvam
+    meetingMinutes: false,
+    actionItems: false,
+    pdfExport: false,
+    priorityProcessing: false,
+  },
+  starter: {
+    recordingsPerMonth: 15,
+    maxDurationSecs: 2700,            // 45 min
+    maxStorageBytes: 3_221_225_472,   // 3 GB
+    languageTier: 'basic_indian',     // English + Hindi + Malayalam
+    indianLanguages: true,
+    meetingMinutes: false,
+    actionItems: false,
+    pdfExport: false,
+    priorityProcessing: false,
+  },
+  pro: {
+    recordingsPerMonth: 40,
+    maxDurationSecs: 7200,            // 2 hours
+    maxStorageBytes: 10_737_418_240,  // 10 GB
+    languageTier: 'extended',         // 15+ languages
+    indianLanguages: true,
+    meetingMinutes: true,
+    actionItems: true,
+    pdfExport: true,
+    priorityProcessing: true,
+  },
+  growth: {
+    recordingsPerMonth: null,         // unlimited
+    maxDurationSecs: 10_800,          // 3 hours
+    maxStorageBytes: 26_843_545_600,  // 25 GB
+    languageTier: 'full',             // 20+ languages
+    indianLanguages: true,
+    meetingMinutes: true,
+    actionItems: true,
+    pdfExport: true,
+    priorityProcessing: true,
+  },
+  // kept for existing users; no longer sold
+  team: {
+    recordingsPerMonth: null,
+    maxDurationSecs: 10_800,
+    maxStorageBytes: 53_687_091_200,  // 50 GB
+    languageTier: 'full',
+    indianLanguages: true,
+    meetingMinutes: true,
+    actionItems: true,
+    pdfExport: true,
+    priorityProcessing: true,
+  },
+};
+
+/** Returns the user's currently active plan key, falling back to 'free' if expired. */
+export const getActivePlan = (user) => {
+  if (!user?.plan || user.plan === 'free') return 'free';
+  if (!user.planExpiresAt || new Date(user.planExpiresAt) < new Date()) return 'free';
+  return user.plan;
+};
+
+export const getPlanLimits = (user) => PLAN_LIMITS[getActivePlan(user)] ?? PLAN_LIMITS.free;

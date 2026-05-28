@@ -63,10 +63,10 @@
           <span class="font-medium">New Recording</span>
         </router-link>
 
-        <router-link 
-          to="/dashboard/recordings" 
+        <router-link
+          to="/dashboard/recordings"
           @click="mobileMenuOpen = false"
-          class="flex items-center space-x-3 px-4 py-3  rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition"
+          class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition"
           :class="{ 'bg-emerald-50 text-emerald-600': $route.path.includes('/recordings') }"
         >
           <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -74,7 +74,51 @@
           </svg>
           <span class="font-medium">My Recordings</span>
         </router-link>
+
+        <router-link v-if="!isPaid"
+          to="/pricing"
+          @click="mobileMenuOpen = false"
+          class="flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-600 hover:bg-emerald-50 transition"
+          :class="{ 'bg-emerald-50': $route.path === '/pricing' }"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span class="font-medium">Upgrade</span>
+          <span class="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Pro</span>
+        </router-link>
+
+        <div v-else class="flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-50">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-medium text-emerald-700">{{ planLabel }} Plan</span>
+          <span class="ml-auto text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold">Active</span>
+        </div>
       </nav>
+
+      <!-- Mobile Upgrade banner -->
+      <div class="px-4 pb-3">
+        <router-link v-if="!isPaid" to="/pricing" @click="mobileMenuOpen = false"
+          class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-400 hover:to-green-400 transition shadow-md shadow-emerald-500/20">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div>
+            <p class="text-sm font-semibold leading-none">Upgrade to Pro</p>
+            <p class="text-xs text-white/70 mt-0.5">Unlock all features</p>
+          </div>
+        </router-link>
+        <div v-else class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div>
+            <p class="text-sm font-semibold text-emerald-800 leading-none">{{ planLabel }} Plan Active</p>
+            <p class="text-xs text-emerald-600 mt-0.5">{{ subscription.daysRemaining }}d remaining</p>
+          </div>
+        </div>
+      </div>
 
       <!-- Mobile User section -->
       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
@@ -127,8 +171,8 @@
           <span class="font-medium">New Recording</span>
         </router-link>
 
-        <router-link 
-          to="/dashboard/recordings" 
+        <router-link
+          to="/dashboard/recordings"
           class="flex items-center space-x-3 px-4 py-3 rounded-xl text-gray-700 hover:bg-emerald-50 hover:text-emerald-600 transition"
           :class="{ 'bg-emerald-50 text-emerald-600': $route.path.includes('/recordings') }"
         >
@@ -137,7 +181,50 @@
           </svg>
           <span class="font-medium">My Recordings</span>
         </router-link>
+
+        <router-link v-if="!isPaid"
+          to="/pricing"
+          class="flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-600 hover:bg-emerald-50 transition font-medium"
+          :class="{ 'bg-emerald-50': $route.path === '/pricing' }"
+        >
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <span>Upgrade</span>
+          <span class="ml-auto text-xs bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full font-semibold">Pro</span>
+        </router-link>
+
+        <div v-else class="flex items-center space-x-3 px-4 py-3 rounded-xl bg-emerald-50">
+          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span class="font-medium text-emerald-700">{{ planLabel }} Plan</span>
+          <span class="ml-auto text-xs bg-emerald-500 text-white px-2 py-0.5 rounded-full font-semibold">Active</span>
+        </div>
       </nav>
+
+      <!-- Desktop Upgrade banner -->
+      <div class="absolute bottom-20 left-0 right-0 px-4">
+        <router-link v-if="!isPaid" to="/pricing"
+          class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-400 hover:to-green-400 transition shadow-md shadow-emerald-500/20">
+          <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div>
+            <p class="text-sm font-semibold leading-none">Upgrade to Pro</p>
+            <p class="text-xs text-white/70 mt-0.5">Unlock all features</p>
+          </div>
+        </router-link>
+        <div v-else class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200">
+          <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+          <div>
+            <p class="text-sm font-semibold text-emerald-800 leading-none">{{ planLabel }} Plan Active</p>
+            <p class="text-xs text-emerald-600 mt-0.5">{{ subscription.daysRemaining }}d remaining</p>
+          </div>
+        </div>
+      </div>
 
       <!-- Desktop User section -->
       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
@@ -166,9 +253,9 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { authState, authApi } from '../api';
+import { authState, authApi, paymentsApi } from '../api';
 
 const router = useRouter();
 const mobileMenuOpen = ref(false);
@@ -178,6 +265,32 @@ const userEmail = computed(() => authState.user?.email || '');
 const userInitials = computed(() => {
   const name = authState.user?.name || 'U';
   return name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2);
+});
+
+function buildSubFromUser(user) {
+  if (!user?.plan) return null;
+  const exp = user.planExpiresAt;
+  const active = user.plan !== 'free' && exp && new Date(exp) > new Date();
+  return {
+    plan: user.plan || 'free',
+    isActive: !!active,
+    daysRemaining: active ? Math.ceil((new Date(exp).getTime() - Date.now()) / 86400000) : 0,
+  };
+}
+
+const subscription = ref(
+  buildSubFromUser(authState.user) ?? { plan: 'free', isActive: false, daysRemaining: 0 }
+);
+const isPaid = computed(() => subscription.value.plan !== 'free' && subscription.value.isActive);
+const planLabel = computed(() => {
+  const p = subscription.value.plan;
+  return p === 'pro' ? 'Pro' : p === 'team' ? 'Team' : 'Free';
+});
+
+onMounted(async () => {
+  try {
+    subscription.value = await paymentsApi.getStatus();
+  } catch { /* keep cached value */ }
 });
 
 const handleLogout = () => {

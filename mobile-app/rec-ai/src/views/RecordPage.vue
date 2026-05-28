@@ -226,6 +226,8 @@ const playbackTotalTime = ref('0:00');
 const waveformBars = ref<number[]>(Array(40).fill(12));
 const animationFrame = ref<number | null>(null);
 const timerInterval = ref<number | null>(null);
+const sourceNode = ref<MediaStreamAudioSourceNode | null>(null);
+const nativeVisInterval = ref<number | null>(null);
 
 // Wake lock — keeps screen on during recording so MediaRecorder isn't paused
 let wakeLock: WakeLockSentinel | null = null;
@@ -276,7 +278,7 @@ function showPermissionAlert(): Promise<boolean> {
   return new Promise(async (resolve) => {
     const alert = await alertController.create({
       header: 'Microphone Permission Required',
-      message: 'Go to Settings \u2192 Apps \u2192 RecAI \u2192 Permissions \u2192 Microphone and enable it, then tap Retry.',
+      message: 'Go to Settings \u2192 Apps \u2192 Echobits \u2192 Permissions \u2192 Microphone and enable it, then tap Retry.',
       buttons: [
         { text: 'Cancel', role: 'cancel', handler: () => resolve(false) },
         { text: 'Retry', handler: () => resolve(true) }
@@ -297,6 +299,8 @@ function cleanup() {
     CapacitorVoiceRecorder.stopRecording().catch(() => {});
   }
   mediaRecorder.value?.state !== 'inactive' && mediaRecorder.value?.stop();
+  sourceNode.value?.disconnect();
+  sourceNode.value = null;
   mediaStream.value?.getTracks().forEach(t => t.stop());
   mediaStream.value = null;
   audioContext.value?.close().catch(() => {});
@@ -372,16 +376,8 @@ async function startRecording(retryCount = 0) {
     acquireWakeLock();
     await startBgService();
 
-    voiceRecorderListener.value = await CapacitorVoiceRecorder.addListener(
-      'frequencyData',
-      ({ base64 }: { base64: string }) => {
-        const bytes = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
-        const step = Math.max(1, Math.floor(bytes.length / 40));
-        waveformBars.value = Array.from({ length: 40 }, (_, i) =>
-          Math.max(12, ((bytes[i * step] ?? 0) / 255) * 100)
-        );
-      }
-    );
+    // Native plugin doesn't emit frequencyData — use animated simulation
+    startNativeVisualization();
     return;
   }
 
@@ -402,10 +398,12 @@ async function startRecording(retryCount = 0) {
     mediaStream.value = await navigator.mediaDevices.getUserMedia({ audio: audioConstraints });
 
     audioContext.value = new AudioContext();
+    await audioContext.value.resume();
     analyser.value = audioContext.value.createAnalyser();
-    analyser.value.fftSize = 128;
-    const source = audioContext.value.createMediaStreamSource(mediaStream.value);
-    source.connect(analyser.value);
+    analyser.value.fftSize = 256;
+    analyser.value.smoothingTimeConstant = 0.4;
+    sourceNode.value = audioContext.value.createMediaStreamSource(mediaStream.value);
+    sourceNode.value.connect(analyser.value);
 
     const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus') ? 'audio/webm;codecs=opus' : 'audio/webm';
     mediaRecorder.value = new MediaRecorder(mediaStream.value, { mimeType });
@@ -758,10 +756,12 @@ function startVisualization() {
   function animate() {
     if (!analyser.value) return;
     analyser.value.getByteFrequencyData(dataArray);
+    const bins = dataArray.length;
+    const step = Math.floor(bins / 40);
     const bars: number[] = [];
     for (let i = 0; i < 40; i++) {
-      const val = dataArray[i] || 0;
-      bars.push(Math.max(12, (val / 255) * 100));
+      const val = dataArray[i * step] || 0;
+      bars.push(Math.max(12, (val / 255) * 90));
     }
     waveformBars.value = bars;
     animationFrame.value = requestAnimationFrame(animate);
@@ -783,10 +783,26 @@ function startPlaybackVisualization() {
   animate();
 }
 
+function startNativeVisualization() {
+  // Simulate a realistic waveform since the native plugin has no frequency API
+  const base = Array.from({ length: 40 }, (_, i) => 20 + Math.sin(i * 0.4) * 10);
+  nativeVisInterval.value = window.setInterval(() => {
+    if (!isRecording.value || isPaused.value) return;
+    waveformBars.value = base.map((b, i) => {
+      const t = Date.now() / 200;
+      return Math.max(12, Math.min(90, b + Math.sin(t + i * 0.5) * 20 + (Math.random() - 0.5) * 15));
+    });
+  }, 80);
+}
+
 function stopVisualization() {
   if (animationFrame.value) {
     cancelAnimationFrame(animationFrame.value);
     animationFrame.value = null;
+  }
+  if (nativeVisInterval.value) {
+    clearInterval(nativeVisInterval.value);
+    nativeVisInterval.value = null;
   }
   waveformBars.value = Array(40).fill(12);
 }

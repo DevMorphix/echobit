@@ -120,6 +120,74 @@
                 </div>
               </div>
 
+              <div class="input-wrapper">
+                <label>Country</label>
+                <div class="input-field" :class="{ focused: countryFocused }">
+                  <ion-icon :icon="globeOutline" class="field-icon"></ion-icon>
+                  <select
+                    v-model="country"
+                    :disabled="loading"
+                    class="select-field"
+                    @focus="countryFocused = true"
+                    @blur="countryFocused = false"
+                  >
+                    <option value="">Select your country</option>
+                    <option value="India">🇮🇳 India</option>
+                    <option value="United States">🇺🇸 United States</option>
+                    <option value="United Kingdom">🇬🇧 United Kingdom</option>
+                    <option value="Canada">🇨🇦 Canada</option>
+                    <option value="Australia">🇦🇺 Australia</option>
+                    <option value="Germany">🇩🇪 Germany</option>
+                    <option value="France">🇫🇷 France</option>
+                    <option value="Japan">🇯🇵 Japan</option>
+                    <option value="Singapore">🇸🇬 Singapore</option>
+                    <option value="UAE">🇦🇪 UAE</option>
+                    <option value="Other">🌍 Other</option>
+                  </select>
+                </div>
+              </div>
+
+              <div v-if="country === 'India'" class="input-wrapper">
+                <label>Preferred Language</label>
+                <div class="input-field" :class="{ focused: langFocused }">
+                  <ion-icon :icon="languageOutline" class="field-icon"></ion-icon>
+                  <select
+                    v-model="preferredLanguage"
+                    :disabled="loading"
+                    class="select-field"
+                    @focus="langFocused = true"
+                    @blur="langFocused = false"
+                  >
+                    <option value="English">English</option>
+                    <option value="Hindi">Hindi (हिन्दी)</option>
+                    <option value="Bengali">Bengali (বাংলা)</option>
+                    <option value="Tamil">Tamil (தமிழ்)</option>
+                    <option value="Telugu">Telugu (తెలుగు)</option>
+                    <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
+                    <option value="Malayalam">Malayalam (മലയാളം)</option>
+                    <option value="Marathi">Marathi (मराठी)</option>
+                    <option value="Gujarati">Gujarati (ગુજરાતી)</option>
+                    <option value="Punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
+                    <option value="Odia">Odia (ଓଡ଼ିଆ)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="input-wrapper">
+                <label>Profession <span class="optional">(optional)</span></label>
+                <div class="input-field" :class="{ focused: professionFocused }">
+                  <ion-icon :icon="briefcaseOutline" class="field-icon"></ion-icon>
+                  <input
+                    v-model="profession"
+                    type="text"
+                    placeholder="e.g. Doctor, Teacher, Engineer..."
+                    :disabled="loading"
+                    @focus="professionFocused = true"
+                    @blur="professionFocused = false"
+                  />
+                </div>
+              </div>
+
               <div v-if="error" class="error-banner">
                 <ion-icon :icon="alertCircleOutline"></ion-icon>
                 <span>{{ error }}</span>
@@ -153,7 +221,7 @@ import { IonPage, IonContent, IonIcon, IonSpinner } from '@ionic/vue';
 import {
   arrowBackOutline, personOutline, mailOutline, lockClosedOutline,
   eyeOutline, eyeOffOutline, shieldCheckmarkOutline, checkmarkCircleOutline,
-  alertCircleOutline, arrowForwardOutline
+  alertCircleOutline, arrowForwardOutline, globeOutline, languageOutline, briefcaseOutline
 } from 'ionicons/icons';
 import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
 import { Capacitor } from '@capacitor/core';
@@ -166,6 +234,9 @@ const name = ref('');
 const email = ref('');
 const password = ref('');
 const confirmPassword = ref('');
+const country = ref('');
+const preferredLanguage = ref('English');
+const profession = ref('');
 const showPassword = ref(false);
 const loading = ref(false);
 const googleLoading = ref(false);
@@ -174,6 +245,9 @@ const nameFocused = ref(false);
 const emailFocused = ref(false);
 const passwordFocused = ref(false);
 const confirmFocused = ref(false);
+const countryFocused = ref(false);
+const langFocused = ref(false);
+const professionFocused = ref(false);
 
 const passwordStrength = computed(() => {
   const p = password.value;
@@ -246,7 +320,11 @@ async function handleRegister() {
   loading.value = true;
   error.value = '';
 
-  const result = await auth.register(name.value, email.value, password.value);
+  const result = await auth.register(name.value, email.value, password.value, {
+    country: country.value || undefined,
+    preferredLanguage: country.value === 'India' ? preferredLanguage.value : undefined,
+    profession: profession.value || undefined,
+  });
 
   if (result.success) {
     router.replace({ path: '/verify-email', query: { email: result.email } });
@@ -361,7 +439,7 @@ async function handleRegister() {
 .google-btn-primary {
   width: 100%;
   height: 56px;
-  border: none;
+  border: 1.5px solid rgba(0,0,0,0.08);
   border-radius: var(--radius-lg);
   background: white;
   color: #1f1f1f;
@@ -372,13 +450,13 @@ async function handleRegister() {
   align-items: center;
   justify-content: center;
   gap: 12px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.18);
+  box-shadow: 0 1px 6px rgba(0,0,0,0.12), 0 4px 16px rgba(0,0,0,0.08);
   transition: all var(--transition-fast);
 }
 
 .google-btn-primary:active:not(:disabled) {
   transform: scale(0.98);
-  box-shadow: 0 1px 5px rgba(0,0,0,0.12);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.1);
 }
 
 .google-btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
@@ -467,6 +545,31 @@ async function handleRegister() {
 }
 
 .input-field input::placeholder {
+  color: var(--app-text-muted);
+}
+
+.select-field {
+  flex: 1;
+  border: none;
+  background: none;
+  font-size: 15px;
+  color: var(--app-text);
+  outline: none;
+  min-width: 0;
+  cursor: pointer;
+  appearance: none;
+}
+
+.select-field option {
+  background: var(--app-surface);
+  color: var(--app-text);
+}
+
+.optional {
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: 0;
+  font-size: 11px;
   color: var(--app-text-muted);
 }
 

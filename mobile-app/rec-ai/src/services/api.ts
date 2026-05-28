@@ -8,6 +8,19 @@ export interface User {
   name: string;
   email: string;
   createdAt: string;
+  plan?: 'free' | 'pro' | 'team';
+  planBillingCycle?: 'monthly' | 'annual' | null;
+  planStartDate?: string | null;
+  planExpiresAt?: string | null;
+}
+
+export interface SubscriptionStatus {
+  plan: 'free' | 'pro' | 'team';
+  planBillingCycle: 'monthly' | 'annual' | null;
+  planStartDate: string | null;
+  planExpiresAt: string | null;
+  isActive: boolean;
+  daysRemaining: number;
 }
 
 export interface Recording {
@@ -43,7 +56,7 @@ class ApiService {
     this.api = axios.create({
       baseURL: API_URL,
       headers: { 'Content-Type': 'application/json' },
-      timeout: 60000,
+      timeout: 300000,
     });
 
     // Request interceptor - add token
@@ -72,8 +85,8 @@ class ApiService {
   }
 
   // Auth
-  async register(name: string, email: string, password: string): Promise<{ message: string; email: string }> {
-    const { data } = await this.api.post<{ message: string; email: string }>('/auth/register', { name, email, password });
+  async register(name: string, email: string, password: string, profile?: { country?: string; preferredLanguage?: string; profession?: string }): Promise<{ message: string; email: string }> {
+    const { data } = await this.api.post<{ message: string; email: string }>('/auth/register', { name, email, password, ...profile });
     return data;
   }
 
@@ -286,6 +299,11 @@ class ApiService {
   async generateTitle(id: string): Promise<Recording> {
     const { data } = await this.api.post<{ recording: Recording }>(`/recordings/${id}/generate-title`);
     return data.recording;
+  }
+
+  async getSubscriptionStatus(): Promise<SubscriptionStatus> {
+    const { data } = await this.api.get<SubscriptionStatus>('/payments/status');
+    return data;
   }
 }
 

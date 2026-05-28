@@ -2,9 +2,29 @@ import express from 'express';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
+import rateLimit from 'express-rate-limit';
 import User from '../models/User.js';
 import { generateToken, authenticateToken } from '../middleware/auth.js';
 import { sendOTPEmail, sendDeletionRequestEmail } from '../utils/email.js';
+import { deleteAudio } from '../config/storage.js';
+
+// 20 login attempts per 15 min per IP
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 20,
+  message: { error: 'Too many login attempts. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+// 10 OTP requests per 15 min per IP (covers send-verification, forgot-password)
+const otpLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 10,
+  message: { error: 'Too many requests. Please try again in 15 minutes.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+});
 
 const googleClient = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 const router = express.Router();
@@ -16,7 +36,7 @@ function generateOTP() {
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { name, email, password } = req.body;
+    const { name, email, password, country, profession, preferredLanguage } = req.body;
 
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'All fields are required' });
@@ -35,6 +55,9 @@ router.post('/register', async (req, res) => {
       name,
       email,
       password,
+      country: country || null,
+      profession: profession || null,
+      preferredLanguage: preferredLanguage || null,
       verificationOTP: hashedOTP,
       verificationOTPExpires: otpExpires,
     });
@@ -63,7 +86,7 @@ router.post('/register', async (req, res) => {
 });
 
 // Login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
   try {
     const { email, password } = req.body;
 
@@ -85,12 +108,16 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'Email not verified', email: user.email });
     }
 
+    user.lastLoginAt = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
+    await user.save();
+
     const { token, expiresAt } = generateToken(user);
     res.json({
       message: 'Login successful',
       token,
       expiresAt,
-      user: { id: user._id, name: user.name, email: user.email }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role || 'user', plan: user.plan || 'free', planExpiresAt: user.planExpiresAt || null, planBillingCycle: user.planBillingCycle || null }
     });
   } catch (error) {
     console.error('Login error:', error);
@@ -99,7 +126,7 @@ router.post('/login', async (req, res) => {
 });
 
 // Send / Resend verification OTP
-router.post('/send-verification', async (req, res) => {
+router.post('/send-verification', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
@@ -124,7 +151,7 @@ router.post('/send-verification', async (req, res) => {
 });
 
 // Verify email with OTP
-router.post('/verify-email', async (req, res) => {
+router.post('/verify-email', otpLimiter, async (req, res) => {
   try {
     const { email, otp } = req.body;
     if (!email || !otp) return res.status(400).json({ error: 'Email and code are required' });
@@ -146,6 +173,8 @@ router.post('/verify-email', async (req, res) => {
     user.isVerified = true;
     user.verificationOTP = null;
     user.verificationOTPExpires = null;
+    user.lastLoginAt = new Date();
+    user.loginCount = (user.loginCount || 0) + 1;
     await user.save();
 
     const { token, expiresAt } = generateToken(user);
@@ -153,7 +182,7 @@ router.post('/verify-email', async (req, res) => {
       message: 'Email verified successfully',
       token,
       expiresAt,
-      user: { id: user._id, name: user.name, email: user.email }
+      user: { id: user._id, name: user.name, email: user.email, role: user.role || 'user', plan: user.plan || 'free', planExpiresAt: user.planExpiresAt || null, planBillingCycle: user.planBillingCycle || null }
     });
   } catch (error) {
     console.error('Verify email error:', error);
@@ -162,7 +191,7 @@ router.post('/verify-email', async (req, res) => {
 });
 
 // Forgot password — send OTP
-router.post('/forgot-password', async (req, res) => {
+router.post('/forgot-password', otpLimiter, async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) return res.status(400).json({ error: 'Email is required' });
@@ -247,10 +276,16 @@ router.patch('/profile', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { name, avatar } = req.body;
+    const { name, avatar, country, profession, preferredLanguage, summaryLanguage, autoSave } = req.body;
+    const updates = { name, avatar };
+    if (country !== undefined) updates.country = country;
+    if (profession !== undefined) updates.profession = profession;
+    if (preferredLanguage !== undefined) updates.preferredLanguage = preferredLanguage;
+    if (summaryLanguage !== undefined) updates.summaryLanguage = summaryLanguage;
+    if (autoSave !== undefined) updates.autoSave = autoSave;
     const user = await User.findByIdAndUpdate(
       decoded.id,
-      { name, avatar },
+      updates,
       { new: true, runValidators: true }
     );
     if (!user) return res.status(404).json({ error: 'User not found' });
@@ -281,10 +316,14 @@ router.post('/google', async (req, res) => {
         googleId,
         password: googleId + process.env.JWT_SECRET,
         isVerified: true,
+        lastLoginAt: new Date(),
+        loginCount: 1,
       });
     } else {
       if (!user.googleId) user.googleId = googleId;
       if (!user.isVerified) user.isVerified = true;
+      user.lastLoginAt = new Date();
+      user.loginCount = (user.loginCount || 0) + 1;
       await user.save();
     }
 
@@ -292,7 +331,7 @@ router.post('/google', async (req, res) => {
     res.json({
       token,
       expiresAt,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { id: user._id, name: user.name, email: user.email, role: user.role || 'user', plan: user.plan || 'free', planExpiresAt: user.planExpiresAt || null, planBillingCycle: user.planBillingCycle || null },
     });
   } catch (error) {
     console.error('Google auth error:', error);
@@ -326,11 +365,15 @@ router.post('/delete-account', async (req, res) => {
     const isMatch = await user.comparePassword(password);
     if (!isMatch) return res.status(401).json({ error: 'Incorrect password' });
 
-    // Delete user's recordings
     const Recording = (await import('../models/Recording.js')).default;
-    await Recording.deleteMany({ user: user._id });
 
-    // Delete user
+    // Delete audio files from R2 before removing DB records
+    if (process.env.R2_ACCESS_KEY_ID) {
+      const recordings = await Recording.find({ user: user._id }).select('audioKey').lean();
+      await Promise.allSettled(recordings.filter(r => r.audioKey).map(r => deleteAudio(r.audioKey)));
+    }
+
+    await Recording.deleteMany({ user: user._id });
     await User.findByIdAndDelete(user._id);
 
     res.json({ message: 'Account and all associated data deleted successfully' });

@@ -1,6 +1,7 @@
 import { S3Client, PutObjectCommand, GetObjectCommand, DeleteObjectCommand, PutBucketCorsCommand } from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 import { v4 as uuidv4 } from 'uuid';
+import { getExtensionFromMimeType } from '../utils/mimeUtils.js';
 
 // Lazy initialization of R2 client (S3-compatible)
 let r2Client = null;
@@ -63,22 +64,7 @@ export const configureBucketCors = async () => {
  * @returns {Promise<{key: string, url: string, size: number}>}
  */
 export const uploadAudio = async (fileBuffer, userId, mimeType = 'audio/webm') => {
-  // Map MIME types to proper extensions
-  const mimeMap = {
-    'audio/webm': 'webm',
-    'audio/mp3': 'mp3',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/ogg': 'ogg',
-    'audio/flac': 'flac',
-    'audio/m4a': 'm4a',
-    'audio/mp4': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'video/webm': 'webm',
-    'video/mp4': 'mp4',
-  };
-  const extension = mimeMap[mimeType] || 'webm';
+  const extension = getExtensionFromMimeType(mimeType);
   const key = `audio/${userId}/${uuidv4()}.${extension}`;
 
   const command = new PutObjectCommand({
@@ -133,27 +119,6 @@ export const deleteAudio = async (key) => {
 
   await getR2Client().send(command);
 };
-
-/**
- * Get file extension from MIME type
- */
-function getExtensionFromMimeType(mimeType) {
-  const mimeMap = {
-    'audio/webm': 'webm',
-    'audio/mp3': 'mp3',
-    'audio/mpeg': 'mp3',
-    'audio/wav': 'wav',
-    'audio/wave': 'wav',
-    'audio/ogg': 'ogg',
-    'audio/flac': 'flac',
-    'audio/m4a': 'm4a',
-    'audio/mp4': 'm4a',
-    'audio/x-m4a': 'm4a',
-    'video/webm': 'webm',
-    'video/mp4': 'mp4',
-  };
-  return mimeMap[mimeType] || 'webm';
-}
 
 /**
  * Generate a presigned URL for direct upload from client
