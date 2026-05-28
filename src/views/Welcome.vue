@@ -103,10 +103,10 @@
           <p class="text-3xl sm:text-4xl font-bold text-emerald-400 mb-1">99%</p>
           <p class="text-white/50 text-sm">Transcription Accuracy</p>
         </div>
-        <div>
+        <!-- <div>
           <p class="text-3xl sm:text-4xl font-bold text-emerald-400 mb-1">&lt;30s</p>
           <p class="text-white/50 text-sm">Processing Time</p>
-        </div>
+        </div> -->
       </div>
     </section>
 
