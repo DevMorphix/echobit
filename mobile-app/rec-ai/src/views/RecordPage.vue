@@ -84,7 +84,7 @@
         <footer class="record-footer" v-if="!isProcessing">
           <!-- Record Button -->
           <div class="controls" v-if="!showPreview">
-            <div class="record-btn-wrap" v-if="!isRecording">
+            <div class="record-btn-wrap" v-if="!isRecording && !limitReached">
               <button class="record-btn" @click="() => startRecording()">
                 <div class="btn-inner">
                   <ion-icon :icon="mic"></ion-icon>
@@ -105,16 +105,26 @@
                 <div class="pulse-ring pulse-ring-2" v-if="!isPaused"></div>
               </div>
             </div>
-            <p class="hint">{{ !isRecording ? 'Tap to record' : isPaused ? 'Paused' : 'Recording...' }}</p>
-            <p class="lang-notice" v-if="!isRecording">English is the only supported language in this version.<br> We appreciate your patience.</p>
+            <p class="hint" v-if="!limitReached">{{ !isRecording ? 'Tap to record' : isPaused ? 'Paused' : 'Recording...' }}</p>
+            <p class="lang-notice" v-if="!isRecording && !limitReached">English is the only supported language in this version.<br> We appreciate your patience.</p>
+
+            <!-- Plan limit block -->
+            <div class="limit-block" v-if="!isRecording && limitReached">
+              <div class="limit-icon">
+                <ion-icon :icon="lockClosedOutline"></ion-icon>
+              </div>
+              <p class="limit-title">Monthly limit reached</p>
+              <p class="limit-sub">You've used {{ usageCount }}/{{ limitCount }} recordings on the {{ planLabel }} plan.</p>
+              <button class="limit-upgrade-btn" @click="router.push('/pricing')">Upgrade Plan</button>
+            </div>
 
             <!-- Upload Option -->
-            <div class="upload-divider" v-if="!isRecording">
+            <div class="upload-divider" v-if="!isRecording && !limitReached">
               <span class="divider-line"></span>
               <span class="divider-text">or</span>
               <span class="divider-line"></span>
             </div>
-            <button class="upload-btn" v-if="!isRecording" @click="triggerFileUpload">
+            <button class="upload-btn" v-if="!isRecording && !limitReached" @click="triggerFileUpload">
               <ion-icon :icon="cloudUploadOutline"></ion-icon>
               <span>Upload Audio File</span>
             </button>
@@ -158,10 +168,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonSpinner, alertController } from '@ionic/vue';
-import { closeOutline, mic, playOutline, pauseOutline, trashOutline, checkmarkOutline, alertCircleOutline, cloudUploadOutline } from 'ionicons/icons';
+import { closeOutline, mic, playOutline, pauseOutline, trashOutline, checkmarkOutline, alertCircleOutline, cloudUploadOutline, lockClosedOutline } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { CapacitorVoiceRecorder } from '@lgicc/capacitor-voice-recorder';
@@ -187,6 +197,25 @@ async function stopBgService() {
 
 const router = useRouter();
 const recordingsStore = useRecordingsStore();
+
+// Plan limits
+const usageCount = ref(0);
+const limitCount = ref<number | null>(null);
+const planLabel = ref('Free');
+const limitReached = computed(() =>
+  limitCount.value !== null && usageCount.value >= limitCount.value
+);
+
+onMounted(async () => {
+  try {
+    const data = await api.getLimits();
+    usageCount.value = data.usage.recordingsThisMonth;
+    limitCount.value = data.limits.recordingsPerMonth;
+    planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+  } catch {
+    // non-critical — backend will still block at save time
+  }
+});
 
 // State
 const isRecording = ref(false);
@@ -1367,6 +1396,58 @@ function stopVisualization() {
 @keyframes slide-up-fade {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
+}
+
+/* Plan limit block */
+.limit-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 20px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-xl);
+  text-align: center;
+  margin-top: 4px;
+}
+
+.limit-icon {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(245, 158, 11, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #d97706;
+  font-size: 22px;
+}
+
+.limit-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--app-text);
+  margin: 0;
+}
+
+.limit-sub {
+  font-size: 13px;
+  color: var(--app-text-secondary);
+  margin: 0;
+}
+
+.limit-upgrade-btn {
+  margin-top: 4px;
+  padding: 10px 28px;
+  background: var(--app-gradient);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
 }
 
 /* Compact layout for short screens */

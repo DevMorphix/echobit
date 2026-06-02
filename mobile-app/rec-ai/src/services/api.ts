@@ -7,6 +7,11 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  country?: string;
+  preferredLanguage?: string;
+  profession?: string;
+  autoSave?: boolean;
+  summaryLanguage?: string;
   createdAt: string;
   plan?: 'free' | 'pro' | 'team';
   planBillingCycle?: 'monthly' | 'annual' | null;
@@ -272,6 +277,15 @@ class ApiService {
 
   async deleteRecording(id: string): Promise<void> {
     await this.api.delete(`/recordings/${id}`);
+  }
+
+  async getLimits(): Promise<{
+    plan: string;
+    usage: { recordingsThisMonth: number; storageUsedBytes: number };
+    limits: { recordingsPerMonth: number | null; maxDurationSecs: number; maxStorageBytes: number };
+  }> {
+    const { data } = await this.api.get('/recordings/limits');
+    return data;
   }
 
   async transcribeRecording(id: string): Promise<Recording> {

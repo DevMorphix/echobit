@@ -12,7 +12,7 @@
             <p class="greeting-label">{{ greetingText }}</p>
             <h1 class="greeting-name">{{ userName }}</h1>
           </div>
-          <button class="avatar-btn" @click="router.push('/profile')">
+          <button class="avatar-btn" :class="{ 'is-pro': isPaid }" @click="router.push('/profile')">
             <span>{{ userInitials }}</span>
             <div class="online-dot"></div>
           </button>
@@ -265,6 +265,13 @@ async function declinePrivacy() {
 const userInitials = computed(() => {
   const name = auth.user?.name || 'U';
   return name.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2);
+});
+
+const isPaid = computed(() => {
+  const user = auth.user;
+  if (!user?.plan || user.plan === 'free') return false;
+  if (!user.planExpiresAt) return false;
+  return new Date(user.planExpiresAt) > new Date();
 });
 
 const greetingText = computed(() => {
@@ -546,6 +553,10 @@ function getStatusLabel(status: string) {
 
 .avatar-btn:active {
   transform: scale(0.93);
+}
+
+.avatar-btn.is-pro {
+  box-shadow: 0 0 0 2.5px var(--app-bg), 0 0 0 5px var(--app-primary);
 }
 
 .online-dot {

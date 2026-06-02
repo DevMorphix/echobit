@@ -6,6 +6,22 @@
       <p class="text-gray-600 mt-1 text-sm sm:text-base">Record your voice or upload an existing audio file for AI transcription.</p>
     </div>
 
+    <!-- Plan limit banner -->
+    <div v-if="limitReached" class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      </svg>
+      <div class="flex-1">
+        <p class="font-semibold text-amber-800 text-sm">Recording limit reached</p>
+        <p class="text-amber-700 text-sm mt-0.5">
+          You've used {{ usageCount }}/{{ limitCount }} recordings this month on the {{ planLabel }} plan.
+        </p>
+      </div>
+      <router-link to="/pricing" class="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition">
+        Upgrade
+      </router-link>
+    </div>
+
     <!-- Tab Selection -->
     <div class="flex space-x-2 mb-4 sm:mb-6">
       <button
@@ -61,10 +77,11 @@
 
         <!-- Controls -->
         <div class="flex items-center justify-center space-x-4">
-          <button 
+          <button
             v-if="!isRecording && !audioBlob"
             @click="startRecording"
-            class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105"
+            :disabled="limitReached"
+            class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-r from-pink-500 to-red-500 rounded-full flex items-center justify-center text-white shadow-lg hover:shadow-xl transition-all transform hover:scale-105 disabled:opacity-40 disabled:cursor-not-allowed disabled:scale-100"
           >
             <svg class="w-6 h-6 sm:w-8 sm:h-8" fill="currentColor" viewBox="0 0 24 24">
               <path d="M12 14c1.66 0 3-1.34 3-3V5c0-1.66-1.34-3-3-3S9 3.34 9 5v6c0 1.66 1.34 3 3 3z"/>
@@ -102,12 +119,13 @@
       <div v-else class="py-4 sm:py-8">
         <!-- Drop Zone -->
         <div
-          @dragover.prevent="isDragging = true"
+          @dragover.prevent="!limitReached && (isDragging = true)"
           @dragleave.prevent="isDragging = false"
-          @drop.prevent="handleFileDrop"
-          @click="$refs.fileInput.click()"
+          @drop.prevent="!limitReached && handleFileDrop($event)"
+          @click="!limitReached && $refs.fileInput.click()"
           :class="[
-            'border-2 border-dashed rounded-2xl p-6 sm:p-12 text-center cursor-pointer transition',
+            'border-2 border-dashed rounded-2xl p-6 sm:p-12 text-center transition',
+            limitReached ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
             isDragging 
               ? 'border-emerald-500 bg-emerald-50' 
               : uploadedFile 
@@ -194,9 +212,9 @@
         >
           Cancel
         </button>
-        <button 
+        <button
           @click="saveRecording"
-          :disabled="saving || (!audioBlob && !uploadedFile)"
+          :disabled="saving || (!audioBlob && !uploadedFile) || limitReached"
           class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
         >
           <svg v-if="saving" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
@@ -211,11 +229,30 @@
 </template>
 
 <script setup>
-import { ref, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { recordingsApi } from '../api';
 
 const router = useRouter();
+
+// Plan limits
+const usageCount = ref(0);
+const limitCount = ref(null);
+const planLabel = ref('Free');
+const limitReached = computed(() =>
+  limitCount.value !== null && usageCount.value >= limitCount.value
+);
+
+onMounted(async () => {
+  try {
+    const data = await recordingsApi.getLimits();
+    usageCount.value = data.usage.recordingsThisMonth;
+    limitCount.value = data.limits.recordingsPerMonth;
+    planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+  } catch {
+    // non-critical — page still works, backend will block at save
+  }
+});
 
 // Mode: 'record' or 'upload'
 const mode = ref('record');

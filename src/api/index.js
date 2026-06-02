@@ -175,6 +175,10 @@ export const recordingsApi = {
     return apiRequest('/recordings');
   },
 
+  async getLimits() {
+    return apiRequest('/recordings/limits');
+  },
+
   async getOne(id) {
     return apiRequest(`/recordings/${id}`);
   },
@@ -301,10 +305,16 @@ export const adminApi = {
 
 // Payments API
 export const paymentsApi = {
-  async createOrder(plan) {
+  async createOrder(plan, couponCode) {
     return apiRequest('/payments/create-order', {
       method: 'POST',
-      body: JSON.stringify({ plan }),
+      body: JSON.stringify({ plan, couponCode: couponCode || undefined }),
+    });
+  },
+  async validateCoupon(code, plan) {
+    return apiRequest('/payments/validate-coupon', {
+      method: 'POST',
+      body: JSON.stringify({ code, plan }),
     });
   },
   async verifyPayment(payload, plan) {
@@ -315,5 +325,19 @@ export const paymentsApi = {
   },
   async getStatus() {
     return apiRequest('/payments/status');
+  },
+};
+
+// Coupons admin API
+export const couponsApi = {
+  async getAll() { return apiRequest('/admin/coupons'); },
+  async create(data) {
+    return apiRequest('/admin/coupons', { method: 'POST', body: JSON.stringify(data) });
+  },
+  async update(id, data) {
+    return apiRequest(`/admin/coupons/${id}`, { method: 'PATCH', body: JSON.stringify(data) });
+  },
+  async remove(id) {
+    return apiRequest(`/admin/coupons/${id}`, { method: 'DELETE' });
   },
 };

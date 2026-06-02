@@ -1,6 +1,7 @@
 import express from 'express';
 import User from '../models/User.js';
 import Recording from '../models/Recording.js';
+import Coupon from '../models/Coupon.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { deleteAudio } from '../config/storage.js';
 
@@ -404,6 +405,61 @@ router.get('/subscriptions', async (req, res) => {
   } catch (error) {
     console.error('Admin subscriptions error:', error);
     res.status(500).json({ error: 'Failed to fetch subscription data' });
+  }
+});
+
+// ── Coupons ───────────────────────────────────────────────────────────────────
+router.get('/coupons', async (req, res) => {
+  try {
+    const coupons = await Coupon.find().sort({ createdAt: -1 }).lean();
+    res.json({ coupons });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch coupons' });
+  }
+});
+
+router.post('/coupons', async (req, res) => {
+  try {
+    const { code, discountType, discountValue, applicablePlans, maxUses, expiresAt } = req.body;
+    if (!code || !discountType || discountValue == null) {
+      return res.status(400).json({ error: 'code, discountType, and discountValue are required' });
+    }
+    const coupon = await Coupon.create({
+      code: code.toUpperCase().trim(),
+      discountType,
+      discountValue: Number(discountValue),
+      applicablePlans: applicablePlans || [],
+      maxUses: maxUses ? Number(maxUses) : null,
+      expiresAt: expiresAt || null,
+    });
+    res.status(201).json({ coupon });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Coupon code already exists' });
+    res.status(500).json({ error: 'Failed to create coupon' });
+  }
+});
+
+router.patch('/coupons/:id', async (req, res) => {
+  try {
+    const { isActive, maxUses, expiresAt } = req.body;
+    const update = {};
+    if (isActive !== undefined) update.isActive = isActive;
+    if (maxUses !== undefined) update.maxUses = maxUses ? Number(maxUses) : null;
+    if (expiresAt !== undefined) update.expiresAt = expiresAt || null;
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!coupon) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ coupon });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update coupon' });
+  }
+});
+
+router.delete('/coupons/:id', async (req, res) => {
+  try {
+    await Coupon.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete coupon' });
   }
 });
 

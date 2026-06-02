@@ -218,7 +218,7 @@
     </section>
 
     <!-- ─── Use Cases ─── -->
-    <section class="py-24 px-4 sm:px-6 border-t border-white/5 fade-up" data-anim>
+    <section class="py-24 px-4 sm:px-6 border-t border-white/5 fade-up" data-anim>  
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16">
           <p class="text-emerald-400 text-sm font-semibold uppercase tracking-widest mb-3">Who Uses Echobit</p>

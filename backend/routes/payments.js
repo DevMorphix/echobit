@@ -3,6 +3,7 @@ import Razorpay from 'razorpay';
 import crypto from 'crypto';
 import { authenticateToken } from '../middleware/auth.js';
 import User from '../models/User.js';
+import Coupon from '../models/Coupon.js';
 
 const router = express.Router();
 
@@ -29,23 +30,84 @@ const PLANS = {
 
 const DEV_MOCK = process.env.RAZORPAY_MOCK === 'true';
 
+// Helper: resolve and validate a coupon, returns { coupon, finalAmount } or throws
+async function applyCoupon(code, planKey, baseAmount) {
+  if (!code) return { coupon: null, finalAmount: baseAmount };
+
+  const coupon = await Coupon.findOne({ code: code.toUpperCase().trim() });
+  if (!coupon || !coupon.isActive) throw { status: 400, message: 'Invalid or inactive coupon code.' };
+  if (coupon.expiresAt && coupon.expiresAt < new Date()) throw { status: 400, message: 'This coupon has expired.' };
+  if (coupon.maxUses !== null && coupon.usedCount >= coupon.maxUses) throw { status: 400, message: 'This coupon has reached its usage limit.' };
+  if (coupon.applicablePlans.length && !coupon.applicablePlans.includes(planKey)) {
+    throw { status: 400, message: 'This coupon is not valid for the selected plan.' };
+  }
+
+  let finalAmount = baseAmount;
+  if (coupon.discountType === 'percent') {
+    finalAmount = Math.round(baseAmount * (1 - coupon.discountValue / 100));
+  } else {
+    finalAmount = Math.max(0, baseAmount - coupon.discountValue);
+  }
+  return { coupon, finalAmount };
+}
+
+// POST /api/payments/validate-coupon
+router.post('/validate-coupon', authenticateToken, async (req, res) => {
+  try {
+    const { code, plan } = req.body;
+    if (!code || !plan) return res.status(400).json({ error: 'code and plan are required' });
+
+    const planConfig = PLANS[plan];
+    if (!planConfig) return res.status(400).json({ error: 'Invalid plan' });
+
+    const { coupon, finalAmount } = await applyCoupon(code, plan, planConfig.amount);
+    const discount = planConfig.amount - finalAmount;
+
+    res.json({
+      valid: true,
+      discountType: coupon.discountType,
+      discountValue: coupon.discountValue,
+      originalAmount: planConfig.amount,
+      finalAmount,
+      discountAmount: discount,
+    });
+  } catch (err) {
+    if (err.status) return res.status(err.status).json({ error: err.message });
+    console.error('validate-coupon error:', err);
+    res.status(500).json({ error: 'Failed to validate coupon' });
+  }
+});
+
 // POST /api/payments/create-order
 router.post('/create-order', authenticateToken, async (req, res) => {
   try {
-    const { plan } = req.body;
+    const { plan, couponCode } = req.body;
 
     const planConfig = PLANS[plan];
     if (!planConfig) {
       return res.status(400).json({ error: `Invalid plan. Valid plans: ${Object.keys(PLANS).join(', ')}` });
     }
 
+    let finalAmount = planConfig.amount;
+    let appliedCoupon = null;
+    if (couponCode) {
+      try {
+        const result = await applyCoupon(couponCode, plan, planConfig.amount);
+        finalAmount = result.finalAmount;
+        appliedCoupon = result.coupon;
+      } catch (err) {
+        return res.status(err.status || 400).json({ error: err.message });
+      }
+    }
+
     // Dev mock — returns a fake order so the frontend flow can be tested
     if (DEV_MOCK) {
       const mockId = `order_mock_${Date.now()}`;
       console.log('[Razorpay] MOCK mode — returning fake order:', mockId);
+      if (appliedCoupon) await Coupon.findByIdAndUpdate(appliedCoupon._id, { $inc: { usedCount: 1 } });
       return res.json({
         order_id: mockId,
-        amount: planConfig.amount,
+        amount: finalAmount,
         currency: planConfig.currency,
         description: planConfig.description,
         mock: true,
@@ -53,15 +115,18 @@ router.post('/create-order', authenticateToken, async (req, res) => {
     }
 
     const order = await getRazorpay().orders.create({
-      amount: planConfig.amount,
+      amount: finalAmount,
       currency: planConfig.currency,
       receipt: `rcpt_${Date.now()}`,
       notes: {
         user_id: req.user.id,
         user_email: req.user.email,
         plan,
+        coupon: couponCode || '',
       },
     });
+
+    if (appliedCoupon) await Coupon.findByIdAndUpdate(appliedCoupon._id, { $inc: { usedCount: 1 } });
 
     res.json({
       order_id: order.id,

@@ -94,6 +94,44 @@
             </button>
           </div>
         </div>
+
+        <!-- Coupon input -->
+        <div class="flex items-center justify-center mt-6">
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl px-4 py-2.5 w-full max-w-sm">
+            <svg class="w-4 h-4 text-white/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z" />
+            </svg>
+            <input
+              v-model="couponInput"
+              @keyup.enter="applyCoupon"
+              placeholder="Coupon code"
+              :disabled="couponApplied"
+              class="flex-1 bg-transparent text-white placeholder-white/40 text-sm outline-none uppercase tracking-widest"
+            />
+            <button
+              v-if="!couponApplied"
+              @click="applyCoupon"
+              :disabled="!couponInput.trim() || couponValidating"
+              class="text-xs font-bold text-emerald-400 hover:text-emerald-300 disabled:opacity-40 transition shrink-0"
+            >
+              {{ couponValidating ? '…' : 'Apply' }}
+            </button>
+            <button
+              v-else
+              @click="removeCoupon"
+              class="text-xs font-bold text-red-400 hover:text-red-300 transition shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+        <div v-if="couponError" class="text-red-400 text-xs text-center mt-2">{{ couponError }}</div>
+        <div v-if="couponApplied" class="flex items-center justify-center gap-1.5 mt-2">
+          <span class="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold px-3 py-1 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            {{ couponApplied.discountType === 'percent' ? couponApplied.discountValue + '% off' : '₹' + (couponApplied.discountValue / 100) + ' off' }} applied
+          </span>
+        </div>
       </div>
     </section>
 
@@ -163,8 +201,9 @@
             <p class="text-white/50 text-xs">For regular users</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 99 : 149 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 99 : 149 }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 9900 : 14900) : ('₹' + (annual ? 99 : 149)) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed ₹1,188/year</p>
@@ -212,8 +251,9 @@
             <p class="text-white/50 text-xs">For power users</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 399 : 499 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 399 : 499 }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 39900 : 49900) : ('₹' + (annual ? 399 : 499)) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed ₹4,788/year</p>
@@ -261,8 +301,9 @@
             <p class="text-white/50 text-xs">Unlimited power</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 799 : 999 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 799 : 999 }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 79900 : 99900) : ('₹' + (annual ? 799 : 999)) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed ₹9,588/year</p>
@@ -408,6 +449,46 @@ const paying = ref(false);
 const activePlan = ref<string | null>(null);
 const paymentStatus = ref<{ type: 'success' | 'error'; message: string } | null>(null);
 
+// Coupon
+const couponInput = ref('');
+const couponValidating = ref(false);
+const couponError = ref('');
+const couponApplied = ref<{ discountType: string; discountValue: number } | null>(null);
+
+async function applyCoupon() {
+  const code = couponInput.value.trim();
+  if (!code) return;
+  couponValidating.value = true;
+  couponError.value = '';
+  try {
+    // Validate against any paid plan — we just need discount info
+    const res = await paymentsApi.validateCoupon(code, 'pro_monthly');
+    couponApplied.value = { discountType: res.discountType, discountValue: res.discountValue };
+  } catch (err: any) {
+    couponError.value = err.message || 'Invalid coupon code';
+    couponApplied.value = null;
+  } finally {
+    couponValidating.value = false;
+  }
+}
+
+function removeCoupon() {
+  couponApplied.value = null;
+  couponInput.value = '';
+  couponError.value = '';
+}
+
+function discountedPrice(paise: number): string {
+  if (!couponApplied.value) return '';
+  let final = paise;
+  if (couponApplied.value.discountType === 'percent') {
+    final = Math.round(paise * (1 - couponApplied.value.discountValue / 100));
+  } else {
+    final = Math.max(0, paise - couponApplied.value.discountValue);
+  }
+  return '₹' + Math.round(final / 100);
+}
+
 function buildSubFromUser(user: any) {
   if (!user) return null;
   const exp = user.planExpiresAt;
@@ -474,7 +555,7 @@ async function pay(plan: string) {
   try {
     await loadRazorpayScript();
 
-    const order = await paymentsApi.createOrder(plan);
+    const order = await paymentsApi.createOrder(plan, couponApplied.value ? couponInput.value.trim() : undefined);
 
     if (order.mock) {
       paymentStatus.value = { type: 'success', message: `[Mock] ${PLAN_LABELS[plan]} order created (ID: ${order.order_id}). Razorpay keys pending activation.` };

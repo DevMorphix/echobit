@@ -406,8 +406,8 @@ onMounted(() => {
   if (user.value) {
     editName.value = user.value.name;
     editEmail.value = user.value.email;
-    autoSave.value = (user.value as any).autoSave !== false;
-    summaryLanguage.value = (user.value as any).summaryLanguage || '';
+    autoSave.value = user.value.autoSave !== false;
+    summaryLanguage.value = user.value.summaryLanguage || '';
   }
 });
 
@@ -441,12 +441,12 @@ async function saveProfile() {
 async function onAutoSaveChange(val: boolean) {
   autoSave.value = val;
   localStorage.setItem('autoSave', val ? 'true' : 'false');
-  await authStore.updateProfile({ autoSave: val } as any);
+  await authStore.updateProfile({ autoSave: val });
 }
 
 async function onSummaryLangChange() {
   localStorage.setItem('summaryLanguage', summaryLanguage.value);
-  await authStore.updateProfile({ summaryLanguage: summaryLanguage.value } as any);
+  await authStore.updateProfile({ summaryLanguage: summaryLanguage.value });
 }
 
 function openHelp() {
