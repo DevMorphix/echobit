@@ -5,6 +5,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
 
+import androidx.activity.EdgeToEdge;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
@@ -14,6 +15,8 @@ public class MainActivity extends BridgeActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        EdgeToEdge.enable(this);
+
         // Register custom plugins before super.onCreate()
         registerPlugin(DownloaderPlugin.class);
         registerPlugin(RecordingServicePlugin.class);

@@ -176,6 +176,7 @@ import { Capacitor, registerPlugin } from '@capacitor/core';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { CapacitorVoiceRecorder } from '@lgicc/capacitor-voice-recorder';
 import { useRecordingsStore } from '@/stores/recordings';
+import { useAuthStore } from '@/stores/auth';
 import { api } from '@/services/api';
 
 // ── Foreground-service bridge (Android only) ────────────────────────────────
@@ -197,6 +198,8 @@ async function stopBgService() {
 
 const router = useRouter();
 const recordingsStore = useRecordingsStore();
+const authStore = useAuthStore();
+const autoSave = computed(() => authStore.user?.autoSave !== false);
 
 // Plan limits
 const usageCount = ref(0);
@@ -461,7 +464,11 @@ async function startRecording(retryCount = 0) {
         stopVisualization();
       };
 
-      showPreview.value = true;
+      if (autoSave.value) {
+        saveRecording();
+      } else {
+        showPreview.value = true;
+      }
     };
 
     mediaRecorder.value.start(100);
@@ -569,7 +576,11 @@ async function stopRecording() {
         stopVisualization();
       };
 
-      showPreview.value = true;
+      if (autoSave.value) {
+        await saveRecording();
+      } else {
+        showPreview.value = true;
+      }
     } catch (err: any) {
       await stopBgService(); // ensure service is stopped even on error
       error.value = err.message || 'Failed to finish recording';
