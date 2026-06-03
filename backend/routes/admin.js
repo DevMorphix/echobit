@@ -2,6 +2,7 @@ import express from 'express';
 import User from '../models/User.js';
 import Recording from '../models/Recording.js';
 import Coupon from '../models/Coupon.js';
+import PlanConfig from '../models/PlanConfig.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { deleteAudio } from '../config/storage.js';
 
@@ -460,6 +461,37 @@ router.delete('/coupons/:id', async (req, res) => {
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete coupon' });
+  }
+});
+
+// ── Plan feature config ──────────────────────────────────────────────────────
+router.get('/plans', async (req, res) => {
+  try {
+    const configs = await PlanConfig.find().lean();
+    res.json(configs);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load plan configs' });
+  }
+});
+
+router.put('/plans/:plan', async (req, res) => {
+  const { plan } = req.params;
+  if (!['free', 'starter', 'pro', 'growth', 'team'].includes(plan)) {
+    return res.status(400).json({ error: 'Invalid plan' });
+  }
+  const { features } = req.body;
+  if (!Array.isArray(features)) {
+    return res.status(400).json({ error: 'features must be an array' });
+  }
+  try {
+    const config = await PlanConfig.findOneAndUpdate(
+      { plan },
+      { features },
+      { upsert: true, new: true }
+    );
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save plan config' });
   }
 });
 

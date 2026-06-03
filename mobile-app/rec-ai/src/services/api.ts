@@ -319,6 +319,11 @@ class ApiService {
     const { data } = await this.api.get<SubscriptionStatus>('/payments/status');
     return data;
   }
+
+  async getPlanFeatures(): Promise<Record<string, { text: string; included: boolean }[]>> {
+    const { data } = await this.api.get('/plans');
+    return data;
+  }
 }
 
 export const api = new ApiService();

@@ -164,11 +164,10 @@
             </div>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in freeFeatures" :key="f" class="flex items-start gap-2.5 text-white/70 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in freeFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/70' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('free')" class="rounded-2xl bg-white/5 border border-white/20 px-4 py-3 text-center">
@@ -209,11 +208,10 @@
             <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed ₹1,188/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in starterFeatures" :key="f" class="flex items-start gap-2.5 text-white/70 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in starterFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/70' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('starter')" class="rounded-2xl bg-blue-500/10 border border-blue-500/30 px-4 py-3 text-center">
@@ -259,11 +257,10 @@
             <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed ₹4,788/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in proFeatures" :key="f" class="flex items-start gap-2.5 text-white/80 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in proFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('pro')" class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-center">
@@ -309,11 +306,10 @@
             <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed ₹9,588/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in growthFeatures" :key="f" class="flex items-start gap-2.5 text-white/80 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in growthFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('growth')" class="rounded-2xl bg-purple-500/10 border border-purple-500/30 px-4 py-3 text-center">
@@ -438,7 +434,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { paymentsApi, authState } from '@/api';
+import { paymentsApi, authApi, authState, plansApi } from '@/api';
 import { useRouter } from 'vue-router';
 
 const annual = ref(false);
@@ -517,6 +513,22 @@ const expiryLabel = computed(() => {
 });
 
 onMounted(async () => {
+  // Auto-login when coming from the mobile app (?token=...)
+  const params = new URLSearchParams(window.location.search);
+  const appToken = params.get('token');
+  if (appToken && !authState.isAuthenticated) {
+    await authApi.loginWithToken(appToken);
+    params.delete('token');
+    const clean = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', clean);
+  }
+
+  // Load admin-editable plan features
+  try {
+    const data = await plansApi.getAll();
+    planFeatures.value = data;
+  } catch { /* keep empty defaults */ }
+
   if (authState.isAuthenticated) {
     try { subscription.value = await paymentsApi.getStatus(); } catch { /* keep default */ }
   }
@@ -631,43 +643,14 @@ watch(paymentStatus, (val) => {
   if (val) toastTimer = setTimeout(() => { paymentStatus.value = null; }, 6000);
 });
 
-const freeFeatures = [
-  '3 recordings/month',
-  'Up to 20 min per recording',
-  'AI transcription (English + Malayalam)',
-  'Basic AI summary',
-  '1 GB storage',
-  'Mobile app access',
-];
-
-const starterFeatures = [
-  '15 recordings/month',
-  'Up to 45 min per recording',
-  'AI transcription (English + Hindi + Malayalam)',
-  'AI summary + notes',
-  '3 GB storage',
-  'Mobile app access',
-];
-
-const proFeatures = [
-  '40 recordings/month',
-  'Up to 2 hours per recording',
-  'AI transcription (15+ languages)',
-  'AI summary + meeting minutes',
-  'Action item extraction',
-  'PDF export',
-  '10 GB storage',
-  'Priority processing',
-];
-
-const growthFeatures = [
-  'Unlimited recordings',
-  'Up to 3 hours per recording',
-  'AI transcription (20+ languages)',
-  'Everything in Pro',
-  '25 GB storage',
-  'Priority processing + support',
-];
+// Plan features loaded from API (admin-editable)
+const planFeatures = ref<Record<string, { text: string; included: boolean }[]>>({
+  free: [], starter: [], pro: [], growth: [],
+});
+const freeFeatures    = computed(() => planFeatures.value.free    ?? []);
+const starterFeatures = computed(() => planFeatures.value.starter ?? []);
+const proFeatures     = computed(() => planFeatures.value.pro     ?? []);
+const growthFeatures  = computed(() => planFeatures.value.growth  ?? []);
 
 const comparison = [
   { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },

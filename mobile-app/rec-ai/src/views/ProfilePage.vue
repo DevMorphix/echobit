@@ -454,7 +454,7 @@ function openHelp() {
 }
 
 function openPricing() {
-  window.open('https://echobit.badhusha.dev/pricing', '_system');
+  router.push('/pricing');
 }
 </script>
 

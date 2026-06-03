@@ -619,6 +619,62 @@
 
       </div>
 
+      <!-- ── PLANS ── -->
+      <div v-if="activeTab === 'plans'" class="space-y-6">
+        <div :class="[thm.card, 'p-5']">
+          <h2 class="font-semibold mb-1" :class="thm.text">Plan Feature Editor</h2>
+          <p class="text-xs mb-5" :class="thm.textFaint">Toggle features on/off, edit text, add or remove rows. Changes are saved per plan.</p>
+
+          <!-- Plan selector -->
+          <div class="flex gap-2 flex-wrap mb-6">
+            <button v-for="p in planKeys" :key="p"
+              @click="activePlanEdit = p"
+              :class="['px-4 py-2 rounded-xl text-sm font-semibold transition', activePlanEdit === p ? 'bg-emerald-600 text-white' : thm.btn]">
+              {{ p.charAt(0).toUpperCase() + p.slice(1) }}
+            </button>
+          </div>
+
+          <!-- Feature rows -->
+          <div v-if="plansLoading" class="text-sm py-6 text-center" :class="thm.textFaint">Loading…</div>
+          <div v-else class="space-y-2">
+            <div v-for="(feat, idx) in editingFeatures" :key="idx"
+              :class="['flex items-center gap-3 px-3 py-2.5 rounded-xl border', isDark ? 'border-gray-800 bg-gray-800/50' : 'border-gray-200 bg-gray-50']">
+              <!-- tick/cross toggle -->
+              <button @click="feat.included = !feat.included"
+                :class="['w-7 h-7 rounded-lg flex items-center justify-center shrink-0 transition',
+                  feat.included ? 'bg-emerald-600 text-white' : (isDark ? 'bg-gray-700 text-gray-400' : 'bg-gray-200 text-gray-400')]">
+                <svg v-if="feat.included" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+                <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              </button>
+              <!-- text input -->
+              <input v-model="feat.text" :class="['flex-1 bg-transparent text-sm outline-none', thm.text]" placeholder="Feature text" />
+              <!-- delete -->
+              <button @click="editingFeatures.splice(idx, 1)"
+                class="w-7 h-7 rounded-lg flex items-center justify-center text-red-400 hover:bg-red-500/10 transition shrink-0">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+              </button>
+            </div>
+
+            <!-- Add row -->
+            <button @click="editingFeatures.push({ text: '', included: true })"
+              :class="['w-full py-2.5 rounded-xl border-2 border-dashed text-sm font-medium transition flex items-center justify-center gap-2',
+                isDark ? 'border-gray-700 text-gray-500 hover:border-gray-600 hover:text-gray-400' : 'border-gray-300 text-gray-400 hover:border-gray-400 hover:text-gray-600']">
+              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+              Add Feature
+            </button>
+          </div>
+
+          <!-- Save -->
+          <div class="flex items-center gap-3 mt-5">
+            <button @click="savePlanFeatures" :disabled="plansSaving"
+              class="px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-500 transition disabled:opacity-50">
+              {{ plansSaving ? 'Saving…' : 'Save Changes' }}
+            </button>
+            <span v-if="plansSaveMsg" :class="['text-xs font-medium', plansSaveMsg.ok ? 'text-emerald-400' : 'text-red-400']">{{ plansSaveMsg.text }}</span>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <!-- User detail drawer -->
@@ -687,7 +743,7 @@
 
 <script setup>
 import { ref, computed, onMounted, defineComponent, h } from 'vue';
-import { adminApi, couponsApi, authState } from '@/api';
+import { adminApi, couponsApi, plansApi, authState } from '@/api';
 
 const adminEmail = computed(() => authState.user?.email || '');
 const globalError = ref('');
@@ -852,6 +908,7 @@ const tabs = [
   { id: 'financials',    label: 'Financials' },
   { id: 'subscriptions', label: 'Subscriptions' },
   { id: 'coupons',       label: 'Coupons' },
+  { id: 'plans',         label: 'Plans' },
 ];
 const activeTab = ref('overview');
 
@@ -1125,6 +1182,40 @@ async function deleteCoupon(c) {
 }
 
 // ── Init ──────────────────────────────────────────────────────────────────────
+// ── Plans ─────────────────────────────────────────────────────────────────────
+const planKeys = ['free', 'starter', 'pro', 'growth', 'team'];
+const activePlanEdit = ref('free');
+const allPlanFeatures = ref({});
+const plansLoading = ref(false);
+const plansSaving = ref(false);
+const plansSaveMsg = ref(null);
+
+const editingFeatures = computed({
+  get: () => allPlanFeatures.value[activePlanEdit.value] ?? [],
+  set: (val) => { allPlanFeatures.value[activePlanEdit.value] = val; },
+});
+
+async function loadPlanFeatures() {
+  plansLoading.value = true;
+  try { allPlanFeatures.value = await plansApi.getAll(); }
+  catch { /* ignore */ }
+  finally { plansLoading.value = false; }
+}
+
+async function savePlanFeatures() {
+  plansSaving.value = true;
+  plansSaveMsg.value = null;
+  try {
+    await plansApi.update(activePlanEdit.value, allPlanFeatures.value[activePlanEdit.value]);
+    plansSaveMsg.value = { ok: true, text: 'Saved!' };
+  } catch (e) {
+    plansSaveMsg.value = { ok: false, text: e.message || 'Save failed' };
+  } finally {
+    plansSaving.value = false;
+    setTimeout(() => { plansSaveMsg.value = null; }, 3000);
+  }
+}
+
 onMounted(() => {
   loadStats();
   loadActivity();
@@ -1134,6 +1225,7 @@ onMounted(() => {
   loadCosts();
   loadSubscriptions();
   loadCoupons();
+  loadPlanFeatures();
 });
 </script>
 

@@ -159,6 +159,27 @@ export const authApi = {
     }
   },
 
+  // Auto-login using a JWT passed from the mobile app via URL param (?token=...)
+  async loginWithToken(token) {
+    try {
+      const response = await fetch(`${API_URL}/auth/me`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!response.ok) return false;
+      const data = await response.json();
+      const user = data.user;
+      authState.token = token;
+      authState.user = user;
+      authState.isAuthenticated = true;
+      localStorage.setItem('token', token);
+      localStorage.setItem('user', JSON.stringify(user));
+      localStorage.setItem('tokenExpiresAt', (Date.now() + TOKEN_EXPIRY_MS).toString());
+      return true;
+    } catch {
+      return false;
+    }
+  },
+
   logout() {
     authState.token = null;
     authState.user = null;
@@ -339,5 +360,14 @@ export const couponsApi = {
   },
   async remove(id) {
     return apiRequest(`/admin/coupons/${id}`, { method: 'DELETE' });
+  },
+};
+
+
+// Plans API (public fetch + admin update)
+export const plansApi = {
+  async getAll() { return apiRequest('/plans'); },
+  async update(plan, features) {
+    return apiRequest(`/admin/plans/${plan}`, { method: 'PUT', body: JSON.stringify({ features }) });
   },
 };
