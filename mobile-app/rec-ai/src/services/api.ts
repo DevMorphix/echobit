@@ -320,7 +320,7 @@ class ApiService {
     return data;
   }
 
-  async getPlanFeatures(): Promise<Record<string, { text: string; included: boolean }[]>> {
+  async getPlans(): Promise<Record<string, { features: { text: string; included: boolean }[]; monthlyPrice: string; annualPrice: string }>> {
     const { data } = await this.api.get('/plans');
     return data;
   }

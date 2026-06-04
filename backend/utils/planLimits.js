@@ -65,3 +65,28 @@ export const getActivePlan = (user) => {
 };
 
 export const getPlanLimits = (user) => PLAN_LIMITS[getActivePlan(user)] ?? PLAN_LIMITS.free;
+
+/**
+ * Like getPlanLimits but merges admin-configured gate overrides from the DB.
+ * Use this in routes that gate Pro/paid features (minutes, actions, etc.).
+ */
+export const getEffectiveLimits = async (user) => {
+  const base = getPlanLimits(user);
+  const plan = getActivePlan(user);
+  try {
+    const PlanConfig = (await import('../models/PlanConfig.js')).default;
+    const cfg = await PlanConfig.findOne({ plan }).select('gates').lean();
+    if (!cfg?.gates) return base;
+    const g = cfg.gates;
+    return {
+      ...base,
+      meetingMinutes:    g.meetingMinutes    ?? base.meetingMinutes,
+      actionItems:       g.actionItems       ?? base.actionItems,
+      pdfExport:         g.pdfExport         ?? base.pdfExport,
+      indianLanguages:   g.indianLanguages   ?? base.indianLanguages,
+      recordingsPerMonth: g.recordingsPerMonth ?? base.recordingsPerMonth,
+    };
+  } catch {
+    return base; // DB unavailable — fall back to hardcoded defaults
+  }
+};

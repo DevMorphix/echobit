@@ -73,6 +73,25 @@
           </div>
         </section>
 
+        <!-- Recording Limit Bar (free users only) -->
+        <div v-if="showLimit" class="limit-bar-wrap" @click="router.push('/pricing')">
+          <div class="limit-bar-header">
+            <span class="limit-bar-label">
+              <ion-icon :icon="micOutline"></ion-icon>
+              Recordings this month
+            </span>
+            <span class="limit-bar-count" :style="{ color: limitColor }">
+              {{ limitUsed }} / {{ limitMax }}
+              <span v-if="limitPct >= 100"> · Limit reached</span>
+              <span v-else-if="limitPct >= 70"> · Almost full</span>
+            </span>
+          </div>
+          <div class="limit-bar-track">
+            <div class="limit-bar-fill" :style="{ width: limitPct + '%', background: limitColor }"></div>
+          </div>
+          <p v-if="limitPct >= 70" class="limit-bar-cta">Upgrade to Pro for unlimited recordings →</p>
+        </div>
+
         <!-- Recent Recordings -->
         <section class="recent-section">
           <div class="section-header">
@@ -213,6 +232,38 @@
         <span>Profile</span>
       </button>
     </div>
+
+    <!-- Onboarding overlay -->
+    <transition name="ob-fade">
+      <div v-if="showOnboarding" class="ob-backdrop">
+        <div class="ob-sheet">
+          <div class="ob-slide-wrap">
+            <transition name="ob-slide" mode="out-in">
+              <div :key="onboardingStep" class="ob-slide">
+                <div class="ob-icon-wrap" :style="{ background: onboardingSlides[onboardingStep].color + '18' }">
+                  <ion-icon :icon="onboardingSlides[onboardingStep].icon" :style="{ color: onboardingSlides[onboardingStep].color }"></ion-icon>
+                </div>
+                <h2 class="ob-title">{{ onboardingSlides[onboardingStep].title }}</h2>
+                <p class="ob-desc">{{ onboardingSlides[onboardingStep].desc }}</p>
+              </div>
+            </transition>
+          </div>
+
+          <!-- Dots -->
+          <div class="ob-dots">
+            <span v-for="(_, i) in onboardingSlides" :key="i" class="ob-dot" :class="{ active: i === onboardingStep }"></span>
+          </div>
+
+          <!-- Buttons -->
+          <button class="ob-next-btn" @click="nextOnboardingStep">
+            <span>{{ onboardingStep < onboardingSlides.length - 1 ? 'Next' : 'Get Started' }}</span>
+            <ion-icon :icon="chevronForwardOutline"></ion-icon>
+          </button>
+          <button v-if="onboardingStep < onboardingSlides.length - 1" class="ob-skip-btn" @click="finishOnboarding">Skip</button>
+        </div>
+      </div>
+    </transition>
+
   </ion-page>
 </template>
 
@@ -224,7 +275,8 @@ import {
   mic, micOutline, arrowForwardOutline, layersOutline, checkmarkDoneOutline,
   timeOutline, documentTextOutline, checkmarkCircleOutline, ellipseOutline,
   addOutline, homeOutline, listOutline, searchOutline, personOutline,
-  shieldCheckmarkOutline, sparklesOutline, trashOutline
+  shieldCheckmarkOutline, sparklesOutline, trashOutline,
+  languageOutline, flashOutline, chevronForwardOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -236,6 +288,78 @@ const recordingsStore = useRecordingsStore();
 
 const loading = computed(() => recordingsStore.loading);
 const userName = computed(() => auth.user?.name?.split(' ')[0] || 'User');
+
+// ── Onboarding ───────────────────────────────────────────────────────────────
+const ONBOARDING_KEY = 'onboarding_v1';
+const showOnboarding = ref(false);
+const onboardingStep = ref(0);
+
+const onboardingSlides = [
+  {
+    icon: micOutline,
+    color: '#059669',
+    title: 'Record anything',
+    desc: 'Tap the mic to capture meetings, lectures, or voice notes — up to 3 hours at a stretch.',
+  },
+  {
+    icon: sparklesOutline,
+    color: '#6366f1',
+    title: 'AI does the rest',
+    desc: 'Get automatic transcription, smart summaries, meeting minutes, and action items in seconds.',
+  },
+  {
+    icon: languageOutline,
+    color: '#f59e0b',
+    title: '11 Indian languages',
+    desc: 'Hindi, Tamil, Telugu, Malayalam and more — Echobits understands the way you speak.',
+  },
+  {
+    icon: flashOutline,
+    color: '#10b981',
+    title: "You're all set!",
+    desc: 'Start your first recording and let AI handle the rest. Upgrade anytime for unlimited access.',
+  },
+];
+
+async function checkOnboarding() {
+  const { Preferences } = await import('@capacitor/preferences');
+  const { value } = await Preferences.get({ key: ONBOARDING_KEY });
+  if (!value) showOnboarding.value = true;
+}
+
+async function nextOnboardingStep() {
+  if (onboardingStep.value < onboardingSlides.length - 1) {
+    onboardingStep.value++;
+  } else {
+    await finishOnboarding();
+  }
+}
+
+async function finishOnboarding() {
+  const { Preferences } = await import('@capacitor/preferences');
+  await Preferences.set({ key: ONBOARDING_KEY, value: 'done' });
+  showOnboarding.value = false;
+}
+// ───────────────────────────────────────────────────────────────────────────
+
+// ── Recording limit ──────────────────────────────────────────────────────────
+const limitUsed  = ref(0);
+const limitMax   = ref<number | null>(null);
+const showLimit  = computed(() => !isPaid.value && limitMax.value !== null);
+const limitPct   = computed(() => limitMax.value ? Math.min(100, Math.round(limitUsed.value / limitMax.value * 100)) : 0);
+const limitColor = computed(() => {
+  if (limitPct.value >= 100) return '#ef4444';
+  if (limitPct.value >= 70)  return '#f59e0b';
+  return 'var(--app-primary)';
+});
+
+async function fetchLimits() {
+  try {
+    const data = await api.getLimits();
+    limitUsed.value = data.usage.recordingsThisMonth;
+    limitMax.value  = data.limits.recordingsPerMonth;
+  } catch { /* ignore */ }
+}
 
 // ── Privacy Policy consent ──────────────────────────────────────────────────
 const PRIVACY_KEY = 'pp_accepted_v1';
@@ -295,6 +419,8 @@ const stats = computed(() => {
 onIonViewWillEnter(() => {
   recordingsStore.fetchRecordings();
   checkPrivacyConsent();
+  checkOnboarding();
+  fetchLimits();
 });
 
 async function handleRefresh(event: CustomEvent) {
@@ -340,6 +466,75 @@ function getStatusLabel(status: string) {
 
 <!-- Privacy modal styles are unscoped so the backdrop covers the full viewport -->
 <style>
+/* ── Onboarding ── */
+.ob-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 9998;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: flex-end;
+}
+.ob-sheet {
+  width: 100%;
+  background: var(--app-surface);
+  border-radius: 28px 28px 0 0;
+  padding: 32px 28px calc(env(safe-area-inset-bottom, 0px) + 28px);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+.ob-slide-wrap { width: 100%; min-height: 200px; display: flex; align-items: center; justify-content: center; }
+.ob-slide { display: flex; flex-direction: column; align-items: center; }
+.ob-icon-wrap {
+  width: 80px;
+  height: 80px;
+  border-radius: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+.ob-icon-wrap ion-icon { font-size: 38px; }
+.ob-title { font-size: 22px; font-weight: 800; color: var(--app-text); margin: 0 0 10px; }
+.ob-desc  { font-size: 15px; color: var(--app-text-secondary); line-height: 1.55; margin: 0; max-width: 280px; }
+.ob-dots  { display: flex; gap: 6px; margin: 24px 0 28px; }
+.ob-dot   { width: 8px; height: 8px; border-radius: 50%; background: var(--app-border); transition: all 0.25s; }
+.ob-dot.active { width: 20px; border-radius: 4px; background: var(--app-primary); }
+.ob-next-btn {
+  width: 100%;
+  height: 52px;
+  border-radius: 999px;
+  background: var(--app-gradient);
+  border: none;
+  color: white;
+  font-size: 16px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  box-shadow: var(--shadow-primary);
+  margin-bottom: 14px;
+}
+.ob-next-btn ion-icon { font-size: 18px; }
+.ob-skip-btn {
+  background: none;
+  border: none;
+  color: var(--app-text-muted);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 4px 16px;
+}
+.ob-fade-enter-active, .ob-fade-leave-active { transition: opacity 0.3s; }
+.ob-fade-enter-from, .ob-fade-leave-to { opacity: 0; }
+.ob-slide-enter-active, .ob-slide-leave-active { transition: all 0.25s ease; }
+.ob-slide-enter-from { opacity: 0; transform: translateX(30px); }
+.ob-slide-leave-to   { opacity: 0; transform: translateX(-30px); }
+
 .pp-backdrop {
   position: fixed;
   inset: 0;
@@ -511,6 +706,55 @@ function getStatusLabel(status: string) {
 .home-page {
   /* padding: calc(20px + env(safe-area-inset-top, 0px)) 20px 100px; */
   padding: var(--page-top) 20px 100px;
+}
+
+/* Limit Bar */
+.limit-bar-wrap {
+  background: var(--app-surface);
+  border: 1px solid var(--app-border);
+  border-radius: var(--radius-xl);
+  padding: 14px 16px;
+  margin-bottom: 20px;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-xs);
+}
+.limit-bar-wrap:active { transform: scale(0.98); }
+.limit-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+.limit-bar-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--app-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+}
+.limit-bar-label ion-icon { font-size: 13px; }
+.limit-bar-count { font-size: 12px; font-weight: 700; }
+.limit-bar-track {
+  height: 6px;
+  background: var(--app-border);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.limit-bar-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width 0.6s ease-out;
+}
+.limit-bar-cta {
+  font-size: 11px;
+  color: var(--app-primary);
+  font-weight: 600;
+  margin: 6px 0 0;
+  text-align: right;
 }
 
 /* Header */

@@ -84,14 +84,9 @@
         <footer class="record-footer" v-if="!isProcessing">
           <!-- Record Button -->
           <div class="controls" v-if="!showPreview">
-            <div class="record-btn-wrap" v-if="!isRecording && !limitReached">
-              <button class="record-btn" @click="() => startRecording()">
-                <div class="btn-inner">
-                  <ion-icon :icon="mic"></ion-icon>
-                </div>
-              </button>
-            </div>
-            <div class="recording-row" v-else>
+
+            <!-- Active recording controls -->
+            <div class="recording-row" v-if="isRecording">
               <button class="pause-btn" @click="togglePause">
                 <ion-icon :icon="isPaused ? playOutline : pauseOutline"></ion-icon>
               </button>
@@ -105,18 +100,29 @@
                 <div class="pulse-ring pulse-ring-2" v-if="!isPaused"></div>
               </div>
             </div>
-            <p class="hint" v-if="!limitReached">{{ !isRecording ? 'Tap to record' : isPaused ? 'Paused' : 'Recording...' }}</p>
-            <p class="lang-notice" v-if="!isRecording && !limitReached">English is the only supported language in this version.<br> We appreciate your patience.</p>
 
-            <!-- Plan limit block -->
-            <div class="limit-block" v-if="!isRecording && limitReached">
-              <div class="limit-icon">
-                <ion-icon :icon="lockClosedOutline"></ion-icon>
-              </div>
-              <p class="limit-title">Monthly limit reached</p>
-              <p class="limit-sub">You've used {{ usageCount }}/{{ limitCount }} recordings on the {{ planLabel }} plan.</p>
-              <button class="limit-upgrade-btn" @click="router.push('/pricing')">Upgrade Plan</button>
+            <!-- Limit reached — grayed disabled button -->
+            <div class="record-btn-wrap" v-else-if="limitReached">
+              <button class="record-btn record-btn-disabled" disabled>
+                <div class="btn-inner">
+                  <ion-icon :icon="lockClosedOutline"></ion-icon>
+                </div>
+              </button>
             </div>
+
+            <!-- Normal record button -->
+            <div class="record-btn-wrap" v-else>
+              <button class="record-btn" @click="() => startRecording()">
+                <div class="btn-inner">
+                  <ion-icon :icon="mic"></ion-icon>
+                </div>
+              </button>
+            </div>
+
+            <p class="hint" v-if="isRecording">{{ isPaused ? 'Paused' : 'Recording...' }}</p>
+            <p class="hint" v-else-if="limitReached" style="color: var(--ion-color-medium);">{{ usageCount }}/{{ limitCount }} recordings used · <span style="color: var(--app-primary); font-weight: 700; cursor: pointer;" @click="router.push('/pricing')">Upgrade</span></p>
+            <p class="hint" v-else>Tap to record</p>
+            <p class="lang-notice" v-if="!isRecording && !limitReached">English is the only supported language in this version.<br> We appreciate your patience.</p>
 
             <!-- Upload Option -->
             <div class="upload-divider" v-if="!isRecording && !limitReached">
@@ -1188,6 +1194,15 @@ function stopVisualization() {
   box-shadow: 0 8px 32px rgba(239, 68, 68, 0.35);
 }
 
+.record-btn-disabled {
+  background: var(--app-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.record-btn-disabled:active { transform: none !important; }
+
 .btn-inner {
   width: 100%;
   height: 100%;
@@ -1410,56 +1425,6 @@ function stopVisualization() {
 }
 
 /* Plan limit block */
-.limit-block {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  padding: 24px 20px;
-  background: rgba(245, 158, 11, 0.08);
-  border: 1.5px solid rgba(245, 158, 11, 0.3);
-  border-radius: var(--radius-xl);
-  text-align: center;
-  margin-top: 4px;
-}
-
-.limit-icon {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: rgba(245, 158, 11, 0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #d97706;
-  font-size: 22px;
-}
-
-.limit-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--app-text);
-  margin: 0;
-}
-
-.limit-sub {
-  font-size: 13px;
-  color: var(--app-text-secondary);
-  margin: 0;
-}
-
-.limit-upgrade-btn {
-  margin-top: 4px;
-  padding: 10px 28px;
-  background: var(--app-gradient);
-  color: white;
-  border: none;
-  border-radius: var(--radius-full);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-  box-shadow: var(--shadow-primary);
-}
 
 /* Compact layout for short screens */
 @media (max-height: 680px) {

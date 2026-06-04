@@ -396,18 +396,41 @@
 
         <template v-else-if="subscriptions">
           <!-- KPI row -->
-          <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div :class="[thm.card, 'p-5 ring-1 ring-yellow-500/30']">
+              <p class="text-xs mb-1" :class="thm.textFaint">MRR</p>
+              <p class="text-2xl font-bold text-yellow-400">₹{{ subscriptions.stats.mrrInr.toLocaleString('en-IN') }}</p>
+              <p class="text-xs mt-1" :class="thm.textFaint">monthly recurring revenue</p>
+            </div>
+            <div :class="[thm.card, 'p-5 ring-1 ring-emerald-500/30']">
+              <p class="text-xs mb-1" :class="thm.textFaint">ARR</p>
+              <p class="text-2xl font-bold text-emerald-400">₹{{ subscriptions.stats.arrInr.toLocaleString('en-IN') }}</p>
+              <p class="text-xs mt-1" :class="thm.textFaint">annual run rate</p>
+            </div>
+            <div :class="[thm.card, 'p-5 ring-1 ring-blue-500/30']">
+              <p class="text-xs mb-1" :class="thm.textFaint">ARPU</p>
+              <p class="text-2xl font-bold text-blue-400">₹{{ subscriptions.stats.arpuInr.toLocaleString('en-IN') }}</p>
+              <p class="text-xs mt-1" :class="thm.textFaint">avg revenue per user</p>
+            </div>
+            <div :class="[thm.card, 'p-5']">
+              <p class="text-xs mb-1" :class="thm.textFaint">Churn Rate</p>
+              <p class="text-2xl font-bold" :class="[subscriptions.stats.churnRate > 10 ? 'text-red-400' : 'text-white']">{{ subscriptions.stats.churnRate }}%</p>
+              <p class="text-xs mt-1" :class="thm.textFaint">{{ subscriptions.stats.churnedUsers }} churned</p>
+            </div>
+          </div>
+          <!-- Secondary KPIs -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div :class="[thm.card, 'p-5']">
               <p class="text-xs mb-1" :class="thm.textFaint">Total Users</p>
               <p class="text-2xl font-bold" :class="thm.text">{{ subscriptions.stats.totalUsers }}</p>
               <p class="text-xs mt-1" :class="thm.textFaint">all accounts</p>
             </div>
-            <div :class="[thm.card, 'p-5 ring-1 ring-emerald-500/30']">
+            <div :class="[thm.card, 'p-5 ring-1 ring-emerald-500/20']">
               <p class="text-xs mb-1" :class="thm.textFaint">Active Pro</p>
               <p class="text-2xl font-bold text-emerald-400">{{ subscriptions.stats.activePro }}</p>
               <p class="text-xs mt-1" :class="thm.textFaint">subscribers</p>
             </div>
-            <div :class="[thm.card, 'p-5 ring-1 ring-blue-500/30']">
+            <div :class="[thm.card, 'p-5 ring-1 ring-blue-500/20']">
               <p class="text-xs mb-1" :class="thm.textFaint">Active Team</p>
               <p class="text-2xl font-bold text-blue-400">{{ subscriptions.stats.activeTeam }}</p>
               <p class="text-xs mt-1" :class="thm.textFaint">subscribers</p>
@@ -415,12 +438,7 @@
             <div :class="[thm.card, 'p-5']">
               <p class="text-xs mb-1" :class="thm.textFaint">Free Plan</p>
               <p class="text-2xl font-bold" :class="thm.text">{{ subscriptions.stats.freeUsers }}</p>
-              <p class="text-xs mt-1" :class="thm.textFaint">not yet paying</p>
-            </div>
-            <div :class="[thm.card, 'p-5 ring-1 ring-yellow-500/30']">
-              <p class="text-xs mb-1" :class="thm.textFaint">Est. MRR</p>
-              <p class="text-2xl font-bold text-yellow-400">₹{{ subscriptions.stats.mrrInr.toLocaleString('en-IN') }}</p>
-              <p class="text-xs mt-1" :class="thm.textFaint">monthly recurring</p>
+              <p class="text-xs mt-1 text-emerald-400">{{ subscriptions.stats.totalUsers > 0 ? Math.round(subscriptions.stats.activePaid/subscriptions.stats.totalUsers*100) : 0 }}% conversion</p>
             </div>
           </div>
 
@@ -634,6 +652,28 @@
             </button>
           </div>
 
+          <!-- Prices -->
+          <div class="grid grid-cols-2 gap-3 mb-2">
+            <div>
+              <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">Monthly Price <span class="font-normal">(e.g. ₹499)</span></label>
+              <input v-model="editingMonthlyPrice" :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]" placeholder="₹499" />
+            </div>
+            <div>
+              <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">Annual/mo <span class="font-normal">(e.g. ₹399)</span></label>
+              <input v-model="editingAnnualMonthly" :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]" placeholder="₹399" />
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-3 mb-5">
+            <div>
+              <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">Annual Total <span class="font-normal">(e.g. ₹4,788)</span></label>
+              <input v-model="editingAnnualTotal" :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]" placeholder="₹4,788" />
+            </div>
+            <div>
+              <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">Monthly Paise <span class="font-normal">(for MRR)</span></label>
+              <input v-model.number="editingMonthlyPaise" type="number" :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]" placeholder="49900" />
+            </div>
+          </div>
+
           <!-- Feature rows -->
           <div v-if="plansLoading" class="text-sm py-6 text-center" :class="thm.textFaint">Loading…</div>
           <div v-else class="space-y-2">
@@ -662,6 +702,32 @@
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
               Add Feature
             </button>
+          </div>
+
+          <!-- Feature Gates -->
+          <div :class="['mt-5 p-4 rounded-xl border', isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50']">
+            <p class="text-xs font-bold mb-3 uppercase tracking-wide" :class="thm.textFaint">Feature Gates <span class="font-normal normal-case">(overrides plan defaults — leave off to use defaults)</span></p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+              <label v-for="gate in gateKeys" :key="gate.key"
+                :class="['flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition',
+                  isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-100 border border-gray-200']">
+                <div>
+                  <span class="text-sm font-medium" :class="thm.text">{{ gate.label }}</span>
+                  <span class="text-xs block mt-0.5" :class="thm.textFaint">default: {{ defaultGates[activePlanEdit]?.[gate.key] ? 'ON' : 'OFF' }}</span>
+                </div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs" :class="thm.textFaint">{{ editingGates[gate.key] === null ? 'Default' : editingGates[gate.key] ? 'ON' : 'OFF' }}</span>
+                  <button @click="cycleGate(gate.key)"
+                    :class="['w-10 h-6 rounded-full transition-all relative flex-shrink-0',
+                      editingGates[gate.key] === null ? (isDark ? 'bg-gray-600' : 'bg-gray-300') :
+                      editingGates[gate.key] ? 'bg-emerald-500' : 'bg-red-400']">
+                    <span :class="['absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all',
+                      editingGates[gate.key] === null ? 'left-0.5' :
+                      editingGates[gate.key] ? 'left-[18px]' : 'left-0.5']"></span>
+                  </button>
+                </div>
+              </label>
+            </div>
           </div>
 
           <!-- Save -->
@@ -906,7 +972,7 @@ const tabs = [
   { id: 'recordings',    label: 'Recordings' },
   { id: 'analytics',     label: 'Analytics' },
   { id: 'financials',    label: 'Financials' },
-  { id: 'subscriptions', label: 'Subscriptions' },
+  { id: 'subscriptions', label: 'Revenue' },
   { id: 'coupons',       label: 'Coupons' },
   { id: 'plans',         label: 'Plans' },
 ];
@@ -1185,19 +1251,68 @@ async function deleteCoupon(c) {
 // ── Plans ─────────────────────────────────────────────────────────────────────
 const planKeys = ['free', 'starter', 'pro', 'growth', 'team'];
 const activePlanEdit = ref('free');
-const allPlanFeatures = ref({});
+const allPlanData = ref({});
 const plansLoading = ref(false);
 const plansSaving = ref(false);
 const plansSaveMsg = ref(null);
 
 const editingFeatures = computed({
-  get: () => allPlanFeatures.value[activePlanEdit.value] ?? [],
-  set: (val) => { allPlanFeatures.value[activePlanEdit.value] = val; },
+  get: () => allPlanData.value[activePlanEdit.value]?.features ?? [],
+  set: (val) => {
+    if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {};
+    allPlanData.value[activePlanEdit.value].features = val;
+  },
 });
+const editingMonthlyPrice = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.monthlyPrice ?? '',
+  set: (val) => { if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {}; allPlanData.value[activePlanEdit.value].monthlyPrice = val; },
+});
+const editingAnnualMonthly = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.annualMonthly ?? '',
+  set: (val) => { if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {}; allPlanData.value[activePlanEdit.value].annualMonthly = val; },
+});
+const editingAnnualTotal = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.annualTotal ?? '',
+  set: (val) => { if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {}; allPlanData.value[activePlanEdit.value].annualTotal = val; },
+});
+const editingMonthlyPaise = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.monthlyPaise ?? 0,
+  set: (val) => { if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {}; allPlanData.value[activePlanEdit.value].monthlyPaise = val; },
+});
+
+// ── Feature Gates ─────────────────────────────────────────────────────────────
+const PLAN_DEFAULTS = {
+  free:    { meetingMinutes: false, actionItems: false, pdfExport: false, indianLanguages: true  },
+  starter: { meetingMinutes: false, actionItems: false, pdfExport: false, indianLanguages: true  },
+  pro:     { meetingMinutes: true,  actionItems: true,  pdfExport: true,  indianLanguages: true  },
+  growth:  { meetingMinutes: true,  actionItems: true,  pdfExport: true,  indianLanguages: true  },
+  team:    { meetingMinutes: true,  actionItems: true,  pdfExport: true,  indianLanguages: true  },
+};
+const defaultGates = PLAN_DEFAULTS;
+
+const gateKeys = [
+  { key: 'meetingMinutes',  label: 'Meeting Minutes' },
+  { key: 'actionItems',     label: 'Action Items (Tasks)' },
+  { key: 'pdfExport',       label: 'PDF Export' },
+  { key: 'indianLanguages', label: 'Indian Languages' },
+];
+
+const editingGates = computed(() => allPlanData.value[activePlanEdit.value]?.gates ?? {});
+
+// Cycle: null (default) → true (ON) → false (OFF) → null
+function cycleGate(key) {
+  const p = activePlanEdit.value;
+  if (!allPlanData.value[p]) allPlanData.value[p] = {};
+  if (!allPlanData.value[p].gates) allPlanData.value[p].gates = {};
+  const cur = allPlanData.value[p].gates[key];
+  if (cur === null || cur === undefined) allPlanData.value[p].gates[key] = true;
+  else if (cur === true)  allPlanData.value[p].gates[key] = false;
+  else                   allPlanData.value[p].gates[key] = null;
+}
 
 async function loadPlanFeatures() {
   plansLoading.value = true;
-  try { allPlanFeatures.value = await plansApi.getAll(); }
+  try { allPlanData.value = await plansApi.getAll(); }
   catch { /* ignore */ }
   finally { plansLoading.value = false; }
 }
@@ -1205,8 +1320,10 @@ async function loadPlanFeatures() {
 async function savePlanFeatures() {
   plansSaving.value = true;
   plansSaveMsg.value = null;
+  const p = activePlanEdit.value;
   try {
-    await plansApi.update(activePlanEdit.value, allPlanFeatures.value[activePlanEdit.value]);
+    const d = allPlanData.value[p] ?? {};
+    await plansApi.update(p, d.features ?? [], d.monthlyPrice, d.annualMonthly, d.annualTotal, d.monthlyPaise, d.gates);
     plansSaveMsg.value = { ok: true, text: 'Saved!' };
   } catch (e) {
     plansSaveMsg.value = { ok: false, text: e.message || 'Save failed' };

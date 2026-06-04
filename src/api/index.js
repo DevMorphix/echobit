@@ -162,12 +162,19 @@ export const authApi = {
   // Auto-login using a JWT passed from the mobile app via URL param (?token=...)
   async loginWithToken(token) {
     try {
+      console.log('[loginWithToken] calling /auth/me with token:', token?.slice(0, 30) + '...');
       const response = await fetch(`${API_URL}/auth/me`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (!response.ok) return false;
+      console.log('[loginWithToken] response status:', response.status);
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        console.error('[loginWithToken] failed:', err);
+        return false;
+      }
       const data = await response.json();
       const user = data.user;
+      console.log('[loginWithToken] success, user:', user?.email);
       authState.token = token;
       authState.user = user;
       authState.isAuthenticated = true;
@@ -175,7 +182,8 @@ export const authApi = {
       localStorage.setItem('user', JSON.stringify(user));
       localStorage.setItem('tokenExpiresAt', (Date.now() + TOKEN_EXPIRY_MS).toString());
       return true;
-    } catch {
+    } catch (e) {
+      console.error('[loginWithToken] exception:', e);
       return false;
     }
   },
@@ -367,7 +375,7 @@ export const couponsApi = {
 // Plans API (public fetch + admin update)
 export const plansApi = {
   async getAll() { return apiRequest('/plans'); },
-  async update(plan, features) {
-    return apiRequest(`/admin/plans/${plan}`, { method: 'PUT', body: JSON.stringify({ features }) });
+  async update(plan, features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates) {
+    return apiRequest(`/admin/plans/${plan}`, { method: 'PUT', body: JSON.stringify({ features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates }) });
   },
 };

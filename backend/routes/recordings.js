@@ -6,7 +6,7 @@ import { uploadAudio, getAudioUrl, deleteAudio, getUploadUrl } from '../config/s
 import { transcribeAudio, transcribeFromUrl } from '../config/transcription.js';
 import { transcribeAudioSarvam, transcribeFromUrlSarvam, translateText, LANG_TO_SARVAM_CODE } from '../config/sarvam.js';
 import { generateSummary, generateMeetingMinutes, extractActionItems, generateTitle } from '../config/gemini.js';
-import { getPlanLimits, getActivePlan } from '../utils/planLimits.js';
+import { getPlanLimits, getActivePlan, getEffectiveLimits } from '../utils/planLimits.js';
 
 // ─── Plan limit helpers ──────────────────────────────────────────────────────
 
@@ -594,10 +594,10 @@ router.post('/:id/transcribe', async (req, res) => {
       recording.status = 'transcribed';
       await recording.save();
 
-      res.json({ 
-        transcript: result.text, 
+      res.json({
+        transcript: result.text,
         duration: result.duration,
-        recording 
+        recording
       });
     } catch (transcribeError) {
       console.error('Transcription error:', transcribeError.message);
@@ -650,7 +650,7 @@ router.post('/:id/summarize', async (req, res) => {
 router.post('/:id/minutes', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     if (!limits.meetingMinutes) {
       return res.status(403).json({
         error: 'Meeting minutes require a Pro or Team plan. Upgrade to unlock this feature.',
@@ -672,13 +672,25 @@ router.post('/:id/minutes', async (req, res) => {
     }
 
     console.log('Generating minutes for recording:', recording._id);
-    const englishTranscript2 = await toEnglishTranscript(recording.transcript, userDoc);
-    let minutes = await generateMeetingMinutes(
-      englishTranscript2,
+
+    // Determine output language — let Gemini handle it natively instead of
+    // post-translating via Sarvam (which breaks markdown with 900-char chunks)
+    const LANG_LABELS = {
+      hindi: 'Hindi', tamil: 'Tamil', telugu: 'Telugu', bengali: 'Bengali',
+      kannada: 'Kannada', malayalam: 'Malayalam', marathi: 'Marathi',
+      gujarati: 'Gujarati', punjabi: 'Punjabi', odia: 'Odia',
+    };
+    const prefLang = userDoc?.summaryLanguage?.toLowerCase().trim();
+    const outputLanguage = (prefLang && prefLang !== 'english' && prefLang !== 'en')
+      ? (LANG_LABELS[prefLang] || null)
+      : null;
+
+    const minutes = await generateMeetingMinutes(
+      recording.transcript,   // pass raw transcript — Gemini handles any language
       recording.summary,
-      recording.title
+      recording.title,
+      outputLanguage          // null = English output
     );
-    minutes = await toPreferredLanguage(minutes, userDoc);
 
     recording.minutes = minutes;
     recording.status = 'completed';
@@ -695,7 +707,7 @@ router.post('/:id/minutes', async (req, res) => {
 router.post('/:id/actions', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     if (!limits.actionItems) {
       return res.status(403).json({
         error: 'Action item extraction requires a Pro or Team plan. Upgrade to unlock this feature.',

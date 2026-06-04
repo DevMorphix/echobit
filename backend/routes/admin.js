@@ -376,22 +376,42 @@ router.get('/subscriptions', async (req, res) => {
     );
     const freeUsers = allUsers.filter(u => !u.plan || u.plan === 'free');
 
-    const MONTHLY_VALUE = { pro: 749, team: 1999 };
-    const ANNUAL_VALUE  = { pro: Math.round(7499 / 12), team: Math.round(19999 / 12) };
+    // Use admin-configured prices if available, else fall back to defaults
+    const planConfigs = await PlanConfig.find().lean();
+    const DEFAULT_PAISE = { free: 0, starter: 14900, pro: 49900, growth: 99900, team: 79900 };
+    const planPaise = {};
+    for (const key of ['free','starter','pro','growth','team']) {
+      const cfg = planConfigs.find(c => c.plan === key);
+      planPaise[key] = cfg?.monthlyPaise || DEFAULT_PAISE[key];
+    }
     let mrr = 0;
     for (const u of activePaid) {
-      mrr += ((u.planBillingCycle === 'annual' ? ANNUAL_VALUE : MONTHLY_VALUE)[u.plan] || 0);
+      const monthly = planPaise[u.plan] || 0;
+      const value = u.planBillingCycle === 'annual'
+        ? Math.round(monthly * 12 / 12)  // annual subscribers count monthly equivalent
+        : monthly;
+      mrr += value;
     }
+    mrr = Math.round(mrr / 100); // convert paise to rupees
+
+    const arr = mrr * 12;
+    const arpu = activePaid.length > 0 ? Math.round(mrr / activePaid.length) : 0;
+    const churnRate = allUsers.length > 0
+      ? Math.round((churned.length / allUsers.length) * 100)
+      : 0;
 
     res.json({
       stats: {
-        totalUsers: allUsers.length,
-        activePaid: activePaid.length,
-        activePro:  activePaid.filter(u => u.plan === 'pro').length,
-        activeTeam: activePaid.filter(u => u.plan === 'team').length,
-        freeUsers:  freeUsers.length,
+        totalUsers:   allUsers.length,
+        activePaid:   activePaid.length,
+        activePro:    activePaid.filter(u => u.plan === 'pro').length,
+        activeTeam:   activePaid.filter(u => u.plan === 'team').length,
+        freeUsers:    freeUsers.length,
         churnedUsers: churned.length,
-        mrrInr: Math.round(mrr),
+        mrrInr:       mrr,
+        arrInr:       arr,
+        arpuInr:      arpu,
+        churnRate,
       },
       planBreakdown: {
         pro:     activePaid.filter(u => u.plan === 'pro').length,
@@ -479,14 +499,20 @@ router.put('/plans/:plan', async (req, res) => {
   if (!['free', 'starter', 'pro', 'growth', 'team'].includes(plan)) {
     return res.status(400).json({ error: 'Invalid plan' });
   }
-  const { features } = req.body;
+  const { features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates } = req.body;
   if (!Array.isArray(features)) {
     return res.status(400).json({ error: 'features must be an array' });
   }
   try {
+    const update = { features };
+    if (monthlyPrice  !== undefined) update.monthlyPrice  = monthlyPrice;
+    if (annualMonthly !== undefined) update.annualMonthly = annualMonthly;
+    if (annualTotal   !== undefined) update.annualTotal   = annualTotal;
+    if (monthlyPaise  !== undefined) update.monthlyPaise  = Number(monthlyPaise);
+    if (gates         !== undefined) update.gates         = gates;
     const config = await PlanConfig.findOneAndUpdate(
       { plan },
-      { features },
+      update,
       { upsert: true, new: true }
     );
     res.json(config);

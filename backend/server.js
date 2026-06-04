@@ -45,6 +45,14 @@ app.use(express.json({ limit: '150mb' }));
 app.use(express.urlencoded({ extended: true, limit: '150mb' }));
 
 // Default features seeded on first request if DB has none
+const DEFAULT_PRICES = {
+  free:    { monthlyPrice: '₹0',   annualMonthly: '₹0',   annualTotal: '₹0',      monthlyPaise: 0    },
+  starter: { monthlyPrice: '₹149', annualMonthly: '₹99',  annualTotal: '₹1,188',  monthlyPaise: 14900 },
+  pro:     { monthlyPrice: '₹499', annualMonthly: '₹399', annualTotal: '₹4,788',  monthlyPaise: 49900 },
+  growth:  { monthlyPrice: '₹999', annualMonthly: '₹799', annualTotal: '₹9,588',  monthlyPaise: 99900 },
+  team:    { monthlyPrice: '₹799', annualMonthly: '₹599', annualTotal: '₹7,188',  monthlyPaise: 79900 },
+};
+
 const DEFAULT_FEATURES = {
   free: [
     { text: '3 recordings / month', included: true },
@@ -95,7 +103,15 @@ app.get('/api/plans', async (req, res) => {
     const result = {};
     for (const plan of ['free', 'starter', 'pro', 'growth', 'team']) {
       const found = configs.find(c => c.plan === plan);
-      result[plan] = found ? found.features : DEFAULT_FEATURES[plan];
+      const def = DEFAULT_PRICES[plan];
+      result[plan] = {
+        features:      found?.features      ?? DEFAULT_FEATURES[plan],
+        monthlyPrice:  found?.monthlyPrice  || def.monthlyPrice,
+        annualMonthly: found?.annualMonthly || def.annualMonthly,
+        annualTotal:   found?.annualTotal   || def.annualTotal,
+        monthlyPaise:  found?.monthlyPaise  || def.monthlyPaise,
+        gates:         found?.gates         ?? {},
+      };
     }
     res.json(result);
   } catch (err) {

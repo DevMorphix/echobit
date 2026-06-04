@@ -43,9 +43,33 @@
           </div>
         </div>
 
-        <!-- Settings Sections -->
-        <!-- Upgrade Banner -->
-        <div class="upgrade-banner" @click="openPricing">
+        <!-- Subscription Status / Upgrade Banner -->
+        <div v-if="isPaid" class="sub-card">
+          <div class="sub-card-header">
+            <div class="sub-badge">
+              <ion-icon :icon="flashOutline"></ion-icon>
+              <span>{{ planLabel }} Plan</span>
+            </div>
+            <span class="sub-status-dot"></span>
+          </div>
+          <div class="sub-details">
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Billing</span>
+              <span class="sub-detail-value">{{ billingCycleLabel }}</span>
+            </div>
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Expires</span>
+              <span class="sub-detail-value">{{ expiryDateLabel }}</span>
+            </div>
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Days left</span>
+              <span class="sub-detail-value sub-days-left">{{ daysLeft }} days</span>
+            </div>
+          </div>
+          <button class="sub-manage-btn" @click="openPricing">Manage Plan</button>
+        </div>
+
+        <div v-else class="upgrade-banner" @click="openPricing">
           <div class="upgrade-icon">
             <ion-icon :icon="flashOutline"></ion-icon>
           </div>
@@ -187,7 +211,7 @@
               </div>
               <div class="setting-body">
                 <span class="setting-title">About</span>
-                <span class="setting-desc">Version 0.1.0</span>
+                <span class="setting-desc">Version {{ appVersion }} ({{ appBuild }})</span>
               </div>
               <ion-icon :icon="chevronForwardOutline" class="setting-chevron"></ion-icon>
             </button>
@@ -201,7 +225,7 @@
         </button>
 
         <!-- Version -->
-        <p class="version-text">Echobits v0.1.0</p>
+        <p class="version-text">Echobits v{{ appVersion }}</p>
       </div>
 
       <!-- Edit Profile Modal -->
@@ -301,7 +325,7 @@
                 <img src="/logo.png" alt="App Logo" style="width: 58px; height: 58px; object-fit: contain;" />
               </div>
               <h3>Echobits</h3>
-              <p class="about-version">Version 0.1.0</p>
+              <p class="about-version">Version {{ appVersion }} (build {{ appBuild }})</p>
               <p class="about-desc">Your intelligent voice recorder with AI-powered transcription, summaries, and meeting minutes.</p>
               <p class="about-copy">&copy; 2024 Echobits. All rights reserved.</p>
             </div>
@@ -322,7 +346,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeMount } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonToggle, IonModal, IonAlert, IonSpinner, toastController } from '@ionic/vue';
 import {
@@ -337,6 +361,18 @@ import { useRecordingsStore } from '@/stores/recordings';
 const router = useRouter();
 const authStore = useAuthStore();
 const recordingsStore = useRecordingsStore();
+
+const appVersion = ref('1.2.0');
+const appBuild   = ref('7');
+
+onBeforeMount(async () => {
+  try {
+    const { App: CapApp } = await import('@capacitor/app');
+    const info = await CapApp.getInfo();
+    appVersion.value = info.version;
+    appBuild.value   = info.build;
+  } catch { /* web/dev — keep defaults */ }
+});
 
 const showEditProfile = ref(false);
 const showStorage = ref(false);
@@ -364,6 +400,39 @@ const LANG_LABELS: Record<string, string> = {
 const summaryLanguageLabel = computed(() => LANG_LABELS[summaryLanguage.value] || 'English');
 
 const user = computed(() => authStore.user);
+
+const isPaid = computed(() => {
+  if (!user.value?.plan || user.value.plan === 'free') return false;
+  if (!user.value.planExpiresAt) return false;
+  return new Date(user.value.planExpiresAt) > new Date();
+});
+
+const planLabel = computed(() => {
+  const p = user.value?.plan;
+  if (p === 'pro') return 'Pro';
+  if (p === 'team') return 'Team';
+  return 'Free';
+});
+
+const billingCycleLabel = computed(() => {
+  const c = user.value?.planBillingCycle;
+  if (c === 'monthly') return 'Monthly';
+  if (c === 'annual') return 'Annual';
+  return '—';
+});
+
+const expiryDateLabel = computed(() => {
+  if (!user.value?.planExpiresAt) return '—';
+  return new Date(user.value.planExpiresAt).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
+});
+
+const daysLeft = computed(() => {
+  if (!user.value?.planExpiresAt) return 0;
+  const diff = new Date(user.value.planExpiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+});
 
 const userInitials = computed(() => {
   const name = user.value?.name || 'User';
@@ -605,6 +674,96 @@ function openPricing() {
   height: 32px;
   background: var(--app-border);
 }
+
+/* Subscription Card */
+.sub-card {
+  background: var(--app-surface);
+  border: 1.5px solid var(--app-primary);
+  border-radius: var(--radius-2xl);
+  padding: 18px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-primary);
+}
+
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--app-gradient);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
+.sub-badge ion-icon { font-size: 14px; }
+
+.sub-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-primary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0.08); }
+}
+
+.sub-details {
+  background: var(--app-bg);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sub-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-detail-label {
+  font-size: 12px;
+  color: var(--app-text-muted);
+  font-weight: 500;
+}
+
+.sub-detail-value {
+  font-size: 13px;
+  color: var(--app-text);
+  font-weight: 600;
+}
+
+.sub-days-left { color: var(--app-primary); }
+
+.sub-manage-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--app-primary-ultra-light);
+  border: 1.5px solid var(--app-primary);
+  color: var(--app-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sub-manage-btn:active { background: var(--app-primary); color: white; }
 
 /* Upgrade Banner */
 .upgrade-banner {

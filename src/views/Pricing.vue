@@ -201,11 +201,11 @@
           </div>
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
-              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 99 : 149 }}</span>
-              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 9900 : 14900) : ('₹' + (annual ? 99 : 149)) }}</span>
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? starterAnnualMo : starterMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ annual ? starterAnnualMo : starterMonthly }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed ₹1,188/year</p>
+            <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed {{ starterAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
             <li v-for="f in starterFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/70' : 'text-white/30']">
@@ -250,11 +250,11 @@
           </div>
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
-              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 399 : 499 }}</span>
-              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 39900 : 49900) : ('₹' + (annual ? 399 : 499)) }}</span>
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? proAnnualMo : proMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ annual ? proAnnualMo : proMonthly }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed ₹4,788/year</p>
+            <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed {{ proAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
             <li v-for="f in proFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
@@ -299,11 +299,11 @@
           </div>
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
-              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">₹{{ annual ? 799 : 999 }}</span>
-              <span class="text-4xl font-bold text-white">{{ couponApplied ? discountedPrice(annual ? 79900 : 99900) : ('₹' + (annual ? 799 : 999)) }}</span>
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? growthAnnualMo : growthMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ annual ? growthAnnualMo : growthMonthly }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed ₹9,588/year</p>
+            <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed {{ growthAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
             <li v-for="f in growthFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
@@ -528,7 +528,7 @@ onMounted(async () => {
   // Load admin-editable plan features
   try {
     const data = await plansApi.getAll();
-    planFeatures.value = data;
+    planData.value = data;
   } catch { /* keep empty defaults */ }
 
   if (authState.isAuthenticated) {
@@ -578,7 +578,7 @@ async function pay(plan: string) {
       return;
     }
 
-    const options = {
+    const options: Record<string, any> = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
       currency: order.currency,
@@ -591,6 +591,7 @@ async function pay(plan: string) {
         email: authState.user?.email || '',
       },
       theme: { color: '#10b981' },
+      config_id: import.meta.env.VITE_RAZORPAY_CONFIG_ID || undefined,
       handler: async (response: any) => {
         try {
           await paymentsApi.verifyPayment({
@@ -645,14 +646,24 @@ watch(paymentStatus, (val) => {
   if (val) toastTimer = setTimeout(() => { paymentStatus.value = null; }, 6000);
 });
 
-// Plan features loaded from API (admin-editable)
-const planFeatures = ref<Record<string, { text: string; included: boolean }[]>>({
-  free: [], starter: [], pro: [], growth: [],
-});
-const freeFeatures    = computed(() => planFeatures.value.free    ?? []);
-const starterFeatures = computed(() => planFeatures.value.starter ?? []);
-const proFeatures     = computed(() => planFeatures.value.pro     ?? []);
-const growthFeatures  = computed(() => planFeatures.value.growth  ?? []);
+// Plan data loaded from API (admin-editable features + prices)
+type PlanData = { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string };
+const planData = ref<Record<string, PlanData>>({});
+const freeFeatures    = computed(() => planData.value.free?.features    ?? []);
+const starterFeatures = computed(() => planData.value.starter?.features ?? []);
+const proFeatures     = computed(() => planData.value.pro?.features     ?? []);
+const growthFeatures  = computed(() => planData.value.growth?.features  ?? []);
+
+const pd = (key: string): PlanData => planData.value[key] ?? { features: [], monthlyPrice: '', annualMonthly: '', annualTotal: '' };
+const starterMonthly  = computed(() => pd('starter').monthlyPrice  || '₹149');
+const starterAnnualMo = computed(() => pd('starter').annualMonthly || '₹99');
+const starterAnnualTt = computed(() => pd('starter').annualTotal   || '₹1,188');
+const proMonthly      = computed(() => pd('pro').monthlyPrice      || '₹499');
+const proAnnualMo     = computed(() => pd('pro').annualMonthly     || '₹399');
+const proAnnualTt     = computed(() => pd('pro').annualTotal       || '₹4,788');
+const growthMonthly   = computed(() => pd('growth').monthlyPrice   || '₹999');
+const growthAnnualMo  = computed(() => pd('growth').annualMonthly  || '₹799');
+const growthAnnualTt  = computed(() => pd('growth').annualTotal    || '₹9,588');
 
 const comparison = [
   { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },
@@ -684,7 +695,9 @@ const faqs = [
   },
   {
     q: 'How does annual billing work?',
-    a: 'Annual plans are billed as a single payment upfront — Starter at ₹1,188/yr, Pro at ₹4,788/yr, and Growth at ₹9,588/yr — saving you up to 33% versus monthly billing.',
+    get a() {
+      return `Annual plans are billed as a single payment upfront — Starter at ${starterAnnualTt.value}/yr, Pro at ${proAnnualTt.value}/yr, and Growth at ${growthAnnualTt.value}/yr — saving you up to 33% versus monthly billing.`;
+    },
   },
   {
     q: 'Is my data secure?',

@@ -79,7 +79,7 @@
                 <span class="plan-tagline">For power users</span>
               </div>
               <div class="plan-price-group">
-                <span class="plan-price">{{ cycle === 'monthly' ? '₹299' : '₹2,499' }}</span>
+                <span class="plan-price">{{ cycle === 'monthly' ? proMonthly : proAnnual }}</span>
                 <span class="plan-per">/ {{ cycle === 'monthly' ? 'mo' : 'yr' }}</span>
               </div>
             </div>
@@ -105,7 +105,7 @@
                 <span class="plan-tagline">For organizations</span>
               </div>
               <div class="plan-price-group">
-                <span class="plan-price">{{ cycle === 'monthly' ? '₹799' : '₹6,999' }}</span>
+                <span class="plan-price">{{ cycle === 'monthly' ? teamMonthly : teamAnnual }}</span>
                 <span class="plan-per">/ {{ cycle === 'monthly' ? 'mo' : 'yr' }}</span>
               </div>
             </div>
@@ -159,17 +159,23 @@ const daysRemaining = computed(() => {
 });
 
 type Feature = { text: string; included: boolean };
+type PlanData = { features: Feature[]; monthlyPrice: string; annualPrice: string };
 
-const planFeatures = ref<Record<string, Feature[]>>({ free: [], pro: [], team: [] });
+const plans = ref<Record<string, PlanData>>({});
 
-const freeFeatures  = computed(() => planFeatures.value.free  ?? []);
-const proFeatures   = computed(() => planFeatures.value.pro   ?? []);
-const teamFeatures  = computed(() => planFeatures.value.team  ?? []);
+const freeFeatures  = computed(() => plans.value.free?.features  ?? []);
+const proFeatures   = computed(() => plans.value.pro?.features   ?? []);
+const teamFeatures  = computed(() => plans.value.team?.features  ?? []);
+
+const proMonthly  = computed(() => plans.value.pro?.monthlyPrice  || '₹299');
+const proAnnual   = computed(() => plans.value.pro?.annualPrice   || '₹2,499');
+const teamMonthly = computed(() => plans.value.team?.monthlyPrice || '₹799');
+const teamAnnual  = computed(() => plans.value.team?.annualPrice  || '₹6,999');
 
 onMounted(async () => {
   try {
-    planFeatures.value = await api.getPlanFeatures();
-  } catch { /* keep empty — UI shows nothing rather than crashing */ }
+    plans.value = await api.getPlans();
+  } catch { /* keep defaults */ }
 });
 
 function subscribe(plan: 'pro' | 'team') {

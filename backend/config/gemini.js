@@ -63,7 +63,7 @@ Please provide a well-structured summary (only including sections with actual co
  * @param {string} title - The meeting/recording title
  * @returns {Promise<string>} - The generated meeting minutes
  */
-export const generateMeetingMinutes = async (transcript, summary, title) => {
+export const generateMeetingMinutes = async (transcript, summary, title, outputLanguage = null) => {
   if (!transcript || transcript.length < 50) {
     return 'Transcript too short to generate minutes. Please provide more content.';
   }
@@ -74,6 +74,10 @@ export const generateMeetingMinutes = async (transcript, summary, title) => {
     month: 'long',
     day: 'numeric'
   });
+
+  const langInstruction = outputLanguage
+    ? `OUTPUT LANGUAGE: Write the entire meeting minutes in ${outputLanguage}. Translate all content into ${outputLanguage}. Keep markdown formatting intact.`
+    : `OUTPUT LANGUAGE: Write in English.`;
 
   const prompt = `You are an expert at creating professional meeting minutes.
 Please analyze the following transcript and generate comprehensive meeting minutes.
@@ -88,10 +92,7 @@ Transcript:
 ${transcript}
 """
 
-LANGUAGE RULE (apply first):
-- Detect the language of the transcript.
-- If it is NOT in English, translate all spoken content to English before processing.
-- The final meeting minutes must always be written in English regardless of the transcript language.
+${langInstruction}
 
 IMPORTANT RULES:
 1. ONLY include sections that have actual content from the transcript
