@@ -174,7 +174,7 @@ onMounted(async () => {
 
 function subscribe(plan: 'pro' | 'team') {
   const token = authStore.token;
-  const url = `https://echobit.devmorphix.com/pricing?plan=${plan}&cycle=${cycle.value}&token=${token}`;
+  const url = `https://echobits.devmorphix.com/pricing?plan=${plan}&cycle=${cycle.value}&token=${token}`;
   window.open(url, '_blank');
 }
 </script>
