@@ -287,8 +287,10 @@ const subscription = ref(
 );
 const isPaid = computed(() => subscription.value.plan !== 'free' && subscription.value.isActive);
 const planLabel = computed(() => {
-  const p = subscription.value.plan;
-  return p === 'pro' ? 'Pro' : p === 'team' ? 'Team' : 'Free';
+  const labels: Record<string, string> = {
+    free: 'Free', starter: 'Starter', pro: 'Pro', growth: 'Growth', team: 'Team',
+  };
+  return labels[subscription.value.plan] || 'Free';
 });
 
 onMounted(async () => {

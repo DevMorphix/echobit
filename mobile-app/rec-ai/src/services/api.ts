@@ -282,7 +282,7 @@ class ApiService {
   async getLimits(): Promise<{
     plan: string;
     usage: { recordingsThisMonth: number; storageUsedBytes: number };
-    limits: { recordingsPerMonth: number | null; maxDurationSecs: number; maxStorageBytes: number };
+    limits: { recordingsPerMonth: number | null; maxDurationSecs: number; maxStorageBytes: number; meetingMinutes: boolean; actionItems: boolean; pdfExport: boolean };
   }> {
     const { data } = await this.api.get('/recordings/limits');
     return data;

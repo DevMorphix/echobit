@@ -53,7 +53,7 @@
     </nav>
 
     <!-- Hero -->
-    <section class="pt-32 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
+    <section class="pt-40 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none overflow-hidden">
         <div class="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
         <div class="absolute -bottom-20 -left-40 w-80 h-80 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>

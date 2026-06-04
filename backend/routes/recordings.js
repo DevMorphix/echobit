@@ -229,7 +229,7 @@ router.post('/finalize-upload', async (req, res) => {
 router.get('/limits', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     const plan = getActivePlan(userDoc);
 
     const [monthlyCount, storageUsed] = await Promise.all([
@@ -250,6 +250,7 @@ router.get('/limits', async (req, res) => {
         indianLanguages: limits.indianLanguages,
         meetingMinutes: limits.meetingMinutes,
         actionItems: limits.actionItems,
+        pdfExport: limits.pdfExport,
       },
     });
   } catch (error) {

@@ -176,11 +176,13 @@
                     <button
                       v-if="activeTab === 'summary' || activeTab === 'minutes'"
                       class="action-btn"
+                      :class="{ 'action-btn-locked': !pdfEnabled }"
                       :disabled="generatingPDF"
                       @click="activeTab === 'minutes' ? downloadMinutesPDF() : downloadSummaryPDF()"
-                      title="Download PDF"
+                      :title="pdfEnabled ? 'Download PDF' : 'PDF export not available on your plan'"
                     >
                       <ion-spinner v-if="generatingPDF" name="crescent" style="width:16px;height:16px"></ion-spinner>
+                      <ion-icon v-else-if="!pdfEnabled" :icon="lockClosedOutline"></ion-icon>
                       <ion-icon v-else :icon="shareOutline"></ion-icon>
                     </button>
                   </template>
@@ -295,7 +297,7 @@ import {
   textOutline, sparklesOutline, listOutline, checkmarkOutline, copyOutline,
   alertCircleOutline, shareOutline, trashOutline, calendarOutline, timeOutline,
   downloadOutline, createOutline, addOutline, pencilOutline, closeOutline, saveOutline,
-  checkmarkCircleOutline, personOutline, languageOutline, refreshOutline
+  checkmarkCircleOutline, personOutline, languageOutline, refreshOutline, lockClosedOutline
 } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -442,6 +444,14 @@ async function saveTranscript() {
 const templates = ref<Record<string, PdfTemplate>>({});
 const selectedTemplate = ref('professional');
 const generatingPDF = ref(false);
+const pdfEnabled = ref(true); // default true; overridden by limits fetch
+
+onMounted(async () => {
+  try {
+    const data = await api.getLimits();
+    pdfEnabled.value = data.limits.pdfExport;
+  } catch { /* keep default */ }
+});
 const logoBase64 = ref<string | null>(null);
 const showTemplateEditor = ref(false);
 const editingTemplateKey = ref<string | null>(null);
@@ -747,6 +757,11 @@ async function copyActiveContent() {
 // PDF Download
 async function downloadMinutesPDF() {
   if (!recording.value?.minutes) return;
+  if (!pdfEnabled.value) {
+    const toast = await toastController.create({ message: 'PDF export is not available on your current plan. Upgrade to unlock it.', duration: 3000, color: 'warning', position: 'bottom' });
+    await toast.present();
+    return;
+  }
   generatingPDF.value = true;
   try {
     const template = templates.value[selectedTemplate.value] || templates.value.professional;
@@ -769,6 +784,11 @@ async function downloadMinutesPDF() {
 
 async function downloadSummaryPDF() {
   if (!recording.value?.summary) return;
+  if (!pdfEnabled.value) {
+    const toast = await toastController.create({ message: 'PDF export is not available on your current plan. Upgrade to unlock it.', duration: 3000, color: 'warning', position: 'bottom' });
+    await toast.present();
+    return;
+  }
   generatingPDF.value = true;
   try {
     const template = templates.value[selectedTemplate.value] || templates.value.professional;
@@ -1380,6 +1400,11 @@ function applyInlineFormatting(text: string): string {
 }
 
 .action-btn ion-icon { font-size: 16px; }
+
+.action-btn-locked {
+  color: var(--app-text-muted) !important;
+  background: var(--app-surface-hover) !important;
+}
 
 /* Template Bar */
 .template-bar {
