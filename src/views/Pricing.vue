@@ -516,8 +516,11 @@ onMounted(async () => {
   // Auto-login when coming from the mobile app (?token=...)
   const params = new URLSearchParams(window.location.search);
   const appToken = params.get('token');
-  if (appToken && !authState.isAuthenticated) {
-    await authApi.loginWithToken(appToken);
+  if (appToken) {
+    if (!authState.isAuthenticated) {
+      await authApi.loginWithToken(appToken);
+    }
+    // Always strip the token from the URL regardless of auth state
     params.delete('token');
     const clean = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
     window.history.replaceState({}, '', clean);
