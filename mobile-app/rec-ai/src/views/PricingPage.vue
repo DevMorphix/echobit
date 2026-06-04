@@ -25,7 +25,7 @@
         <!-- Current Plan Badge -->
         <div class="current-plan-row" v-if="currentPlan !== 'free'">
           <ion-icon :icon="checkmarkCircleOutline" class="cp-icon"></ion-icon>
-          <span>You're on the <strong>{{ currentPlan === 'pro' ? 'Pro' : 'Team' }}</strong> plan</span>
+          <span>You're on the <strong>{{ PLAN_LABELS[currentPlan] || currentPlan }}</strong> plan</span>
           <span v-if="daysRemaining > 0" class="cp-days">{{ daysRemaining }}d left</span>
         </div>
 
@@ -34,7 +34,7 @@
           <button :class="{ active: cycle === 'monthly' }" @click="cycle = 'monthly'">Monthly</button>
           <button :class="{ active: cycle === 'annual' }" @click="cycle = 'annual'">
             Annual
-            <span class="save-badge">Save 30%</span>
+            <span class="save-badge">Save 33%</span>
           </button>
         </div>
 
@@ -49,7 +49,7 @@
               </div>
               <div class="plan-title-group">
                 <span class="plan-name">Free</span>
-                <span class="plan-tagline">Get started</span>
+                <span class="plan-tagline">Try it out</span>
               </div>
               <div class="plan-price-group">
                 <span class="plan-price">₹0</span>
@@ -67,6 +67,33 @@
             </button>
           </div>
 
+          <!-- Starter -->
+          <div class="plan-card" :class="{ current: currentPlan === 'starter' }">
+            <div class="plan-header">
+              <div class="plan-icon starter-icon">
+                <ion-icon :icon="sparklesOutline"></ion-icon>
+              </div>
+              <div class="plan-title-group">
+                <span class="plan-name">Starter</span>
+                <span class="plan-tagline">For regular users</span>
+              </div>
+              <div class="plan-price-group">
+                <span class="plan-price">{{ cycle === 'monthly' ? starterMonthly : starterAnnualMo }}</span>
+                <span class="plan-per">/mo</span>
+              </div>
+            </div>
+            <p v-if="cycle === 'annual'" class="annual-note">Billed {{ starterAnnualTt }}/year</p>
+            <ul class="feature-list">
+              <li v-for="f in starterFeatures" :key="f.text" :class="{ disabled: !f.included }">
+                <ion-icon :icon="f.included ? checkmarkOutline : closeOutline"></ion-icon>
+                <span>{{ f.text }}</span>
+              </li>
+            </ul>
+            <button class="plan-btn starter-btn" @click="subscribe('starter')" :disabled="currentPlan === 'starter'">
+              {{ currentPlan === 'starter' ? 'Current Plan' : 'Get Starter' }}
+            </button>
+          </div>
+
           <!-- Pro — highlighted -->
           <div class="plan-card pro-card" :class="{ current: currentPlan === 'pro' }">
             <div class="popular-tag">Most Popular</div>
@@ -79,10 +106,11 @@
                 <span class="plan-tagline">For power users</span>
               </div>
               <div class="plan-price-group">
-                <span class="plan-price">{{ cycle === 'monthly' ? proMonthly : proAnnual }}</span>
-                <span class="plan-per">/ {{ cycle === 'monthly' ? 'mo' : 'yr' }}</span>
+                <span class="plan-price">{{ cycle === 'monthly' ? proMonthly : proAnnualMo }}</span>
+                <span class="plan-per">/mo</span>
               </div>
             </div>
+            <p v-if="cycle === 'annual'" class="annual-note">Billed {{ proAnnualTt }}/year</p>
             <ul class="feature-list">
               <li v-for="f in proFeatures" :key="f.text" :class="{ disabled: !f.included }">
                 <ion-icon :icon="f.included ? checkmarkOutline : closeOutline"></ion-icon>
@@ -94,29 +122,30 @@
             </button>
           </div>
 
-          <!-- Team -->
-          <div class="plan-card" :class="{ current: currentPlan === 'team' }">
+          <!-- Growth -->
+          <div class="plan-card" :class="{ current: currentPlan === 'growth' }">
             <div class="plan-header">
-              <div class="plan-icon team-icon">
-                <ion-icon :icon="peopleOutline"></ion-icon>
+              <div class="plan-icon growth-icon">
+                <ion-icon :icon="trendingUpOutline"></ion-icon>
               </div>
               <div class="plan-title-group">
-                <span class="plan-name">Team</span>
-                <span class="plan-tagline">For organizations</span>
+                <span class="plan-name">Growth</span>
+                <span class="plan-tagline">Unlimited power</span>
               </div>
               <div class="plan-price-group">
-                <span class="plan-price">{{ cycle === 'monthly' ? teamMonthly : teamAnnual }}</span>
-                <span class="plan-per">/ {{ cycle === 'monthly' ? 'mo' : 'yr' }}</span>
+                <span class="plan-price">{{ cycle === 'monthly' ? growthMonthly : growthAnnualMo }}</span>
+                <span class="plan-per">/mo</span>
               </div>
             </div>
+            <p v-if="cycle === 'annual'" class="annual-note">Billed {{ growthAnnualTt }}/year</p>
             <ul class="feature-list">
-              <li v-for="f in teamFeatures" :key="f.text" :class="{ disabled: !f.included }">
+              <li v-for="f in growthFeatures" :key="f.text" :class="{ disabled: !f.included }">
                 <ion-icon :icon="f.included ? checkmarkOutline : closeOutline"></ion-icon>
                 <span>{{ f.text }}</span>
               </li>
             </ul>
-            <button class="plan-btn team-btn" @click="subscribe('team')" :disabled="currentPlan === 'team'">
-              {{ currentPlan === 'team' ? 'Current Plan' : 'Get Team' }}
+            <button class="plan-btn growth-btn" @click="subscribe('growth')" :disabled="currentPlan === 'growth'">
+              {{ currentPlan === 'growth' ? 'Current Plan' : 'Get Growth' }}
             </button>
           </div>
 
@@ -137,8 +166,9 @@ import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon } from '@ionic/vue';
 import {
-  chevronBackOutline, flashOutline, personOutline, peopleOutline,
-  checkmarkOutline, closeOutline, checkmarkCircleOutline
+  chevronBackOutline, flashOutline, personOutline,
+  checkmarkOutline, closeOutline, checkmarkCircleOutline,
+  sparklesOutline, trendingUpOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { api } from '@/services/api';
@@ -146,10 +176,12 @@ import { api } from '@/services/api';
 const router = useRouter();
 const authStore = useAuthStore();
 
+const PLAN_LABELS: Record<string, string> = {
+  free: 'Free', starter: 'Starter', pro: 'Pro', growth: 'Growth', team: 'Team',
+};
+
 const cycle = ref<'monthly' | 'annual'>('monthly');
-
 const user = computed(() => authStore.user);
-
 const currentPlan = computed(() => user.value?.plan || 'free');
 
 const daysRemaining = computed(() => {
@@ -159,18 +191,66 @@ const daysRemaining = computed(() => {
 });
 
 type Feature = { text: string; included: boolean };
-type PlanData = { features: Feature[]; monthlyPrice: string; annualPrice: string };
+type PlanData = { features: Feature[]; monthlyPrice: string; annualMonthly: string; annualTotal: string };
+
+const DEFAULT_FEATURES: Record<string, Feature[]> = {
+  free: [
+    { text: '3 recordings / month',                  included: true  },
+    { text: 'Up to 20 min per recording',            included: true  },
+    { text: 'AI transcription (English + Malayalam)', included: true  },
+    { text: 'Basic AI summary',                      included: true  },
+    { text: 'AI notes',                              included: false },
+    { text: 'PDF export',                            included: false },
+    { text: 'Meeting minutes',                       included: false },
+    { text: 'Action items',                          included: false },
+  ],
+  starter: [
+    { text: '15 recordings / month',                          included: true  },
+    { text: 'Up to 45 min per recording',                    included: true  },
+    { text: 'AI transcription (English + Hindi + Malayalam)', included: true  },
+    { text: 'AI summary + notes',                            included: true  },
+    { text: 'PDF export',                                    included: false },
+    { text: 'Meeting minutes',                               included: false },
+    { text: 'Action items',                                  included: false },
+    { text: 'Priority processing',                           included: false },
+  ],
+  pro: [
+    { text: '40 recordings / month',         included: true  },
+    { text: 'Up to 2 hours per recording',   included: true  },
+    { text: 'AI transcription (15+ languages)', included: true },
+    { text: 'AI summary + meeting minutes',  included: true  },
+    { text: 'Action item extraction',        included: true  },
+    { text: 'PDF export',                    included: true  },
+    { text: 'Priority processing',           included: true  },
+    { text: 'Team workspace',                included: false },
+  ],
+  growth: [
+    { text: 'Unlimited recordings',              included: true },
+    { text: 'Up to 3 hours per recording',       included: true },
+    { text: 'AI transcription (20+ languages)',  included: true },
+    { text: 'Everything in Pro',                 included: true },
+    { text: '25 GB storage',                     included: true },
+    { text: 'Priority processing + support',     included: true },
+    { text: 'Team workspace',                    included: true },
+  ],
+};
 
 const plans = ref<Record<string, PlanData>>({});
 
-const freeFeatures  = computed(() => plans.value.free?.features  ?? []);
-const proFeatures   = computed(() => plans.value.pro?.features   ?? []);
-const teamFeatures  = computed(() => plans.value.team?.features  ?? []);
+const freeFeatures    = computed(() => plans.value.free?.features    ?? DEFAULT_FEATURES.free);
+const starterFeatures = computed(() => plans.value.starter?.features ?? DEFAULT_FEATURES.starter);
+const proFeatures     = computed(() => plans.value.pro?.features     ?? DEFAULT_FEATURES.pro);
+const growthFeatures  = computed(() => plans.value.growth?.features  ?? DEFAULT_FEATURES.growth);
 
-const proMonthly  = computed(() => plans.value.pro?.monthlyPrice  || '₹299');
-const proAnnual   = computed(() => plans.value.pro?.annualPrice   || '₹2,499');
-const teamMonthly = computed(() => plans.value.team?.monthlyPrice || '₹799');
-const teamAnnual  = computed(() => plans.value.team?.annualPrice  || '₹6,999');
+const starterMonthly  = computed(() => plans.value.starter?.monthlyPrice  || '₹149');
+const starterAnnualMo = computed(() => plans.value.starter?.annualMonthly || '₹99');
+const starterAnnualTt = computed(() => plans.value.starter?.annualTotal   || '₹1,188');
+const proMonthly      = computed(() => plans.value.pro?.monthlyPrice      || '₹499');
+const proAnnualMo     = computed(() => plans.value.pro?.annualMonthly     || '₹399');
+const proAnnualTt     = computed(() => plans.value.pro?.annualTotal       || '₹4,788');
+const growthMonthly   = computed(() => plans.value.growth?.monthlyPrice   || '₹999');
+const growthAnnualMo  = computed(() => plans.value.growth?.annualMonthly  || '₹799');
+const growthAnnualTt  = computed(() => plans.value.growth?.annualTotal    || '₹9,588');
 
 onMounted(async () => {
   try {
@@ -178,7 +258,7 @@ onMounted(async () => {
   } catch { /* keep defaults */ }
 });
 
-function subscribe(plan: 'pro' | 'team') {
+function subscribe(plan: 'starter' | 'pro' | 'growth') {
   const token = authStore.token;
   const url = `https://echobits.devmorphix.com/pricing?plan=${plan}&cycle=${cycle.value}&token=${token}`;
   window.open(url, '_blank');
@@ -187,10 +267,9 @@ function subscribe(plan: 'pro' | 'team') {
 
 <style scoped>
 .pricing-page {
-  padding: var(--page-top) 20px 48px;
+  padding: calc(var(--page-top) + 12px) 20px 48px;
 }
 
-/* Header */
 .page-header {
   display: flex;
   align-items: center;
@@ -223,7 +302,6 @@ function subscribe(plan: 'pro' | 'team') {
 .back-btn:active { transform: scale(0.93); }
 .back-btn ion-icon { font-size: 22px; }
 
-/* Hero */
 .pricing-hero {
   text-align: center;
   margin-bottom: 24px;
@@ -260,7 +338,6 @@ function subscribe(plan: 'pro' | 'team') {
   margin: 0;
 }
 
-/* Current plan row */
 .current-plan-row {
   display: flex;
   align-items: center;
@@ -286,7 +363,6 @@ function subscribe(plan: 'pro' | 'team') {
   border-radius: var(--radius-full);
 }
 
-/* Billing Toggle */
 .billing-toggle {
   display: flex;
   background: var(--app-surface);
@@ -312,7 +388,6 @@ function subscribe(plan: 'pro' | 'team') {
   align-items: center;
   justify-content: center;
   gap: 6px;
-  position: relative;
 }
 
 .billing-toggle button.active {
@@ -327,7 +402,6 @@ function subscribe(plan: 'pro' | 'team') {
   background: rgba(255,255,255,0.25);
   padding: 2px 6px;
   border-radius: var(--radius-full);
-  letter-spacing: 0.3px;
 }
 
 .billing-toggle button:not(.active) .save-badge {
@@ -335,7 +409,6 @@ function subscribe(plan: 'pro' | 'team') {
   color: var(--app-primary);
 }
 
-/* Plans */
 .plans-list {
   display: flex;
   flex-direction: column;
@@ -378,12 +451,11 @@ function subscribe(plan: 'pro' | 'team') {
   box-shadow: var(--shadow-primary);
 }
 
-/* Plan header */
 .plan-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 4px;
 }
 
 .plan-icon {
@@ -397,14 +469,12 @@ function subscribe(plan: 'pro' | 'team') {
   font-size: 20px;
 }
 
-.free-icon  { background: var(--app-surface-hover); color: var(--app-text-muted); }
-.pro-icon   { background: var(--app-gradient); color: white; box-shadow: var(--shadow-primary); }
-.team-icon  { background: rgba(99, 102, 241, 0.1); color: var(--ion-color-tertiary); }
+.free-icon    { background: var(--app-surface-hover); color: var(--app-text-muted); }
+.starter-icon { background: rgba(59, 130, 246, 0.1);  color: #3b82f6; }
+.pro-icon     { background: var(--app-gradient); color: white; box-shadow: var(--shadow-primary); }
+.growth-icon  { background: rgba(139, 92, 246, 0.1);  color: #8b5cf6; }
 
-.plan-title-group {
-  flex: 1;
-  min-width: 0;
-}
+.plan-title-group { flex: 1; min-width: 0; }
 
 .plan-name {
   display: block;
@@ -421,10 +491,7 @@ function subscribe(plan: 'pro' | 'team') {
   margin-top: 2px;
 }
 
-.plan-price-group {
-  text-align: right;
-  flex-shrink: 0;
-}
+.plan-price-group { text-align: right; flex-shrink: 0; }
 
 .plan-price {
   display: block;
@@ -434,16 +501,19 @@ function subscribe(plan: 'pro' | 'team') {
   line-height: 1.1;
 }
 
-.plan-per {
+.plan-per { font-size: 11px; color: var(--app-text-muted); }
+
+.annual-note {
   font-size: 11px;
   color: var(--app-text-muted);
+  margin: 2px 0 14px;
+  text-align: right;
 }
 
-/* Features */
 .feature-list {
   list-style: none;
   padding: 0;
-  margin: 0 0 20px;
+  margin: 14px 0 20px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -463,15 +533,9 @@ function subscribe(plan: 'pro' | 'team') {
   color: var(--app-primary);
 }
 
-.feature-list li.disabled {
-  opacity: 0.4;
-}
+.feature-list li.disabled { opacity: 0.4; }
+.feature-list li.disabled ion-icon { color: var(--app-text-muted); }
 
-.feature-list li.disabled ion-icon {
-  color: var(--app-text-muted);
-}
-
-/* Buttons */
 .plan-btn {
   width: 100%;
   height: 48px;
@@ -492,23 +556,24 @@ function subscribe(plan: 'pro' | 'team') {
   border: 1px solid var(--app-border);
 }
 
+.starter-btn {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
 .pro-btn {
   background: var(--app-gradient);
   color: white;
   box-shadow: var(--shadow-primary);
 }
 
-.team-btn {
-  background: rgba(99, 102, 241, 0.1);
-  color: var(--ion-color-tertiary);
-  border: 1px solid rgba(99, 102, 241, 0.2);
+.growth-btn {
+  background: rgba(139, 92, 246, 0.1);
+  color: #8b5cf6;
+  border: 1px solid rgba(139, 92, 246, 0.25);
 }
 
-.team-btn:not(:disabled):active {
-  background: rgba(99, 102, 241, 0.18);
-}
-
-/* Footnote */
 .footnote {
   text-align: center;
   font-size: 12px;

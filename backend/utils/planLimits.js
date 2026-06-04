@@ -84,7 +84,18 @@ export const getEffectiveLimits = async (user) => {
       actionItems:       g.actionItems       ?? base.actionItems,
       pdfExport:         g.pdfExport         ?? base.pdfExport,
       indianLanguages:   g.indianLanguages   ?? base.indianLanguages,
-      recordingsPerMonth: g.recordingsPerMonth ?? base.recordingsPerMonth,
+      // 0 means unlimited for recordings; null means use plan default
+      recordingsPerMonth: g.recordingsPerMonth != null
+        ? (g.recordingsPerMonth === 0 ? null : g.recordingsPerMonth)
+        : base.recordingsPerMonth,
+      // convert admin minutes → seconds; null means use plan default
+      maxDurationSecs: g.maxDurationMins != null
+        ? g.maxDurationMins * 60
+        : base.maxDurationSecs,
+      // convert admin GB → bytes; null means use plan default
+      maxStorageBytes: g.maxStorageGB != null
+        ? g.maxStorageGB * 1_073_741_824
+        : base.maxStorageBytes,
     };
   } catch {
     return base; // DB unavailable — fall back to hardcoded defaults

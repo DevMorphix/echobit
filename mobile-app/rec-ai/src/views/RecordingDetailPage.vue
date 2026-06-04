@@ -682,27 +682,37 @@ async function handleSummarize() {
 
 async function handleMinutes() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
   if (recording.value.minutes) {
     await recordingsStore.updateRecording(recording.value._id, { minutes: '' } as any);
   }
   processingAction.value = 'minutes';
-  await recordingsStore.generateMinutes(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'minutes');
+  const result = await recordingsStore.generateMinutes(recording.value._id);
   processingAction.value = '';
+  if (!result || !result.minutes) {
+    const msg = recordingsStore.error || 'Failed to generate minutes. Please try again.';
+    const toast = await toastController.create({ message: msg, duration: 3500, color: 'danger', position: 'bottom' });
+    await toast.present();
+    return;
+  }
+  saveGeneratedAt(recording.value._id, 'minutes');
   activeTab.value = 'minutes';
 }
 
 async function handleActionItems() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
   if (recording.value.actionItems?.length) {
     await recordingsStore.updateRecording(recording.value._id, { actionItems: [] } as any);
   }
   processingAction.value = 'actions';
-  await recordingsStore.generateActionItems(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'actions');
+  const result = await recordingsStore.generateActionItems(recording.value._id);
   processingAction.value = '';
+  if (!result || !result.actionItems?.length) {
+    const msg = recordingsStore.error || 'Failed to extract action items. Please try again.';
+    const toast = await toastController.create({ message: msg, duration: 3500, color: 'danger', position: 'bottom' });
+    await toast.present();
+    return;
+  }
+  saveGeneratedAt(recording.value._id, 'actions');
   activeTab.value = 'actions';
 }
 

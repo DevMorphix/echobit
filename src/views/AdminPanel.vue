@@ -706,8 +706,8 @@
 
           <!-- Feature Gates -->
           <div :class="['mt-5 p-4 rounded-xl border', isDark ? 'border-gray-700 bg-gray-800/50' : 'border-gray-200 bg-gray-50']">
-            <p class="text-xs font-bold mb-3 uppercase tracking-wide" :class="thm.textFaint">Feature Gates <span class="font-normal normal-case">(overrides plan defaults — leave off to use defaults)</span></p>
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <p class="text-xs font-bold mb-3 uppercase tracking-wide" :class="thm.textFaint">Feature Gates <span class="font-normal normal-case">(overrides plan defaults — leave as Default to keep plan defaults)</span></p>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mb-4">
               <label v-for="gate in gateKeys" :key="gate.key"
                 :class="['flex items-center justify-between px-3 py-2.5 rounded-lg cursor-pointer transition',
                   isDark ? 'bg-gray-700 hover:bg-gray-600' : 'bg-white hover:bg-gray-100 border border-gray-200']">
@@ -716,17 +716,49 @@
                   <span class="text-xs block mt-0.5" :class="thm.textFaint">default: {{ defaultGates[activePlanEdit]?.[gate.key] ? 'ON' : 'OFF' }}</span>
                 </div>
                 <div class="flex items-center gap-2">
-                  <span class="text-xs" :class="thm.textFaint">{{ editingGates[gate.key] === null ? 'Default' : editingGates[gate.key] ? 'ON' : 'OFF' }}</span>
+                  <span class="text-xs" :class="thm.textFaint">{{ editingGates[gate.key] === null || editingGates[gate.key] === undefined ? 'Default' : editingGates[gate.key] ? 'ON' : 'OFF' }}</span>
                   <button @click="cycleGate(gate.key)"
                     :class="['w-10 h-6 rounded-full transition-all relative flex-shrink-0',
-                      editingGates[gate.key] === null ? (isDark ? 'bg-gray-600' : 'bg-gray-300') :
+                      (editingGates[gate.key] === null || editingGates[gate.key] === undefined) ? (isDark ? 'bg-gray-600' : 'bg-gray-300') :
                       editingGates[gate.key] ? 'bg-emerald-500' : 'bg-red-400']">
                     <span :class="['absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-all',
-                      editingGates[gate.key] === null ? 'left-0.5' :
+                      (editingGates[gate.key] === null || editingGates[gate.key] === undefined) ? 'left-0.5' :
                       editingGates[gate.key] ? 'left-[18px]' : 'left-0.5']"></span>
                   </button>
                 </div>
               </label>
+            </div>
+
+            <!-- Numeric Limits -->
+            <p class="text-xs font-bold mb-2 uppercase tracking-wide" :class="thm.textFaint">Usage Limits <span class="font-normal normal-case">(leave blank to use plan defaults)</span></p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div>
+                <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">
+                  Recordings / month
+                  <span :class="thm.textFaint + ' font-normal'"> (default: {{ PLAN_LIMITS_DISPLAY[activePlanEdit]?.recordings }})</span>
+                </label>
+                <input v-model.number="editingRecordingsPerMonth" type="number" min="0"
+                  :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]"
+                  placeholder="0 = unlimited, blank = default" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">
+                  Max duration (minutes)
+                  <span :class="thm.textFaint + ' font-normal'"> (default: {{ PLAN_LIMITS_DISPLAY[activePlanEdit]?.duration }})</span>
+                </label>
+                <input v-model.number="editingMaxDurationMins" type="number" min="1"
+                  :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]"
+                  placeholder="blank = default" />
+              </div>
+              <div>
+                <label class="text-xs font-semibold mb-1 block" :class="thm.textFaint">
+                  Storage (GB)
+                  <span :class="thm.textFaint + ' font-normal'"> (default: {{ PLAN_LIMITS_DISPLAY[activePlanEdit]?.storage }})</span>
+                </label>
+                <input v-model.number="editingMaxStorageGB" type="number" min="1"
+                  :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]"
+                  placeholder="blank = default" />
+              </div>
             </div>
           </div>
 
@@ -1280,7 +1312,15 @@ const editingMonthlyPaise = computed({
   set: (val) => { if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {}; allPlanData.value[activePlanEdit.value].monthlyPaise = val; },
 });
 
-// ── Feature Gates ─────────────────────────────────────────────────────────────
+// ── Feature Gates & Limits ────────────────────────────────────────────────────
+const PLAN_LIMITS_DISPLAY = {
+  free:    { recordings: '3',        duration: '20 min',  storage: '1 GB'  },
+  starter: { recordings: '15',       duration: '45 min',  storage: '3 GB'  },
+  pro:     { recordings: '40',       duration: '2 hrs',   storage: '10 GB' },
+  growth:  { recordings: 'Unlimited', duration: '3 hrs',  storage: '25 GB' },
+  team:    { recordings: 'Unlimited', duration: '3 hrs',  storage: '50 GB' },
+};
+
 const PLAN_DEFAULTS = {
   free:    { meetingMinutes: false, actionItems: false, pdfExport: false, indianLanguages: true  },
   starter: { meetingMinutes: false, actionItems: false, pdfExport: false, indianLanguages: true  },
@@ -1298,6 +1338,31 @@ const gateKeys = [
 ];
 
 const editingGates = computed(() => allPlanData.value[activePlanEdit.value]?.gates ?? {});
+
+const editingRecordingsPerMonth = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.gates?.recordingsPerMonth ?? '',
+  set: (val) => {
+    if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {};
+    if (!allPlanData.value[activePlanEdit.value].gates) allPlanData.value[activePlanEdit.value].gates = {};
+    allPlanData.value[activePlanEdit.value].gates.recordingsPerMonth = val === '' ? null : Number(val);
+  },
+});
+const editingMaxDurationMins = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.gates?.maxDurationMins ?? '',
+  set: (val) => {
+    if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {};
+    if (!allPlanData.value[activePlanEdit.value].gates) allPlanData.value[activePlanEdit.value].gates = {};
+    allPlanData.value[activePlanEdit.value].gates.maxDurationMins = val === '' ? null : Number(val);
+  },
+});
+const editingMaxStorageGB = computed({
+  get: () => allPlanData.value[activePlanEdit.value]?.gates?.maxStorageGB ?? '',
+  set: (val) => {
+    if (!allPlanData.value[activePlanEdit.value]) allPlanData.value[activePlanEdit.value] = {};
+    if (!allPlanData.value[activePlanEdit.value].gates) allPlanData.value[activePlanEdit.value].gates = {};
+    allPlanData.value[activePlanEdit.value].gates.maxStorageGB = val === '' ? null : Number(val);
+  },
+});
 
 // Cycle: null (default) → true (ON) → false (OFF) → null
 function cycleGate(key) {

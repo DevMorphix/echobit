@@ -10,7 +10,9 @@ const gatesSchema = new mongoose.Schema({
   actionItems:        { type: Boolean, default: null },
   pdfExport:          { type: Boolean, default: null },
   indianLanguages:    { type: Boolean, default: null },
-  recordingsPerMonth: { type: Number,  default: null }, // null = use plan default
+  recordingsPerMonth: { type: Number,  default: null }, // null = use plan default; 0 = unlimited
+  maxDurationMins:    { type: Number,  default: null }, // minutes; null = use plan default
+  maxStorageGB:       { type: Number,  default: null }, // GB; null = use plan default
 }, { _id: false });
 
 const planConfigSchema = new mongoose.Schema({

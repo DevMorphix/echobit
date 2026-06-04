@@ -176,22 +176,6 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="group-label">Plans</h3>
-          <div class="settings-card">
-            <button class="setting-item" @click="openPricing">
-              <div class="setting-icon" style="background: rgba(16, 185, 129, 0.1);">
-                <ion-icon :icon="flashOutline" style="color: #10b981;"></ion-icon>
-              </div>
-              <div class="setting-body">
-                <span class="setting-title">Upgrade to Pro</span>
-                <span class="setting-desc">View plans &amp; pricing</span>
-              </div>
-              <ion-icon :icon="chevronForwardOutline" class="setting-chevron"></ion-icon>
-            </button>
-          </div>
-        </div>
-
-        <div class="settings-group">
           <h3 class="group-label">Support</h3>
           <div class="settings-card">
             <button class="setting-item" @click="openHelp">
@@ -408,10 +392,10 @@ const isPaid = computed(() => {
 });
 
 const planLabel = computed(() => {
-  const p = user.value?.plan;
-  if (p === 'pro') return 'Pro';
-  if (p === 'team') return 'Team';
-  return 'Free';
+  const labels: Record<string, string> = {
+    free: 'Free', starter: 'Starter', pro: 'Pro', growth: 'Growth', team: 'Team',
+  };
+  return labels[user.value?.plan || 'free'] || 'Free';
 });
 
 const billingCycleLabel = computed(() => {

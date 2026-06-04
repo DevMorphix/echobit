@@ -29,7 +29,7 @@ const getUserStorageUsed = async (userId) => {
  * Returns { ok: true } or { ok: false, status, error, code }.
  */
 const checkCreateLimits = async (userId, userDoc, durationSecs, incomingBytes) => {
-  const limits = getPlanLimits(userDoc);
+  const limits = await getEffectiveLimits(userDoc);
 
   if (limits.recordingsPerMonth !== null) {
     const count = await Recording.countDocuments({
