@@ -517,10 +517,9 @@ onMounted(async () => {
   const params = new URLSearchParams(window.location.search);
   const appToken = params.get('token');
   if (appToken) {
-    if (!authState.isAuthenticated) {
-      await authApi.loginWithToken(appToken);
-    }
-    // Always strip the token from the URL regardless of auth state
+    // Always attempt login with the app token — it's fresher than any cached session
+    await authApi.loginWithToken(appToken);
+    // Strip token from URL immediately so it doesn't sit in browser history
     params.delete('token');
     const clean = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
     window.history.replaceState({}, '', clean);
