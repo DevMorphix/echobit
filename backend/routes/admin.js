@@ -3,6 +3,7 @@ import User from '../models/User.js';
 import Recording from '../models/Recording.js';
 import Coupon from '../models/Coupon.js';
 import PlanConfig from '../models/PlanConfig.js';
+import ErrorLog from '../models/ErrorLog.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { deleteAudio } from '../config/storage.js';
 
@@ -227,15 +228,22 @@ router.get('/activity', async (req, res) => {
   try {
     const limit = Math.min(50, parseInt(req.query.limit) || 30);
 
-    const [recentUsers, recentRecordings] = await Promise.all([
+    const [recentUsers, recentRecordings, recentErrors] = await Promise.all([
       User.find().select('name email createdAt isVerified privacyAccepted googleId').sort({ createdAt: -1 }).limit(limit).lean(),
       Recording.find().populate('user', 'name email').select('title status createdAt user').sort({ createdAt: -1 }).limit(limit).lean(),
+      ErrorLog.find().populate('userId', 'name email').sort({ createdAt: -1 }).limit(limit).lean(),
     ]);
+
+    const TYPE_LABEL = {
+      transcription_failed: 'Transcription failed',
+      summary_failed:       'Summary generation failed',
+      minutes_failed:       'Minutes generation failed',
+      actions_failed:       'Action items failed',
+    };
 
     const events = [
       ...recentUsers.map(u => ({
         type: 'register',
-        icon: 'user',
         text: `${u.name} (${u.email}) registered${u.googleId ? ' via Google' : ''}`,
         verified: u.isVerified,
         privacyAccepted: u.privacyAccepted,
@@ -243,10 +251,15 @@ router.get('/activity', async (req, res) => {
       })),
       ...recentRecordings.map(r => ({
         type: 'recording',
-        icon: 'mic',
         text: `${r.user?.name || 'Unknown'} created "${r.title}"`,
         status: r.status,
         timestamp: r.createdAt,
+      })),
+      ...recentErrors.map(e => ({
+        type: 'error',
+        text: `${TYPE_LABEL[e.type] || e.type}${e.userId?.name ? ` — ${e.userId.name}` : ''}: ${e.message}`,
+        errorType: e.type,
+        timestamp: e.createdAt,
       })),
     ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
 

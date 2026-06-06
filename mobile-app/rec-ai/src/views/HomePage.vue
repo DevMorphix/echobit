@@ -268,7 +268,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonRefresher, IonRefresherContent, onIonViewWillEnter } from '@ionic/vue';
 import {
@@ -290,7 +290,6 @@ const loading = computed(() => recordingsStore.loading);
 const userName = computed(() => auth.user?.name?.split(' ')[0] || 'User');
 
 // ── Onboarding ───────────────────────────────────────────────────────────────
-const ONBOARDING_KEY = 'onboarding_v1';
 const showOnboarding = ref(false);
 const onboardingStep = ref(0);
 
@@ -322,9 +321,8 @@ const onboardingSlides = [
 ];
 
 async function checkOnboarding() {
-  const { Preferences } = await import('@capacitor/preferences');
-  const { value } = await Preferences.get({ key: ONBOARDING_KEY });
-  if (!value) showOnboarding.value = true;
+  if (auth.user?.onboardingSeen) return;
+  showOnboarding.value = true;
 }
 
 async function nextOnboardingStep() {
@@ -336,9 +334,8 @@ async function nextOnboardingStep() {
 }
 
 async function finishOnboarding() {
-  const { Preferences } = await import('@capacitor/preferences');
-  await Preferences.set({ key: ONBOARDING_KEY, value: 'done' });
   showOnboarding.value = false;
+  auth.updateProfile({ onboardingSeen: true }).catch(() => {});
 }
 // ───────────────────────────────────────────────────────────────────────────
 
@@ -362,21 +359,16 @@ async function fetchLimits() {
 }
 
 // ── Privacy Policy consent ──────────────────────────────────────────────────
-const PRIVACY_KEY = 'pp_accepted_v1';
 const showPrivacyModal = ref(false);
 
 async function checkPrivacyConsent() {
-  const { Preferences } = await import('@capacitor/preferences');
-  const { value } = await Preferences.get({ key: PRIVACY_KEY });
-  if (!value) showPrivacyModal.value = true;
+  if (auth.user?.privacyAccepted) return;
+  showPrivacyModal.value = true;
 }
 
 async function acceptPrivacy() {
-  const { Preferences } = await import('@capacitor/preferences');
-  await Preferences.set({ key: PRIVACY_KEY, value: 'true' });
   showPrivacyModal.value = false;
-  // Save consent to backend (fire-and-forget — local preference already secured)
-  api.acceptPrivacy().catch(() => {});
+  auth.updateProfile({ privacyAccepted: true }).catch(() => {});
 }
 
 async function declinePrivacy() {
@@ -416,10 +408,13 @@ const stats = computed(() => {
   return { total, transcribed, duration };
 });
 
-onIonViewWillEnter(() => {
-  recordingsStore.fetchRecordings();
+onMounted(() => {
   checkPrivacyConsent();
   checkOnboarding();
+});
+
+onIonViewWillEnter(() => {
+  recordingsStore.fetchRecordings();
   fetchLimits();
 });
 

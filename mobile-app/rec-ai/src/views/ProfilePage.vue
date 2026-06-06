@@ -346,8 +346,8 @@ const router = useRouter();
 const authStore = useAuthStore();
 const recordingsStore = useRecordingsStore();
 
-const appVersion = ref('1.2.0');
-const appBuild   = ref('7');
+const appVersion = ref('1.3.0');
+const appBuild   = ref('9');
 
 onBeforeMount(async () => {
   try {

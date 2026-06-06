@@ -17,6 +17,8 @@ export interface User {
   planBillingCycle?: 'monthly' | 'annual' | null;
   planStartDate?: string | null;
   planExpiresAt?: string | null;
+  privacyAccepted?: boolean;
+  onboardingSeen?: boolean;
 }
 
 export interface SubscriptionStatus {

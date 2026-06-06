@@ -7,6 +7,7 @@ import { transcribeAudio, transcribeFromUrl } from '../config/transcription.js';
 import { transcribeAudioSarvam, transcribeFromUrlSarvam, translateText, LANG_TO_SARVAM_CODE } from '../config/sarvam.js';
 import { generateSummary, generateMeetingMinutes, extractActionItems, generateTitle } from '../config/gemini.js';
 import { getPlanLimits, getActivePlan, getEffectiveLimits } from '../utils/planLimits.js';
+import { logError } from '../utils/logError.js';
 
 // ─── Plan limit helpers ──────────────────────────────────────────────────────
 
@@ -604,6 +605,7 @@ router.post('/:id/transcribe', async (req, res) => {
       console.error('Transcription error:', transcribeError.message);
       recording.status = 'failed';
       await recording.save();
+      logError('transcription_failed', transcribeError.message, { userId: req.user.id, recordingId: recording._id });
       throw transcribeError;
     }
   } catch (error) {
@@ -643,6 +645,7 @@ router.post('/:id/summarize', async (req, res) => {
     res.json({ summary, recording });
   } catch (error) {
     console.error('Error generating summary:', error);
+    logError('summary_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to generate summary: ' + error.message });
   }
 });
@@ -700,6 +703,7 @@ router.post('/:id/minutes', async (req, res) => {
     res.json({ minutes, recording });
   } catch (error) {
     console.error('Error generating minutes:', error);
+    logError('minutes_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to generate minutes: ' + error.message });
   }
 });
@@ -738,6 +742,7 @@ router.post('/:id/actions', async (req, res) => {
     res.json({ actionItems, recording });
   } catch (error) {
     console.error('Error extracting action items:', error);
+    logError('actions_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to extract action items: ' + error.message });
   }
 });

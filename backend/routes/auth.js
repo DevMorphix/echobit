@@ -276,13 +276,15 @@ router.patch('/profile', async (req, res) => {
 
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const { name, avatar, country, profession, preferredLanguage, summaryLanguage, autoSave } = req.body;
+    const { name, avatar, country, profession, preferredLanguage, summaryLanguage, autoSave, privacyAccepted, onboardingSeen } = req.body;
     const updates = { name, avatar };
     if (country !== undefined) updates.country = country;
     if (profession !== undefined) updates.profession = profession;
     if (preferredLanguage !== undefined) updates.preferredLanguage = preferredLanguage;
     if (summaryLanguage !== undefined) updates.summaryLanguage = summaryLanguage;
     if (autoSave !== undefined) updates.autoSave = autoSave;
+    if (privacyAccepted === true) { updates.privacyAccepted = true; updates.privacyAcceptedAt = new Date(); }
+    if (onboardingSeen === true) updates.onboardingSeen = true;
     const user = await User.findByIdAndUpdate(
       decoded.id,
       updates,

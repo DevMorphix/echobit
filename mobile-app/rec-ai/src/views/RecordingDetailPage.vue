@@ -671,58 +671,96 @@ function formatTime(s: number) {
 
 async function handleTranscribe() {
   if (!recording.value) return;
+  const id = recording.value._id;
   processingAction.value = 'transcribe';
-  await recordingsStore.transcribeRecording(recording.value._id);
+  let result = await recordingsStore.transcribeRecording(id);
+  if (!result || !result.transcript) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.transcribeRecording(id);
+  }
   processingAction.value = '';
+  if (!result || !result.transcript) {
+    const msg = recordingsStore.error || 'Failed to transcribe. Please try again.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleTranscribe() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
   activeTab.value = 'transcript';
 }
 
 async function handleSummarize() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
-  if (recording.value.summary) {
-    await recordingsStore.updateRecording(recording.value._id, { summary: '' } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'summarize';
-  await recordingsStore.summarizeRecording(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'summary');
+  let result = await recordingsStore.summarizeRecording(id);
+  if (!result || !result.summary) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.summarizeRecording(id);
+  }
   processingAction.value = '';
+  if (!result || !result.summary) {
+    const msg = recordingsStore.error || 'Failed to generate summary.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleSummarize() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'summary');
   activeTab.value = 'summary';
 }
 
 async function handleMinutes() {
   if (!recording.value) return;
-  if (recording.value.minutes) {
-    await recordingsStore.updateRecording(recording.value._id, { minutes: '' } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'minutes';
-  const result = await recordingsStore.generateMinutes(recording.value._id);
+  let result = await recordingsStore.generateMinutes(id);
+  if (!result || !result.minutes) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.generateMinutes(id);
+  }
   processingAction.value = '';
   if (!result || !result.minutes) {
-    const msg = recordingsStore.error || 'Failed to generate minutes. Please try again.';
-    const toast = await toastController.create({ message: msg, duration: 3500, color: 'danger', position: 'bottom' });
+    const msg = recordingsStore.error || 'Failed to generate minutes.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleMinutes() }]
+    });
     await toast.present();
     return;
   }
-  saveGeneratedAt(recording.value._id, 'minutes');
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'minutes');
   activeTab.value = 'minutes';
 }
 
 async function handleActionItems() {
   if (!recording.value) return;
-  if (recording.value.actionItems?.length) {
-    await recordingsStore.updateRecording(recording.value._id, { actionItems: [] } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'actions';
-  const result = await recordingsStore.generateActionItems(recording.value._id);
+  let result = await recordingsStore.generateActionItems(id);
+  if (!result || !result.actionItems?.length) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.generateActionItems(id);
+  }
   processingAction.value = '';
   if (!result || !result.actionItems?.length) {
-    const msg = recordingsStore.error || 'Failed to extract action items. Please try again.';
-    const toast = await toastController.create({ message: msg, duration: 3500, color: 'danger', position: 'bottom' });
+    const msg = recordingsStore.error || 'Failed to extract action items.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleActionItems() }]
+    });
     await toast.present();
     return;
   }
-  saveGeneratedAt(recording.value._id, 'actions');
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'actions');
   activeTab.value = 'actions';
 }
 

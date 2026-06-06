@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordOTPExpires: { type: Date, default: null },
   privacyAccepted: { type: Boolean, default: false },
   privacyAcceptedAt: { type: Date, default: null },
+  onboardingSeen: { type: Boolean, default: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   lastLoginAt: { type: Date, default: null },
   loginCount: { type: Number, default: 0 },
