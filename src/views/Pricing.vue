@@ -592,6 +592,7 @@ async function pay(plan: string) {
       },
       theme: { color: '#10b981' },
       config_id: import.meta.env.VITE_RAZORPAY_CONFIG_ID || undefined,
+      webview_intent: true,
       handler: async (response: any) => {
         try {
           await paymentsApi.verifyPayment({

@@ -174,8 +174,7 @@
               <span class="bg-gradient-to-r from-emerald-400 to-green-300 bg-clip-text text-transparent"> mother tongue</span>
             </h2>
             <p class="text-white/60 text-base leading-relaxed mb-6">
-              Powered by <strong class="text-white">Sarvam AI</strong>, Echobit Pro and Team plans support
-              transcription and summaries in 20+ Indian languages with native-level accuracy.
+              Echobit supports transcription and summaries in 11 Indian languages with native-level accuracy.
             </p>
             <div class="flex flex-wrap gap-2 mb-8">
               <span v-for="lang in languages" :key="lang"
@@ -205,7 +204,7 @@
               </div>
               <div class="flex items-center gap-2 text-xs text-white/40">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                Transcribed by Sarvam AI · 98.4% confidence
+                Transcribed · 98.4% confidence
               </div>
             </div>
             <div class="mt-5 pt-5 border-t border-white/10">
@@ -289,7 +288,7 @@
           <div class="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col">
             <h3 class="text-white font-bold text-xl mb-1">Free</h3>
             <p class="text-white/40 text-sm mb-5">No card needed</p>
-            <p class="text-4xl font-bold text-white mb-6">$0<span class="text-white/40 text-base font-normal">/mo</span></p>
+            <p class="text-4xl font-bold text-white mb-6">₹0<span class="text-white/40 text-base font-normal">/mo</span></p>
             <ul class="space-y-2.5 flex-1 mb-7">
               <li v-for="f in freeTeaserFeatures" :key="f" class="flex items-center gap-2.5 text-white/60 text-sm">
                 <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -305,7 +304,7 @@
             <div class="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl">Most Popular</div>
             <h3 class="text-white font-bold text-xl mb-1">Pro</h3>
             <p class="text-white/40 text-sm mb-5">For power users</p>
-            <p class="text-4xl font-bold text-white mb-6">$9<span class="text-white/40 text-base font-normal">/mo</span></p>
+            <p class="text-4xl font-bold text-white mb-6">₹499<span class="text-white/40 text-base font-normal">/mo</span></p>
             <ul class="space-y-2.5 flex-1 mb-7">
               <li v-for="f in proTeaserFeatures" :key="f" class="flex items-center gap-2.5 text-white/80 text-sm">
                 <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -463,8 +462,8 @@ const testimonials = [
   },
 ];
 
-const freeTeaserFeatures = ['5 recordings/month', '30 min max', 'AI transcription', 'Basic summary', '1 GB storage'];
-const proTeaserFeatures = ['Unlimited recordings', '3 hours max', '20+ languages', 'Meeting minutes', 'PDF export', '10 GB storage'];
+const freeTeaserFeatures = ['3 recordings/month', '20 min max', 'AI transcription', 'AI summary', '1 GB storage'];
+const proTeaserFeatures = ['40 recordings/month', '2 hours max', '15+ languages', 'Meeting minutes', 'Action items', 'PDF export', '10 GB storage'];
 
 // Intersection observer for scroll animations
 let observer;
