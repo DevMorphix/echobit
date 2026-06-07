@@ -694,7 +694,7 @@ const faqs = [
   },
   {
     q: 'What languages are supported?',
-    a: 'English and Malayalam are available on Free. Starter adds Hindi. Pro unlocks 15+ languages and Growth unlocks 20+ languages including Tamil, Telugu, Bengali, Kannada, Marathi, Gujarati, Punjabi, and more via Sarvam AI.',
+    a: 'English and Malayalam are available on Free. Starter adds Hindi. Pro unlocks 15+ languages and Growth unlocks 20+ languages including Tamil, Telugu, Bengali, Kannada, Marathi, Gujarati, Punjabi, and more.',
   },
   {
     q: 'How does annual billing work?',

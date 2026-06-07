@@ -6,7 +6,7 @@
         <p class="text-gray-500 text-sm mt-1">Privacy Policy</p>
       </div>
 
-      <p class="text-sm text-gray-500 mb-8">Last updated: 6 March 2026</p>
+      <p class="text-sm text-gray-500 mb-8">Last updated: 7 June 2026</p>
 
       <section class="mb-8">
         <h2 class="text-white text-lg font-semibold mb-3">1. Introduction</h2>
@@ -21,7 +21,7 @@
         <h2 class="text-white text-lg font-semibold mb-3">2. Information We Collect</h2>
         <ul class="text-sm leading-relaxed space-y-2 list-disc list-inside">
           <li><strong class="text-white">Account information</strong> — your name and email address when you register or sign in with Google.</li>
-          <li><strong class="text-white">Audio recordings</strong> — audio files you record within the App, stored securely in the cloud.</li>
+          <li><strong class="text-white">Audio recordings</strong> — audio files you record within the App. When Cloud Sync is enabled, audio is uploaded to and stored securely in the cloud. When Cloud Sync is disabled, audio is stored privately on your device only and is never transmitted to our servers permanently; it is sent temporarily for AI processing and immediately discarded from our systems.</li>
           <li><strong class="text-white">Transcriptions and notes</strong> — text generated from your recordings, including AI-generated summaries and custom notes.</li>
           <li><strong class="text-white">Device information</strong> — basic device and operating system information for compatibility and debugging purposes.</li>
         </ul>
@@ -55,10 +55,13 @@
 
       <section class="mb-8">
         <h2 class="text-white text-lg font-semibold mb-3">5. Data Retention</h2>
-        <p class="text-sm leading-relaxed">
+        <p class="text-sm leading-relaxed mb-3">
           Your data is retained for as long as your account remains active. You may delete your account at any time
           (see Section 7), after which all your personal data and recordings are permanently deleted from our systems.
           Deletion is processed immediately upon request.
+        </p>
+        <p class="text-sm leading-relaxed">
+          <strong class="text-white">Local-only recordings (Cloud Sync disabled):</strong> Audio files saved with Cloud Sync turned off are stored exclusively in the app's private storage on your device. They are not accessible from the phone's file manager or any other app. These files are permanently and irrecoverably deleted if the app is uninstalled. We strongly recommend enabling Cloud Sync or exporting important recordings before uninstalling the app.
         </p>
       </section>
 

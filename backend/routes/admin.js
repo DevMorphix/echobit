@@ -123,6 +123,25 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+// ── Per-user feature overrides ───────────────────────────────────────────────
+router.patch('/users/:id/overrides', async (req, res) => {
+  try {
+    const FIELDS = ['meetingMinutes', 'actionItems', 'pdfExport', 'indianLanguages'];
+    const update = {};
+    for (const f of FIELDS) {
+      if (f in req.body) update[`featureOverrides.${f}`] = req.body[f] ?? null;
+    }
+    if (Object.keys(update).length === 0)
+      return res.status(400).json({ error: 'No valid fields provided' });
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (error) {
+    console.error('Override update error:', error);
+    res.status(500).json({ error: 'Failed to update overrides' });
+  }
+});
+
 // ── Recordings list ──────────────────────────────────────────────────────────
 router.get('/recordings', async (req, res) => {
   try {

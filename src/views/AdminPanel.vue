@@ -811,6 +811,28 @@
             </div>
 
             <div>
+              <h4 class="text-sm font-semibold mb-1" :class="thm.textMuted">
+                Feature Overrides
+                <span class="font-normal text-xs" :class="thm.textFaint"> — overrides plan for this user</span>
+              </h4>
+              <div class="space-y-1.5">
+                <div v-for="f in overrideFields" :key="f.key"
+                     :class="[thm.cardInner, 'px-4 py-2.5 flex items-center justify-between gap-3']">
+                  <span class="text-sm" :class="thm.text">{{ f.label }}</span>
+                  <select
+                    :value="selectedUser.user.featureOverrides?.[f.key] == null ? 'default' : String(selectedUser.user.featureOverrides[f.key])"
+                    @change="applyOverride(f.key, $event.target.value)"
+                    :disabled="overrideSaving"
+                    :class="['text-xs rounded-lg px-2 py-1 border cursor-pointer', thm.input]">
+                    <option value="default">Default (plan)</option>
+                    <option value="true">Force ON</option>
+                    <option value="false">Force OFF</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            <div>
               <h4 class="text-sm font-semibold mb-3" :class="thm.textMuted">Recordings (last 20)</h4>
               <div v-if="!selectedUser.recordings.length" class="text-sm" :class="thm.textFaint">No recordings.</div>
               <ul v-else class="space-y-2">
@@ -1061,6 +1083,28 @@ const selectedUser = ref(null);
 async function openUser(u) {
   selectedUser.value = { user: u, recordings: [] };
   try { selectedUser.value = await adminApi.getUser(u._id); } catch {}
+}
+
+const overrideFields = [
+  { key: 'meetingMinutes',  label: 'Meeting Minutes'  },
+  { key: 'actionItems',     label: 'Action Items'     },
+  { key: 'pdfExport',       label: 'PDF Export'       },
+  { key: 'indianLanguages', label: 'Indian Languages' },
+];
+const overrideSaving = ref(false);
+async function applyOverride(field, rawValue) {
+  if (!selectedUser.value) return;
+  const value = rawValue === 'default' ? null : rawValue === 'true';
+  overrideSaving.value = true;
+  try {
+    const { user } = await adminApi.updateUserOverrides(selectedUser.value.user._id, { [field]: value });
+    if (!selectedUser.value.user.featureOverrides) selectedUser.value.user.featureOverrides = {};
+    selectedUser.value.user.featureOverrides[field] = user.featureOverrides?.[field] ?? null;
+  } catch (e) {
+    globalError.value = 'Failed to save feature override';
+  } finally {
+    overrideSaving.value = false;
+  }
 }
 
 const deleteConfirm = ref(null);

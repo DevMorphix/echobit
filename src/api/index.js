@@ -315,6 +315,12 @@ export const adminApi = {
   async deleteUser(id) {
     return apiRequest(`/admin/users/${id}`, { method: 'DELETE' });
   },
+  async updateUserOverrides(id, overrides) {
+    return apiRequest(`/admin/users/${id}/overrides`, {
+      method: 'PATCH',
+      body: JSON.stringify(overrides),
+    });
+  },
   async getRecordings(page = 1, search = '') {
     return apiRequest(`/admin/recordings?page=${page}&search=${encodeURIComponent(search)}`);
   },

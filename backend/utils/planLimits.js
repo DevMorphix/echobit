@@ -73,31 +73,43 @@ export const getPlanLimits = (user) => PLAN_LIMITS[getActivePlan(user)] ?? PLAN_
 export const getEffectiveLimits = async (user) => {
   const base = getPlanLimits(user);
   const plan = getActivePlan(user);
+
+  // Tier 2: plan-wide admin overrides from PlanConfig
+  let limits = base;
   try {
     const PlanConfig = (await import('../models/PlanConfig.js')).default;
     const cfg = await PlanConfig.findOne({ plan }).select('gates').lean();
-    if (!cfg?.gates) return base;
-    const g = cfg.gates;
-    return {
-      ...base,
-      meetingMinutes:    g.meetingMinutes    ?? base.meetingMinutes,
-      actionItems:       g.actionItems       ?? base.actionItems,
-      pdfExport:         g.pdfExport         ?? base.pdfExport,
-      indianLanguages:   g.indianLanguages   ?? base.indianLanguages,
-      // 0 means unlimited for recordings; null means use plan default
-      recordingsPerMonth: g.recordingsPerMonth != null
-        ? (g.recordingsPerMonth === 0 ? null : g.recordingsPerMonth)
-        : base.recordingsPerMonth,
-      // convert admin minutes → seconds; null means use plan default
-      maxDurationSecs: g.maxDurationMins != null
-        ? g.maxDurationMins * 60
-        : base.maxDurationSecs,
-      // convert admin GB → bytes; null means use plan default
-      maxStorageBytes: g.maxStorageGB != null
-        ? g.maxStorageGB * 1_073_741_824
-        : base.maxStorageBytes,
-    };
+    if (cfg?.gates) {
+      const g = cfg.gates;
+      limits = {
+        ...base,
+        meetingMinutes:    g.meetingMinutes    ?? base.meetingMinutes,
+        actionItems:       g.actionItems       ?? base.actionItems,
+        pdfExport:         g.pdfExport         ?? base.pdfExport,
+        indianLanguages:   g.indianLanguages   ?? base.indianLanguages,
+        recordingsPerMonth: g.recordingsPerMonth != null
+          ? (g.recordingsPerMonth === 0 ? null : g.recordingsPerMonth)
+          : base.recordingsPerMonth,
+        maxDurationSecs: g.maxDurationMins != null
+          ? g.maxDurationMins * 60
+          : base.maxDurationSecs,
+        maxStorageBytes: g.maxStorageGB != null
+          ? g.maxStorageGB * 1_073_741_824
+          : base.maxStorageBytes,
+      };
+    }
   } catch {
-    return base; // DB unavailable — fall back to hardcoded defaults
+    // DB unavailable — keep hardcoded defaults
   }
+
+  // Tier 3: per-user overrides (highest priority, set via admin)
+  const ov = user?.featureOverrides;
+  if (ov) {
+    if (ov.meetingMinutes  != null) limits = { ...limits, meetingMinutes:  ov.meetingMinutes };
+    if (ov.actionItems     != null) limits = { ...limits, actionItems:     ov.actionItems };
+    if (ov.pdfExport       != null) limits = { ...limits, pdfExport:       ov.pdfExport };
+    if (ov.indianLanguages != null) limits = { ...limits, indianLanguages: ov.indianLanguages };
+  }
+
+  return limits;
 };

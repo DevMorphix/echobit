@@ -160,6 +160,10 @@
               </div>
               <ion-toggle :checked="cloudSyncEnabled" @ionChange="onCloudSyncChange($event.detail.checked)" mode="ios"></ion-toggle>
             </div>
+            <div v-if="!cloudSyncEnabled" class="cloud-sync-warning">
+              <ion-icon :icon="warningOutline" class="warning-icon"></ion-icon>
+              <span>Audio files are stored privately on this device and cannot be recovered if the app is uninstalled.</span>
+            </div>
 
             <div class="setting-item" v-if="isIndianUser">
               <div class="setting-icon" style="background: rgba(99, 102, 241, 0.08);">
@@ -349,7 +353,7 @@ import {
   sunnyOutline, moonOutline, notificationsOutline, helpCircleOutline,
   informationCircleOutline, logOutOutline, closeOutline, micOutline,
   documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline,
-  cloudUploadOutline, lockClosedOutline
+  cloudUploadOutline, lockClosedOutline, warningOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -925,6 +929,26 @@ function openPricing() {
   font-size: 18px;
   color: var(--app-text-muted);
   flex-shrink: 0;
+}
+
+.cloud-sync-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 8px 0;
+  padding: 10px 12px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #fbbf24;
+  line-height: 1.5;
+}
+
+.cloud-sync-warning .warning-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* Theme Toggle */
