@@ -335,7 +335,7 @@ router.post('/upload-url', async (req, res) => {
 // Create new recording
 router.post('/', async (req, res) => {
   try {
-    const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe } = req.body;
+    const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe, tempUpload } = req.body;
 
     console.log('Creating recording:', {
       title,
@@ -344,14 +344,16 @@ router.post('/', async (req, res) => {
       audioKey,
       duration,
       mimeType,
+      tempUpload: !!tempUpload,
       hasR2Config: !!process.env.R2_ACCESS_KEY_ID,
       hasOpenAIKey: !!process.env.OPENAI_API_KEY
     });
 
     // Plan limit checks
     // For presigned-URL uploads, the client reports the file size since the server never saw the bytes.
+    // tempUpload = audio is processed but not permanently stored; don't count toward storage quota.
     const userDoc = await User.findById(req.user.id);
-    const incomingBytes = audioData
+    const incomingBytes = (audioData && !tempUpload)
       ? Buffer.byteLength(audioData, 'base64')
       : (audioKey ? (clientAudioSize || 0) : 0);
     const check = await checkCreateLimits(req.user.id, userDoc, duration || 0, incomingBytes);
@@ -385,27 +387,29 @@ router.post('/', async (req, res) => {
         }
       }
     }
-    // Option 2: Base64 audioData provided (upload to R2)
-    else if (audioData && process.env.R2_ACCESS_KEY_ID) {
+    // Option 2: Base64 audioData provided
+    else if (audioData) {
       try {
-        console.log('Uploading audio to R2...');
         // Strip data URL prefix — handles "audio/webm;codecs=opus;base64," etc.
         const base64Data = audioData.replace(/^data:[^,]+,/, '');
         audioBuffer = Buffer.from(base64Data, 'base64');
         console.log('Audio buffer size:', audioBuffer.length);
-        const uploaded = await uploadAudio(audioBuffer, req.user.id, mimeType || 'audio/webm');
-        audioInfo = {
-          audioKey: uploaded.key,
-          audioUrl: uploaded.url,
-          audioSize: uploaded.size
-        };
-        console.log('R2 upload success:', audioInfo.audioKey);
+
+        if (process.env.R2_ACCESS_KEY_ID && !tempUpload) {
+          // Permanent cloud storage: upload to R2 and keep the key
+          console.log('Uploading audio to R2...');
+          const uploaded = await uploadAudio(audioBuffer, req.user.id, mimeType || 'audio/webm');
+          audioInfo = { audioKey: uploaded.key, audioUrl: uploaded.url, audioSize: uploaded.size };
+          console.log('R2 upload success:', audioInfo.audioKey);
+        } else {
+          // tempUpload or no R2 config: use buffer for processing, no permanent audio storage
+          console.log('[TempUpload] Processing audio from buffer without permanent cloud storage');
+        }
       } catch (uploadError) {
-        console.error('R2 upload error:', uploadError);
-        // Continue without audio if R2 is not configured
+        console.error('Audio processing error:', uploadError);
       }
     } else {
-      console.log('Skipping R2 operations:', { hasAudioData: !!audioData, hasAudioKey: !!audioKey, hasR2Config: !!process.env.R2_ACCESS_KEY_ID });
+      console.log('Skipping audio operations:', { hasAudioData: !!audioData, hasAudioKey: !!audioKey, hasR2Config: !!process.env.R2_ACCESS_KEY_ID });
     }
 
     // Auto-transcribe if requested and we have audio

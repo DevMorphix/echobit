@@ -707,8 +707,10 @@ async function handleTranscribe() {
 
   if (isLocalRecording.value) {
     const toast = await toastController.create({
-      message: 'Transcription requires Cloud Sync. Enable it in Profile settings.',
-      duration: 3500,
+      message: recording.value?.transcript
+        ? 'Already transcribed. Retry by enabling Cloud Sync in Profile settings.'
+        : 'Transcription failed during save. Enable Cloud Sync and try again.',
+      duration: 4000,
       color: 'warning',
       position: 'bottom',
     });

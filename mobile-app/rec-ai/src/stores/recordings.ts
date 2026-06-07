@@ -48,6 +48,7 @@ export const useRecordingsStore = defineStore('recordings', () => {
     mimeType: string;
     title?: string;
     autoTranscribe?: boolean;
+    tempUpload?: boolean;
   }) {
     processing.value = true;
     error.value = null;

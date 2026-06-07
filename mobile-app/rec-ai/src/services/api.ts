@@ -225,6 +225,7 @@ class ApiService {
     mimeType: string;
     title?: string;
     autoTranscribe?: boolean;
+    tempUpload?: boolean;
   }): Promise<Recording> {
     const { data } = await this.api.post<{ recording: Recording }>('/recordings', recordingData, {
       timeout: 300000, // 5 minutes — backend may transcribe synchronously

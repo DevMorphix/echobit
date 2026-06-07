@@ -668,18 +668,22 @@ async function saveRecording() {
           autoTranscribe: false,
         });
       } else {
-        // Cloud Sync OFF: save audio to device only (privacy mode)
-        processingStatus.value = 'Saving to device...';
+        // Cloud Sync OFF: send audio to server for temporary processing (transcription),
+        // then save audio locally. Audio is never permanently stored in cloud.
+        processingStatus.value = 'Preparing audio...';
         const base64Full = await blobToBase64(audioBlob.value);
         const base64Data = base64Full.replace(/^data:[^,]+,/, '');
-        // Create recording first to get the stable _id for the filename
-        processingStatus.value = 'Saving...';
+        processingStatus.value = 'Transcribing...';
         recording = await recordingsStore.createRecording({
+          audioData: base64Full,
           duration,
           mimeType,
-          autoTranscribe: false,
+          autoTranscribe: true,
+          tempUpload: true,
         });
         if (recording) {
+          // Save audio to device for local playback
+          processingStatus.value = 'Saving to device...';
           const extFromMime = mimeType.split('/')[1]?.split(';')[0] || 'webm';
           const filename = `audio_${recording._id}.${extFromMime}`;
           await Filesystem.writeFile({
