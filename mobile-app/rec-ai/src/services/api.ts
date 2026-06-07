@@ -13,12 +13,13 @@ export interface User {
   autoSave?: boolean;
   summaryLanguage?: string;
   createdAt: string;
-  plan?: 'free' | 'pro' | 'team';
+  plan?: 'free' | 'starter' | 'pro' | 'growth' | 'team';
   planBillingCycle?: 'monthly' | 'annual' | null;
   planStartDate?: string | null;
   planExpiresAt?: string | null;
   privacyAccepted?: boolean;
   onboardingSeen?: boolean;
+  cloudSync?: boolean;
 }
 
 export interface SubscriptionStatus {
@@ -35,12 +36,14 @@ export interface Recording {
   user: string;
   title: string;
   audioUrl?: string;
+  audioKey?: string;
+  audioMimeType?: string;
   duration: number;
   status: 'pending' | 'transcribing' | 'transcribed' | 'summarized' | 'completed' | 'failed';
   transcript?: string;
   summary?: string;
   minutes?: string;
-  actionItems?: { task: string; assignee: string; priority: string; deadline: string | null }[];
+  actionItems?: { task: string; assignee: string; priority: string; deadline: string | null; completed?: boolean }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -322,7 +325,7 @@ class ApiService {
     return data;
   }
 
-  async getPlans(): Promise<Record<string, { features: { text: string; included: boolean }[]; monthlyPrice: string; annualPrice: string }>> {
+  async getPlans(): Promise<Record<string, { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string }>> {
     const { data } = await this.api.get('/plans');
     return data;
   }

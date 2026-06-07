@@ -53,6 +53,7 @@ const userSchema = new mongoose.Schema({
   preferredLanguage: { type: String, default: null, trim: true },
   summaryLanguage: { type: String, default: null, trim: true }, // null = English
   autoSave: { type: Boolean, default: true },
+  cloudSync: { type: Boolean, default: true },
   plan: { type: String, enum: ['free', 'starter', 'pro', 'growth', 'team'], default: 'free' },
   planBillingCycle: { type: String, enum: ['monthly', 'annual'], default: null },
   planStartDate: { type: Date, default: null },

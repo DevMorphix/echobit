@@ -47,8 +47,14 @@
             </div>
           </div>
 
+          <!-- Local Recording Badge -->
+          <div v-if="isLocalRecording" class="local-badge">
+            <ion-icon :icon="lockClosedOutline"></ion-icon>
+            <span>Saved locally · Cloud Sync off</span>
+          </div>
+
           <!-- Compact Audio Player -->
-          <div class="player-section" v-if="recording.audioUrl">
+          <div class="player-section" v-if="recording.audioUrl || localAudioUrl">
             <button class="player-btn" @click="togglePlay">
               <ion-icon :icon="isPlaying ? pauseOutline : playOutline"></ion-icon>
             </button>
@@ -62,7 +68,7 @@
                 <span>{{ totalTime }}</span>
               </div>
             </div>
-            <audio ref="audioRef" :src="recording.audioUrl" @timeupdate="updateProgress" @loadedmetadata="onLoaded" @ended="isPlaying = false"></audio>
+            <audio ref="audioRef" :src="recording.audioUrl || localAudioUrl" @timeupdate="updateProgress" @loadedmetadata="onLoaded" @ended="isPlaying = false"></audio>
           </div>
 
           <!-- AI Actions -->
@@ -308,6 +314,7 @@ interface DownloaderPlugin {
 }
 const Downloader = registerPlugin<DownloaderPlugin>('Downloader');
 import { useRecordingsStore } from '@/stores/recordings';
+import { api } from '@/services/api';
 import { loadTemplates, saveCustomTemplates, loadLogo, saveLogo, removeLogo } from '@/services/pdfTemplates';
 import type { PdfTemplate } from '@/services/pdfTemplates';
 import { generateMinutesPdf, generateSummaryPdf } from '@/services/pdfGenerator';
@@ -359,11 +366,16 @@ const isPlaying = ref(false);
 const progress = ref(0);
 const currentTime = ref('0:00');
 const totalTime = ref('0:00');
+const localAudioUrl = ref<string | undefined>(undefined);
 
 // Declare these first — used by watches below (avoids temporal dead zone errors)
 const recording = computed(() => recordingsStore.currentRecording);
 const loading = computed(() => recordingsStore.loading);
 const processing = computed(() => recordingsStore.processing);
+
+const isLocalRecording = computed(() =>
+  !!recording.value && !recording.value.audioKey && !recording.value.audioUrl
+);
 
 // Todo list local state
 const localCompleted = ref<boolean[]>([]);
@@ -513,6 +525,11 @@ const deleteButtons = [
     role: 'destructive',
     handler: async () => {
       const id = route.params.id as string;
+      const rec = recordingsStore.currentRecording;
+      if (rec && !rec.audioKey && !rec.audioUrl) {
+        const ext = rec.audioMimeType?.split('/')[1]?.split(';')[0] || 'webm';
+        try { await Filesystem.deleteFile({ path: `audio_${id}.${ext}`, directory: Directory.Data }); } catch {}
+      }
       await recordingsStore.deleteRecording(id);
       router.replace('/recordings');
     }
@@ -622,6 +639,22 @@ watch(recording, (rec) => {
   }
 });
 
+// Load local audio file for recordings saved with Cloud Sync OFF
+watch(recording, async (rec) => {
+  if (rec && !rec.audioUrl && !rec.audioKey) {
+    const ext = rec.audioMimeType?.split('/')[1]?.split(';')[0] || 'webm';
+    const localPath = `audio_${rec._id}.${ext}`;
+    try {
+      const { data } = await Filesystem.readFile({ path: localPath, directory: Directory.Data });
+      localAudioUrl.value = `data:${rec.audioMimeType || 'audio/webm'};base64,${data}`;
+    } catch {
+      localAudioUrl.value = undefined;
+    }
+  } else {
+    localAudioUrl.value = undefined;
+  }
+});
+
 // Only set the default tab on first load — never override while user is actively on a tab
 watch(recording, (rec, oldRec) => {
   if (rec && !oldRec) {
@@ -671,6 +704,18 @@ function formatTime(s: number) {
 
 async function handleTranscribe() {
   if (!recording.value) return;
+
+  if (isLocalRecording.value) {
+    const toast = await toastController.create({
+      message: 'Transcription requires Cloud Sync. Enable it in Profile settings.',
+      duration: 3500,
+      color: 'warning',
+      position: 'bottom',
+    });
+    await toast.present();
+    return;
+  }
+
   const id = recording.value._id;
   processingAction.value = 'transcribe';
   let result = await recordingsStore.transcribeRecording(id);
@@ -1112,6 +1157,22 @@ function applyInlineFormatting(text: string): string {
   justify-content: center;
   margin-bottom: 16px;
 }
+
+.local-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-tertiary);
+  margin-bottom: 16px;
+}
+
+.local-badge ion-icon { font-size: 13px; }
 
 .empty-icon-wrap ion-icon { font-size: 28px; color: var(--ion-color-warning); }
 .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--app-text); margin: 0 0 12px; }

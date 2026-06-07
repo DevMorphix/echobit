@@ -66,10 +66,10 @@
               <span class="sub-detail-value sub-days-left">{{ daysLeft }} days</span>
             </div>
           </div>
-          <button class="sub-manage-btn" @click="openPricing">Manage Plan</button>
+          <button class="sub-manage-btn" @click="subscribe">Manage Plan</button>
         </div>
 
-        <div v-else class="upgrade-banner" @click="openPricing">
+        <div v-else class="upgrade-banner" @click="subscribe">
           <div class="upgrade-icon">
             <ion-icon :icon="flashOutline"></ion-icon>
           </div>
@@ -148,6 +148,17 @@
                 <span class="setting-desc">Transcribe automatically after recording</span>
               </div>
               <ion-toggle :checked="autoSave" @ionChange="onAutoSaveChange($event.detail.checked)" mode="ios"></ion-toggle>
+            </div>
+
+            <div class="setting-item">
+              <div class="setting-icon" :style="cloudSyncEnabled ? 'background: rgba(16, 185, 129, 0.08);' : 'background: rgba(99, 102, 241, 0.08);'">
+                <ion-icon :icon="cloudSyncEnabled ? cloudUploadOutline : lockClosedOutline" :style="cloudSyncEnabled ? 'color: var(--app-primary);' : 'color: var(--ion-color-tertiary);'"></ion-icon>
+              </div>
+              <div class="setting-body">
+                <span class="setting-title">Cloud Sync</span>
+                <span class="setting-desc">{{ cloudSyncEnabled ? 'Audio uploaded to cloud' : 'Audio saved on device only' }}</span>
+              </div>
+              <ion-toggle :checked="cloudSyncEnabled" @ionChange="onCloudSyncChange($event.detail.checked)" mode="ios"></ion-toggle>
             </div>
 
             <div class="setting-item" v-if="isIndianUser">
@@ -337,7 +348,8 @@ import {
   chevronBackOutline, chevronForwardOutline, personOutline, cloudOutline,
   sunnyOutline, moonOutline, notificationsOutline, helpCircleOutline,
   informationCircleOutline, logOutOutline, closeOutline, micOutline,
-  documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline
+  documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline,
+  cloudUploadOutline, lockClosedOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -366,6 +378,7 @@ const notifications = ref(true);
 const isDark = ref(false);
 const saving = ref(false);
 const autoSave = ref(true);
+const cloudSyncEnabled = ref(true);
 const summaryLanguage = ref('');
 
 const editName = ref('');
@@ -460,6 +473,7 @@ onMounted(() => {
     editName.value = user.value.name;
     editEmail.value = user.value.email;
     autoSave.value = user.value.autoSave !== false;
+    cloudSyncEnabled.value = user.value.cloudSync !== false;
     summaryLanguage.value = user.value.summaryLanguage || '';
   }
 });
@@ -491,10 +505,21 @@ async function saveProfile() {
   }
 }
 
+function subscribe() {
+  const token = authStore.token;
+  const url = `https://echobits.devmorphix.com/pricing?token=${token}`;
+  window.open(url, '_blank');
+}
+
 async function onAutoSaveChange(val: boolean) {
   autoSave.value = val;
   localStorage.setItem('autoSave', val ? 'true' : 'false');
   await authStore.updateProfile({ autoSave: val });
+}
+
+async function onCloudSyncChange(val: boolean) {
+  cloudSyncEnabled.value = val;
+  await authStore.updateProfile({ cloudSync: val });
 }
 
 async function onSummaryLangChange() {

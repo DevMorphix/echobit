@@ -179,6 +179,7 @@ import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonSpinner, alertController } from '@ionic/vue';
 import { closeOutline, mic, playOutline, pauseOutline, trashOutline, checkmarkOutline, alertCircleOutline, cloudUploadOutline, lockClosedOutline } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { CapacitorVoiceRecorder } from '@lgicc/capacitor-voice-recorder';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -652,19 +653,43 @@ async function saveRecording() {
     let recording;
 
     if (Capacitor.isNativePlatform()) {
-      // Android/iOS: R2 presigned PUT is blocked by Android WebView/carrier proxies.
-      // Send the full audio as base64 to POST /recordings — the server handles R2 upload.
-      processingStatus.value = 'Preparing audio...';
-      const base64 = await blobToBase64(audioBlob.value);
-      const sizeMB = ((base64.length * 0.75) / 1024 / 1024).toFixed(1);
-      console.log(`[Upload] Native — base64 ~${sizeMB} MB → backend`);
-      processingStatus.value = 'Uploading audio...';
-      recording = await recordingsStore.createRecording({
-        audioData: base64,
-        duration,
-        mimeType,
-        autoTranscribe: false,
-      });
+      const cloudSync = authStore.user?.cloudSync !== false;
+
+      if (cloudSync) {
+        // Cloud Sync ON: upload audio to backend → R2
+        processingStatus.value = 'Preparing audio...';
+        const base64 = await blobToBase64(audioBlob.value);
+        console.log(`[Upload] Cloud — base64 ~${((base64.length * 0.75) / 1024 / 1024).toFixed(1)} MB → backend`);
+        processingStatus.value = 'Uploading audio...';
+        recording = await recordingsStore.createRecording({
+          audioData: base64,
+          duration,
+          mimeType,
+          autoTranscribe: false,
+        });
+      } else {
+        // Cloud Sync OFF: save audio to device only (privacy mode)
+        processingStatus.value = 'Saving to device...';
+        const base64Full = await blobToBase64(audioBlob.value);
+        const base64Data = base64Full.replace(/^data:[^,]+,/, '');
+        // Create recording first to get the stable _id for the filename
+        processingStatus.value = 'Saving...';
+        recording = await recordingsStore.createRecording({
+          duration,
+          mimeType,
+          autoTranscribe: false,
+        });
+        if (recording) {
+          const extFromMime = mimeType.split('/')[1]?.split(';')[0] || 'webm';
+          const filename = `audio_${recording._id}.${extFromMime}`;
+          await Filesystem.writeFile({
+            path: filename,
+            data: base64Data,
+            directory: Directory.Data,
+            recursive: true,
+          });
+        }
+      }
     } else {
       // Web: direct R2 presigned URL upload
       uploadProgress.value = 0;

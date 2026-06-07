@@ -1,15 +1,21 @@
 package rec.ai;
 
 import android.Manifest;
+import android.content.ActivityNotFoundException;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.net.Uri;
 import android.os.Bundle;
 import android.webkit.PermissionRequest;
+import android.webkit.WebResourceRequest;
+import android.webkit.WebView;
 
 import androidx.activity.EdgeToEdge;
 import androidx.core.content.ContextCompat;
 
 import com.getcapacitor.BridgeActivity;
 import com.getcapacitor.BridgeWebChromeClient;
+import com.getcapacitor.BridgeWebViewClient;
 
 public class MainActivity extends BridgeActivity {
 
@@ -35,6 +41,28 @@ public class MainActivity extends BridgeActivity {
         //
         // Fix: intercept onPermissionRequest and directly grant RESOURCE_AUDIO_CAPTURE
         // whenever RECORD_AUDIO is already granted at the Android OS level.
+        // Intercept UPI/payment app URL schemes so Razorpay can launch GPay,
+        // PhonePe, Paytm etc. from within the WebView via Android intents.
+        getBridge().getWebView().setWebViewClient(new BridgeWebViewClient(getBridge()) {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String url = request.getUrl().toString();
+                if (url.startsWith("upi://") || url.startsWith("gpay://") ||
+                        url.startsWith("phonepe://") || url.startsWith("paytmmp://") ||
+                        url.startsWith("intent://")) {
+                    try {
+                        Intent intent = new Intent(Intent.ACTION_VIEW, Uri.parse(url));
+                        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+                        startActivity(intent);
+                    } catch (ActivityNotFoundException e) {
+                        // UPI app not installed — let Razorpay show its fallback UI
+                    }
+                    return true;
+                }
+                return super.shouldOverrideUrlLoading(view, request);
+            }
+        });
+
         getBridge().getWebView().setWebChromeClient(new BridgeWebChromeClient(getBridge()) {
             @Override
             public void onPermissionRequest(final PermissionRequest request) {

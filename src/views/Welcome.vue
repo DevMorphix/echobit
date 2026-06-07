@@ -2,7 +2,7 @@
   <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 overflow-x-hidden">
 
     <!-- Fixed Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
+    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5" style="padding-top: max(1rem, env(safe-area-inset-top));">
       <div class="max-w-7xl mx-auto flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />

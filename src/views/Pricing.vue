@@ -1,56 +1,58 @@
 <template>
-  <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 min-h-screen overflow-x-hidden">
+  <!-- Fixed elements outside overflow-x-hidden to avoid Android WebView fixed-positioning bug -->
 
-    <!-- Payment status toast -->
-    <transition name="fade">
-      <div v-if="paymentStatus"
-        class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium max-w-sm w-full"
-        :class="paymentStatus.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'"
-      >
-        <svg v-if="paymentStatus.type === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-        </svg>
-        <svg v-else class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <span class="flex-1">{{ paymentStatus.message }}</span>
-        <button @click="paymentStatus = null" class="opacity-70 hover:opacity-100 text-lg leading-none ml-2">×</button>
-      </div>
-    </transition>
+  <!-- Payment status toast -->
+  <transition name="fade">
+    <div v-if="paymentStatus"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium max-w-sm w-full"
+      :class="paymentStatus.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'"
+    >
+      <svg v-if="paymentStatus.type === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+      </svg>
+      <svg v-else class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      <span class="flex-1">{{ paymentStatus.message }}</span>
+      <button @click="paymentStatus = null" class="opacity-70 hover:opacity-100 text-lg leading-none ml-2">×</button>
+    </div>
+  </transition>
 
-    <!-- Fixed Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
-      <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <router-link to="/" class="flex items-center space-x-2">
-          <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
-          <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
+  <!-- Fixed Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 pt-9 bg-black/30 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <router-link to="/" class="flex items-center space-x-2">
+        <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
+        <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
+      </router-link>
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
+          Contact
         </router-link>
-        <div class="flex items-center space-x-2 sm:space-x-4">
-          <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
-            Contact
+        <template v-if="authState.isAuthenticated">
+          <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
+            Dashboard
           </router-link>
-          <template v-if="authState.isAuthenticated">
-            <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
-              Dashboard
-            </router-link>
-            <router-link to="/dashboard" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-2 rounded-full transition text-sm font-medium">
-              <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold leading-none">
-                {{ (authState.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
-              </div>
-              <span class="hidden sm:inline">{{ authState.user?.name?.split(' ')[0] }}</span>
-            </router-link>
-          </template>
-          <template v-else>
-            <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">
-              Sign In
-            </router-link>
-            <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
-              Get Started
-            </router-link>
-          </template>
-        </div>
+          <router-link to="/dashboard" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-2 rounded-full transition text-sm font-medium">
+            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold leading-none">
+              {{ (authState.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
+            </div>
+            <span class="hidden sm:inline">{{ authState.user?.name?.split(' ')[0] }}</span>
+          </router-link>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">
+            Sign In
+          </router-link>
+          <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
+            Get Started
+          </router-link>
+        </template>
       </div>
-    </nav>
+    </div>
+  </nav>
+
+  <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 min-h-screen overflow-x-hidden">
 
     <!-- Hero -->
     <section class="pt-40 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
