@@ -650,7 +650,7 @@ watch(paymentStatus, (val) => {
 });
 
 // Plan data loaded from API (admin-editable features + prices)
-type PlanData = { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string };
+type PlanData = { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string; gates?: { maxDurationMins?: number | null; recordingsPerMonth?: number | null; maxStorageGB?: number | null } };
 const planData = ref<Record<string, PlanData>>({});
 const freeFeatures    = computed(() => planData.value.free?.features    ?? []);
 const starterFeatures = computed(() => planData.value.starter?.features ?? []);
@@ -668,20 +668,33 @@ const growthMonthly   = computed(() => pd('growth').monthlyPrice   || '₹999');
 const growthAnnualMo  = computed(() => pd('growth').annualMonthly  || '₹799');
 const growthAnnualTt  = computed(() => pd('growth').annualTotal    || '₹9,588');
 
-const comparison = [
-  { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },
-  { feature: 'Max recording length',  free: '20 min',   starter: '45 min',   pro: '2 hours',   growth: '3 hours'   },
-  { feature: 'AI Transcription',      free: true,       starter: true,       pro: true,        growth: true        },
-  { feature: 'Languages',             free: 'Eng+Mal',  starter: '3 langs',  pro: '15+',       growth: '20+'       },
-  { feature: 'AI Summary',            free: true,       starter: true,       pro: true,        growth: true        },
-  { feature: 'AI Notes',              free: false,      starter: true,       pro: true,        growth: true        },
-  { feature: 'Meeting Minutes',       free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Action Items',          free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'PDF Export',            free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Priority Processing',   free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Priority Support',      free: false,      starter: false,      pro: false,       growth: true        },
-  { feature: 'Storage',               free: '1 GB',     starter: '3 GB',     pro: '10 GB',     growth: '25 GB'     },
-];
+function fmtMins(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const h = mins / 60;
+  return `${h % 1 === 0 ? h : h.toFixed(1)} hour${h !== 1 ? 's' : ''}`;
+}
+
+const comparison = computed(() => {
+  const gates = (plan: string) => planData.value[plan]?.gates ?? {};
+  const dur = (plan: string, fallbackMins: number): string => {
+    const m = gates(plan).maxDurationMins;
+    return fmtMins(m != null ? m : fallbackMins);
+  };
+  return [
+    { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },
+    { feature: 'Max recording length',  free: dur('free', 20), starter: dur('starter', 45), pro: dur('pro', 120), growth: dur('growth', 180) },
+    { feature: 'AI Transcription',      free: true,       starter: true,       pro: true,        growth: true        },
+    { feature: 'Languages',             free: 'Eng+Mal',  starter: '3 langs',  pro: '15+',       growth: '20+'       },
+    { feature: 'AI Summary',            free: true,       starter: true,       pro: true,        growth: true        },
+    { feature: 'AI Notes',              free: false,      starter: true,       pro: true,        growth: true        },
+    { feature: 'Meeting Minutes',       free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Action Items',          free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'PDF Export',            free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Priority Processing',   free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Priority Support',      free: false,      starter: false,      pro: false,       growth: true        },
+    { feature: 'Storage',               free: '1 GB',     starter: '3 GB',     pro: '10 GB',     growth: '25 GB'     },
+  ];
+});
 
 const faqs = [
   {

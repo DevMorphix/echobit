@@ -126,7 +126,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-8">
             <div v-for="(step, i) in howItWorks" :key="i" class="flex flex-col items-center text-center relative">
               <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-5 relative z-10" :class="step.bg">
-                <span class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full text-white text-xs font-bold flex items-center justify-center">{{ i + 1 }}</span>
+                <span class="absolute -top-2 -right-2 w-6 h-6 bg-white/5 backdrop-blur-sm rounded-full text-white text-xs font-bold flex items-center justify-center">{{ i + 1 }}</span>
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="step.icon" />
                 </svg>

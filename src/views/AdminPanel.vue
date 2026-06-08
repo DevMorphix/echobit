@@ -1,41 +1,57 @@
 <template>
-  <div :class="thm.root">
-    <!-- Header -->
-    <header :class="thm.header">
-      <div class="flex items-center gap-3">
-        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-sm">A</div>
-        <div>
-          <h1 class="text-lg font-bold leading-none" :class="thm.text">Admin Panel</h1>
-          <p class="text-xs mt-0.5" :class="thm.textFaint">Echobit management console</p>
-        </div>
-      </div>
-      <div class="flex items-center gap-2">
-        <span class="text-xs hidden sm:block" :class="thm.textFaint">{{ adminEmail }}</span>
-        <button @click="isDark = !isDark" :class="[thm.btnNav, 'p-2']" :title="isDark ? 'Light mode' : 'Dark mode'">
-          <svg v-if="isDark" class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
-          </svg>
-          <svg v-else class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-            <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
-          </svg>
-        </button>
-        <router-link to="/dashboard" :class="thm.btnNav">← Dashboard</router-link>
-      </div>
-    </header>
+  <div :class="['flex flex-col h-screen overflow-hidden', thm.rootBg]">
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <!-- Sidebar + Content -->
+    <div class="flex flex-1 overflow-hidden">
+
+      <!-- Sidebar -->
+      <aside :class="['flex flex-col w-56 shrink-0 overflow-y-auto', thm.sidebar]">
+        <!-- Brand -->
+        <div :class="['flex items-center gap-3 px-4 py-5', thm.borderB]">
+          <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-emerald-500 to-green-600 flex items-center justify-center text-white font-bold text-sm shrink-0">A</div>
+          <div>
+            <p class="text-sm font-bold leading-none" :class="thm.text">Admin</p>
+            <p class="text-xs mt-0.5 truncate" :class="thm.textFaint">{{ adminEmail }}</p>
+          </div>
+        </div>
+
+        <!-- Nav -->
+        <nav class="flex-1 p-3 space-y-1">
+          <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
+            :class="['w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition text-left', activeTab === tab.id ? thm.sidebarActive : thm.sidebarItem]">
+            <span class="w-5 h-5 shrink-0" v-html="tab.icon"></span>
+            {{ tab.label }}
+          </button>
+        </nav>
+
+        <!-- Bottom actions -->
+        <div :class="['p-3 space-y-1', thm.borderT]">
+          <button @click="isDark = !isDark"
+            :class="['w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition', thm.sidebarItem]">
+            <svg v-if="isDark" class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 2a1 1 0 011 1v1a1 1 0 11-2 0V3a1 1 0 011-1zm4 8a4 4 0 11-8 0 4 4 0 018 0zm-.464 4.95l.707.707a1 1 0 001.414-1.414l-.707-.707a1 1 0 00-1.414 1.414zm2.12-10.607a1 1 0 010 1.414l-.706.707a1 1 0 11-1.414-1.414l.707-.707a1 1 0 011.414 0zM17 11a1 1 0 100-2h-1a1 1 0 100 2h1zm-7 4a1 1 0 011 1v1a1 1 0 11-2 0v-1a1 1 0 011-1zM5.05 6.464A1 1 0 106.465 5.05l-.708-.707a1 1 0 00-1.414 1.414l.707.707zm1.414 8.486l-.707.707a1 1 0 01-1.414-1.414l.707-.707a1 1 0 011.414 1.414zM4 11a1 1 0 100-2H3a1 1 0 000 2h1z" clip-rule="evenodd"/>
+            </svg>
+            <svg v-else class="w-5 h-5 shrink-0" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M17.293 13.293A8 8 0 016.707 2.707a8.001 8.001 0 1010.586 10.586z"/>
+            </svg>
+            {{ isDark ? 'Light mode' : 'Dark mode' }}
+          </button>
+          <router-link to="/dashboard" :class="['flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition', thm.sidebarItem]">
+            <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
+            Dashboard
+          </router-link>
+        </div>
+      </aside>
+
+      <!-- Main content -->
+      <main class="flex-1 overflow-y-auto">
+        <div class="max-w-5xl mx-auto px-6 py-6 space-y-6">
 
       <!-- Error -->
       <div v-if="globalError" class="bg-red-500/20 border border-red-500/30 text-red-300 text-sm px-4 py-3 rounded-xl flex items-center gap-2">
         <svg class="w-4 h-4 shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/></svg>
         {{ globalError }}
       </div>
-
-      <!-- Tabs -->
-      <nav :class="['flex gap-1 rounded-xl p-1 w-full sm:w-fit overflow-x-auto', thm.tabBar]">
-        <button v-for="tab in tabs" :key="tab.id" @click="activeTab = tab.id"
-          :class="activeTab === tab.id ? thm.tabActive : thm.tabInactive">{{ tab.label }}</button>
-      </nav>
 
       <!-- ── OVERVIEW ── -->
       <div v-if="activeTab === 'overview'">
@@ -776,7 +792,9 @@
         </div>
       </div>
 
-    </div>
+        </div><!-- /max-w-5xl -->
+      </main>
+    </div><!-- /flex sidebar+main -->
 
     <!-- User detail drawer -->
     <transition name="drawer">
@@ -875,15 +893,12 @@ const isDark = ref(true);
 const thm = computed(() => {
   const d = isDark.value;
   return {
-    root:      d ? 'min-h-screen bg-gray-950 text-gray-100' : 'min-h-screen bg-gray-50 text-gray-900',
-    header:    d ? 'sticky top-0 z-30 bg-gray-900/95 backdrop-blur border-b border-gray-800 px-6 py-4 flex items-center justify-between'
-                 : 'sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-gray-200 px-6 py-4 flex items-center justify-between',
+    rootBg:    d ? 'bg-gray-950 text-gray-100' : 'bg-gray-50 text-gray-900',
+    sidebar:   d ? 'bg-gray-900 border-r border-gray-800' : 'bg-white border-r border-gray-200',
+    sidebarActive: d ? 'bg-emerald-600/20 text-emerald-400' : 'bg-emerald-50 text-emerald-700',
+    sidebarItem:   d ? 'text-gray-400 hover:bg-gray-800 hover:text-white' : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900',
     card:      d ? 'bg-gray-900 border border-gray-800 rounded-2xl' : 'bg-white border border-gray-200 rounded-2xl shadow-sm',
     cardInner: d ? 'bg-gray-800 rounded-xl' : 'bg-gray-100 rounded-xl',
-    tabBar:    d ? 'bg-gray-900' : 'bg-gray-100',
-    tabActive: 'px-4 py-2 rounded-lg text-sm font-medium transition bg-emerald-600 text-white shadow',
-    tabInactive: d ? 'px-4 py-2 rounded-lg text-sm font-medium transition text-gray-400 hover:text-white hover:bg-gray-800'
-                   : 'px-4 py-2 rounded-lg text-sm font-medium transition text-gray-500 hover:text-gray-900 hover:bg-gray-200',
     text:      d ? 'text-white'   : 'text-gray-900',
     textMuted: d ? 'text-gray-400' : 'text-gray-600',
     textFaint: d ? 'text-gray-500' : 'text-gray-400',
@@ -895,8 +910,6 @@ const thm = computed(() => {
     rowHover:  d ? 'hover:bg-gray-800/50' : 'hover:bg-gray-50',
     btn:       d ? 'px-3 py-1.5 text-xs rounded-lg bg-gray-800 text-gray-300 disabled:opacity-40 hover:bg-gray-700 transition'
                  : 'px-3 py-1.5 text-xs rounded-lg bg-gray-200 text-gray-700 disabled:opacity-40 hover:bg-gray-300 transition',
-    btnNav:    d ? 'px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-800 text-gray-300 hover:bg-gray-700 transition'
-                 : 'px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 hover:bg-gray-200 transition',
     avatar:    d ? 'bg-emerald-900 text-emerald-300' : 'bg-emerald-100 text-emerald-700',
     skeleton:  d ? 'animate-pulse bg-gray-800' : 'animate-pulse bg-gray-200',
     modal:     d ? 'bg-gray-900 border border-gray-700' : 'bg-white border border-gray-200',
@@ -1024,14 +1037,14 @@ const CostBarChart = defineComponent({
 
 // ── Tabs ──────────────────────────────────────────────────────────────────────
 const tabs = [
-  { id: 'overview',      label: 'Overview' },
-  { id: 'users',         label: 'Users' },
-  { id: 'recordings',    label: 'Recordings' },
-  { id: 'analytics',     label: 'Analytics' },
-  { id: 'financials',    label: 'Financials' },
-  { id: 'subscriptions', label: 'Revenue' },
-  { id: 'coupons',       label: 'Coupons' },
-  { id: 'plans',         label: 'Plans' },
+  { id: 'overview',      label: 'Overview',    icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zm10 0a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/></svg>' },
+  { id: 'users',         label: 'Users',       icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M17 20h5v-2a4 4 0 00-3-3.87M9 20H4v-2a4 4 0 013-3.87m9-4.13a4 4 0 11-8 0 4 4 0 018 0zm6 4a4 4 0 00-3-3.87"/></svg>' },
+  { id: 'recordings',    label: 'Recordings',  icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z"/></svg>' },
+  { id: 'analytics',     label: 'Analytics',   icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/></svg>' },
+  { id: 'financials',    label: 'Financials',  icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>' },
+  { id: 'subscriptions', label: 'Revenue',     icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"/></svg>' },
+  { id: 'coupons',       label: 'Coupons',     icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>' },
+  { id: 'plans',         label: 'Plans',       icon: '<svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/></svg>' },
 ];
 const activeTab = ref('overview');
 
