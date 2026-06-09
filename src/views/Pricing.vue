@@ -204,7 +204,7 @@
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
               <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? starterAnnualMo : starterMonthly }}</span>
-              <span class="text-4xl font-bold text-white">{{ annual ? starterAnnualMo : starterMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? starterAnnualMo : starterMonthly) : (annual ? starterAnnualMo : starterMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed {{ starterAnnualTt }}/year</p>
@@ -253,7 +253,7 @@
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
               <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? proAnnualMo : proMonthly }}</span>
-              <span class="text-4xl font-bold text-white">{{ annual ? proAnnualMo : proMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? proAnnualMo : proMonthly) : (annual ? proAnnualMo : proMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed {{ proAnnualTt }}/year</p>
@@ -302,7 +302,7 @@
           <div class="mb-5">
             <div class="flex items-end gap-1.5">
               <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? growthAnnualMo : growthMonthly }}</span>
-              <span class="text-4xl font-bold text-white">{{ annual ? growthAnnualMo : growthMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? growthAnnualMo : growthMonthly) : (annual ? growthAnnualMo : growthMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
             <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed {{ growthAnnualTt }}/year</p>
@@ -458,16 +458,22 @@ async function applyCoupon() {
   if (!code) return;
   couponValidating.value = true;
   couponError.value = '';
-  try {
-    // Validate against any paid plan — we just need discount info
-    const res = await paymentsApi.validateCoupon(code, 'pro_monthly');
-    couponApplied.value = { discountType: res.discountType, discountValue: res.discountValue };
-  } catch (err: any) {
-    couponError.value = err.message || 'Invalid coupon code';
-    couponApplied.value = null;
-  } finally {
-    couponValidating.value = false;
+  // Try all paid plans — coupon may be restricted to a specific one
+  const plansToTry = ['pro_monthly', 'starter_monthly', 'growth_monthly', 'pro_annual', 'starter_annual', 'growth_annual'];
+  let lastError = 'Invalid coupon code';
+  for (const plan of plansToTry) {
+    try {
+      const res = await paymentsApi.validateCoupon(code, plan);
+      couponApplied.value = { discountType: res.discountType, discountValue: res.discountValue };
+      couponValidating.value = false;
+      return;
+    } catch (err: any) {
+      lastError = err.message || lastError;
+    }
   }
+  couponError.value = lastError;
+  couponApplied.value = null;
+  couponValidating.value = false;
 }
 
 function removeCoupon() {
@@ -476,8 +482,11 @@ function removeCoupon() {
   couponError.value = '';
 }
 
-function discountedPrice(paise: number): string {
-  if (!couponApplied.value) return '';
+function applyDiscount(priceStr: string): string {
+  if (!couponApplied.value || !priceStr) return priceStr;
+  const num = parseFloat(priceStr.replace(/[₹,]/g, ''));
+  if (isNaN(num)) return priceStr;
+  const paise = Math.round(num * 100);
   let final = paise;
   if (couponApplied.value.discountType === 'percent') {
     final = Math.round(paise * (1 - couponApplied.value.discountValue / 100));
