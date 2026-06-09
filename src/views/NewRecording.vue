@@ -6,6 +6,14 @@
       <p class="text-gray-600 mt-1 text-sm sm:text-base">Record your voice or upload an existing audio file for AI transcription.</p>
     </div>
 
+    <!-- Duration warning banner -->
+    <div v-if="isRecording && nearingLimit && !atLimit" class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
+      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+      </svg>
+      <p class="text-amber-800 text-sm font-semibold">Less than 1 minute left on your {{ planLabel }} plan limit — recording will auto-save when time is up.</p>
+    </div>
+
     <!-- Plan limit banner -->
     <div v-if="limitReached" class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
       <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -238,9 +246,16 @@ const router = useRouter();
 // Plan limits
 const usageCount = ref(0);
 const limitCount = ref(null);
+const maxDurationSecs = ref(null);
 const planLabel = ref('Free');
 const limitReached = computed(() =>
   limitCount.value !== null && usageCount.value >= limitCount.value
+);
+const nearingLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value - 60
+);
+const atLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value
 );
 
 onMounted(async () => {
@@ -248,6 +263,7 @@ onMounted(async () => {
     const data = await recordingsApi.getLimits();
     usageCount.value = data.usage.recordingsThisMonth;
     limitCount.value = data.limits.recordingsPerMonth;
+    maxDurationSecs.value = data.limits.maxDurationSecs ?? null;
     planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
   } catch {
     // non-critical — page still works, backend will block at save
@@ -327,6 +343,9 @@ const startRecording = async () => {
     
     timerInterval = setInterval(() => {
       recordingTime.value++;
+      if (maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value) {
+        stopRecording();
+      }
     }, 1000);
   } catch (error) {
     console.error('Error accessing microphone:', error);

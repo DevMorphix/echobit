@@ -17,11 +17,18 @@ import Pricing from '../views/Pricing.vue'
 import VerifyEmail from '../views/VerifyEmail.vue'
 import ForgotPassword from '../views/ForgotPassword.vue'
 
+const BASE = 'https://echobits.devmorphix.com'
+
 const routes = [
   {
     path: '/',
     name: 'Welcome',
-    component: Welcome
+    component: Welcome,
+    meta: {
+      title: 'Echobit – AI Meeting Recorder & Transcriber',
+      description: 'Record, transcribe and summarize your meetings automatically with AI. Supports 15+ Indian languages. Free plan available.',
+      canonical: BASE + '/',
+    },
   },
   {
     path: '/delete-account',
@@ -33,6 +40,11 @@ const routes = [
     path: '/contact',
     name: 'ContactUs',
     component: ContactUs,
+    meta: {
+      title: 'Contact Us – Echobit',
+      description: 'Get in touch with the Echobit team. We are here to help with any questions about our AI meeting recorder.',
+      canonical: BASE + '/contact',
+    },
   },
   {
     path: '/request-deletion',
@@ -43,11 +55,21 @@ const routes = [
     path: '/privacy-policy',
     name: 'PrivacyPolicy',
     component: PrivacyPolicy,
+    meta: {
+      title: 'Privacy Policy – Echobit',
+      description: 'Read the Echobit privacy policy. Learn how we handle your meeting recordings, transcriptions, and personal data.',
+      canonical: BASE + '/privacy-policy',
+    },
   },
   {
     path: '/pricing',
     name: 'Pricing',
     component: Pricing,
+    meta: {
+      title: 'Pricing – Echobit AI Meeting Recorder',
+      description: 'Simple, transparent pricing for Echobit. Start free, upgrade when you need more. Pro plans from ₹499/month.',
+      canonical: BASE + '/pricing',
+    },
   },
   {
     path: '/admin',
@@ -59,25 +81,25 @@ const routes = [
     path: '/login',
     name: 'Login',
     component: Login,
-    meta: { guest: true }
+    meta: { guest: true, title: 'Sign In – Echobit' },
   },
   {
     path: '/register',
     name: 'Register',
     component: Register,
-    meta: { guest: true }
+    meta: { guest: true, title: 'Get Started Free – Echobit', description: 'Create your free Echobit account. No credit card required.' },
   },
   {
     path: '/verify-email',
     name: 'VerifyEmail',
     component: VerifyEmail,
-    meta: { guest: true }
+    meta: { guest: true },
   },
   {
     path: '/forgot-password',
     name: 'ForgotPassword',
     component: ForgotPassword,
-    meta: { guest: true }
+    meta: { guest: true, title: 'Reset Password – Echobit' },
   },
   {
     path: '/dashboard',
@@ -131,6 +153,32 @@ router.beforeEach((to, from, next) => {
   } else {
     next()
   }
+})
+
+const DEFAULT_TITLE = 'Echobit – AI Meeting Recorder & Transcriber'
+const DEFAULT_DESC  = 'Record, transcribe and summarize your meetings automatically with AI. Supports 15+ Indian languages. Free plan available.'
+
+router.afterEach((to) => {
+  const title = to.meta?.title || DEFAULT_TITLE
+  const desc  = to.meta?.description || DEFAULT_DESC
+  const canonical = to.meta?.canonical || (BASE + to.path)
+
+  document.title = title
+
+  let metaDesc = document.querySelector('meta[name="description"]')
+  if (metaDesc) metaDesc.setAttribute('content', desc)
+
+  let metaOgTitle = document.querySelector('meta[property="og:title"]')
+  if (metaOgTitle) metaOgTitle.setAttribute('content', title)
+
+  let metaOgDesc = document.querySelector('meta[property="og:description"]')
+  if (metaOgDesc) metaOgDesc.setAttribute('content', desc)
+
+  let metaOgUrl = document.querySelector('meta[property="og:url"]')
+  if (metaOgUrl) metaOgUrl.setAttribute('content', canonical)
+
+  let linkCanonical = document.querySelector('link[rel="canonical"]')
+  if (linkCanonical) linkCanonical.setAttribute('href', canonical)
 })
 
 export default router

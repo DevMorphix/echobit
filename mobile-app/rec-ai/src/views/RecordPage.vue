@@ -160,6 +160,14 @@
           </div>
         </footer>
 
+        <!-- Duration warning toast -->
+        <transition name="toast">
+          <div class="warning-toast" v-if="isRecording && nearingLimit && !atLimit">
+            <ion-icon :icon="alertCircleOutline"></ion-icon>
+            <span>Under 1 min left — recording will auto-save at the {{ planLabel }} plan limit.</span>
+          </div>
+        </transition>
+
         <!-- Error -->
         <transition name="toast">
           <div class="error-toast" v-if="error" @click="error = ''">
@@ -211,9 +219,16 @@ const autoSave = computed(() => authStore.user?.autoSave !== false);
 // Plan limits
 const usageCount = ref(0);
 const limitCount = ref<number | null>(null);
+const maxDurationSecs = ref<number | null>(null);
 const planLabel = ref('Free');
 const limitReached = computed(() =>
   limitCount.value !== null && usageCount.value >= limitCount.value
+);
+const nearingLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value - 60
+);
+const atLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value
 );
 
 onMounted(async () => {
@@ -221,6 +236,7 @@ onMounted(async () => {
     const data = await api.getLimits();
     usageCount.value = data.usage.recordingsThisMonth;
     limitCount.value = data.limits.recordingsPerMonth;
+    maxDurationSecs.value = data.limits.maxDurationSecs ?? null;
     planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
   } catch {
     // non-critical — backend will still block at save time
@@ -282,7 +298,7 @@ function releaseWakeLock() {
   wakeLock = null;
 }
 
-const MAX_RECORDING_TIME = 600; // 10 minutes
+const MAX_RECORDING_TIME = 600; // fallback until limits load
 
 const headerTitle = computed(() => {
   if (isRecording.value) return isPaused.value ? 'Paused' : 'Recording';
@@ -307,7 +323,8 @@ const formattedTime = computed(() => {
 
 const ringOffset = computed(() => {
   const circumference = 2 * Math.PI * 90;
-  const progress = Math.min(recordingTime.value / MAX_RECORDING_TIME, 1);
+  const limit = maxDurationSecs.value ?? MAX_RECORDING_TIME;
+  const progress = Math.min(recordingTime.value / limit, 1);
   return circumference * (1 - progress);
 });
 
@@ -814,7 +831,13 @@ function formatTime(s: number): string {
 }
 
 function startTimer() {
-  timerInterval.value = window.setInterval(() => recordingTime.value++, 1000);
+  timerInterval.value = window.setInterval(() => {
+    if (isPaused.value) return;
+    recordingTime.value++;
+    if (maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value) {
+      stopRecording();
+    }
+  }, 1000);
 }
 
 function stopTimer() {
@@ -1420,6 +1443,25 @@ function stopVisualization() {
 }
 
 .ctrl-btn.save .ctrl-icon ion-icon { color: white; }
+
+/* Warning Toast */
+.warning-toast {
+  position: fixed;
+  bottom: calc(120px + env(safe-area-inset-bottom));
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #f59e0b;
+  color: white;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+}
 
 /* Error Toast */
 .error-toast {
