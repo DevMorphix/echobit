@@ -26,7 +26,7 @@
     "nodemailer": "^8.0.1",
     "openai": "^6.15.0",
     "razorpay": "^2.9.6",
-    "uuid": "^9.0.1"
+    "uuid": "^11.1.1"
   },
   "devDependencies": {
     "nodemon": "^3.1.11"
