@@ -65,3 +65,51 @@ export const getActivePlan = (user) => {
 };
 
 export const getPlanLimits = (user) => PLAN_LIMITS[getActivePlan(user)] ?? PLAN_LIMITS.free;
+
+/**
+ * Like getPlanLimits but merges admin-configured gate overrides from the DB.
+ * Use this in routes that gate Pro/paid features (minutes, actions, etc.).
+ */
+export const getEffectiveLimits = async (user) => {
+  const base = getPlanLimits(user);
+  const plan = getActivePlan(user);
+
+  // Tier 2: plan-wide admin overrides from PlanConfig
+  let limits = base;
+  try {
+    const PlanConfig = (await import('../models/PlanConfig.js')).default;
+    const cfg = await PlanConfig.findOne({ plan }).select('gates').lean();
+    if (cfg?.gates) {
+      const g = cfg.gates;
+      limits = {
+        ...base,
+        meetingMinutes:    g.meetingMinutes    ?? base.meetingMinutes,
+        actionItems:       g.actionItems       ?? base.actionItems,
+        pdfExport:         g.pdfExport         ?? base.pdfExport,
+        indianLanguages:   g.indianLanguages   ?? base.indianLanguages,
+        recordingsPerMonth: g.recordingsPerMonth != null
+          ? (g.recordingsPerMonth === 0 ? null : g.recordingsPerMonth)
+          : base.recordingsPerMonth,
+        maxDurationSecs: g.maxDurationMins != null
+          ? g.maxDurationMins * 60
+          : base.maxDurationSecs,
+        maxStorageBytes: g.maxStorageGB != null
+          ? g.maxStorageGB * 1_073_741_824
+          : base.maxStorageBytes,
+      };
+    }
+  } catch {
+    // DB unavailable — keep hardcoded defaults
+  }
+
+  // Tier 3: per-user overrides (highest priority, set via admin)
+  const ov = user?.featureOverrides;
+  if (ov) {
+    if (ov.meetingMinutes  != null) limits = { ...limits, meetingMinutes:  ov.meetingMinutes };
+    if (ov.actionItems     != null) limits = { ...limits, actionItems:     ov.actionItems };
+    if (ov.pdfExport       != null) limits = { ...limits, pdfExport:       ov.pdfExport };
+    if (ov.indianLanguages != null) limits = { ...limits, indianLanguages: ov.indianLanguages };
+  }
+
+  return limits;
+};

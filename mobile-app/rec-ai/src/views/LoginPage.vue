@@ -1,6 +1,6 @@
 <template>
   <ion-page>
-    <ion-content :fullscreen="true" :scroll-y="false">
+    <ion-content :fullscreen="true" :scroll-y="false" style="--background: transparent">
       <div class="login-page">
         <!-- Animated Background -->
         <div class="bg-decoration">
@@ -231,7 +231,7 @@ async function handleGoogleLogin() {
 
 <style scoped>
 .login-page {
-  min-height: 100%;
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -242,10 +242,10 @@ async function handleGoogleLogin() {
 }
 
 .bg-decoration {
-  position: absolute;
+  position: fixed;
   inset: 0;
-  overflow: hidden;
   pointer-events: none;
+  z-index: 0;
 }
 
 .blob {

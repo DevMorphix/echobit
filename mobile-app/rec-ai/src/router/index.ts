@@ -64,6 +64,12 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Profile',
     component: () => import('@/views/ProfilePage.vue'),
     meta: { auth: true }
+  },
+  {
+    path: '/pricing',
+    name: 'Pricing',
+    component: () => import('@/views/PricingPage.vue'),
+    meta: { auth: true }
   }
 ];
 

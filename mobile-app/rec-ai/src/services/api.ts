@@ -7,11 +7,19 @@ export interface User {
   _id: string;
   name: string;
   email: string;
+  country?: string;
+  preferredLanguage?: string;
+  profession?: string;
+  autoSave?: boolean;
+  summaryLanguage?: string;
   createdAt: string;
-  plan?: 'free' | 'pro' | 'team';
+  plan?: 'free' | 'starter' | 'pro' | 'growth' | 'team';
   planBillingCycle?: 'monthly' | 'annual' | null;
   planStartDate?: string | null;
   planExpiresAt?: string | null;
+  privacyAccepted?: boolean;
+  onboardingSeen?: boolean;
+  cloudSync?: boolean;
 }
 
 export interface SubscriptionStatus {
@@ -28,12 +36,14 @@ export interface Recording {
   user: string;
   title: string;
   audioUrl?: string;
+  audioKey?: string;
+  audioMimeType?: string;
   duration: number;
   status: 'pending' | 'transcribing' | 'transcribed' | 'summarized' | 'completed' | 'failed';
   transcript?: string;
   summary?: string;
   minutes?: string;
-  actionItems?: { task: string; assignee: string; priority: string; deadline: string | null }[];
+  actionItems?: { task: string; assignee: string; priority: string; deadline: string | null; completed?: boolean }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -215,6 +225,7 @@ class ApiService {
     mimeType: string;
     title?: string;
     autoTranscribe?: boolean;
+    tempUpload?: boolean;
   }): Promise<Recording> {
     const { data } = await this.api.post<{ recording: Recording }>('/recordings', recordingData, {
       timeout: 300000, // 5 minutes — backend may transcribe synchronously
@@ -274,6 +285,15 @@ class ApiService {
     await this.api.delete(`/recordings/${id}`);
   }
 
+  async getLimits(): Promise<{
+    plan: string;
+    usage: { recordingsThisMonth: number; storageUsedBytes: number };
+    limits: { recordingsPerMonth: number | null; maxDurationSecs: number; maxStorageBytes: number; meetingMinutes: boolean; actionItems: boolean; pdfExport: boolean };
+  }> {
+    const { data } = await this.api.get('/recordings/limits');
+    return data;
+  }
+
   async transcribeRecording(id: string): Promise<Recording> {
     const { data } = await this.api.post<{ recording: Recording }>(`/recordings/${id}/transcribe`, {}, {
       timeout: 300000, // 5 minutes — server-side timeout matches
@@ -303,6 +323,11 @@ class ApiService {
 
   async getSubscriptionStatus(): Promise<SubscriptionStatus> {
     const { data } = await this.api.get<SubscriptionStatus>('/payments/status');
+    return data;
+  }
+
+  async getPlans(): Promise<Record<string, { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string }>> {
+    const { data } = await this.api.get('/plans');
     return data;
   }
 }

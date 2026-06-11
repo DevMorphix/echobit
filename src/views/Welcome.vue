@@ -2,7 +2,7 @@
   <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 overflow-x-hidden">
 
     <!-- Fixed Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
+    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5" style="padding-top: max(1rem, env(safe-area-inset-top));">
       <div class="max-w-7xl mx-auto flex justify-between items-center">
         <div class="flex items-center space-x-2">
           <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
@@ -104,8 +104,8 @@
           <p class="text-white/50 text-sm">Transcription Accuracy</p>
         </div>
         <div>
-          <p class="text-3xl sm:text-4xl font-bold text-emerald-400 mb-1">&lt;30s</p>
-          <p class="text-white/50 text-sm">Processing Time</p>
+          <p class="text-3xl sm:text-4xl font-bold text-emerald-400 mb-1">Free</p>
+          <p class="text-white/50 text-sm">Plan Forever</p>
         </div>
       </div>
     </section>
@@ -126,7 +126,7 @@
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-8">
             <div v-for="(step, i) in howItWorks" :key="i" class="flex flex-col items-center text-center relative">
               <div class="w-20 h-20 rounded-2xl flex items-center justify-center mb-5 relative z-10" :class="step.bg">
-                <span class="absolute -top-2 -right-2 w-6 h-6 bg-emerald-500 rounded-full text-white text-xs font-bold flex items-center justify-center">{{ i + 1 }}</span>
+                <span class="absolute -top-2 -right-2 w-6 h-6 bg-white/5 backdrop-blur-sm rounded-full text-white text-xs font-bold flex items-center justify-center">{{ i + 1 }}</span>
                 <svg class="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" :d="step.icon" />
                 </svg>
@@ -174,8 +174,7 @@
               <span class="bg-gradient-to-r from-emerald-400 to-green-300 bg-clip-text text-transparent"> mother tongue</span>
             </h2>
             <p class="text-white/60 text-base leading-relaxed mb-6">
-              Powered by <strong class="text-white">Sarvam AI</strong>, Echobit Pro and Team plans support
-              transcription and summaries in 20+ Indian languages with native-level accuracy.
+              Echobit supports transcription and summaries in 10+ Indian languages with native-level accuracy.
             </p>
             <div class="flex flex-wrap gap-2 mb-8">
               <span v-for="lang in languages" :key="lang"
@@ -205,7 +204,7 @@
               </div>
               <div class="flex items-center gap-2 text-xs text-white/40">
                 <svg class="w-4 h-4 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
-                Transcribed by Sarvam AI · 98.4% confidence
+                Transcribed · 98.4% confidence
               </div>
             </div>
             <div class="mt-5 pt-5 border-t border-white/10">
@@ -218,7 +217,7 @@
     </section>
 
     <!-- ─── Use Cases ─── -->
-    <section class="py-24 px-4 sm:px-6 border-t border-white/5 fade-up" data-anim>
+    <section class="py-24 px-4 sm:px-6 border-t border-white/5 fade-up" data-anim>  
       <div class="max-w-6xl mx-auto">
         <div class="text-center mb-16">
           <p class="text-emerald-400 text-sm font-semibold uppercase tracking-widest mb-3">Who Uses Echobit</p>
@@ -289,7 +288,7 @@
           <div class="bg-white/5 border border-white/10 rounded-2xl p-7 flex flex-col">
             <h3 class="text-white font-bold text-xl mb-1">Free</h3>
             <p class="text-white/40 text-sm mb-5">No card needed</p>
-            <p class="text-4xl font-bold text-white mb-6">$0<span class="text-white/40 text-base font-normal">/mo</span></p>
+            <p class="text-4xl font-bold text-white mb-6">₹0<span class="text-white/40 text-base font-normal">/mo</span></p>
             <ul class="space-y-2.5 flex-1 mb-7">
               <li v-for="f in freeTeaserFeatures" :key="f" class="flex items-center gap-2.5 text-white/60 text-sm">
                 <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -305,7 +304,7 @@
             <div class="absolute top-0 right-0 bg-emerald-500 text-white text-xs font-bold px-3 py-1.5 rounded-bl-xl">Most Popular</div>
             <h3 class="text-white font-bold text-xl mb-1">Pro</h3>
             <p class="text-white/40 text-sm mb-5">For power users</p>
-            <p class="text-4xl font-bold text-white mb-6">$9<span class="text-white/40 text-base font-normal">/mo</span></p>
+            <p class="text-4xl font-bold text-white mb-6">₹499<span class="text-white/40 text-base font-normal">/mo</span></p>
             <ul class="space-y-2.5 flex-1 mb-7">
               <li v-for="f in proTeaserFeatures" :key="f" class="flex items-center gap-2.5 text-white/80 text-sm">
                 <svg class="w-4 h-4 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
@@ -394,15 +393,15 @@ import { authState } from '../api';
 const isLoggedIn = computed(() => authState.isAuthenticated);
 
 const howItWorks = [
-  { title: 'Record', desc: 'Open Echobit on Android and hit record. Works in background while you stay present.', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', bg: 'bg-gradient-to-br from-emerald-500 to-green-600' },
-  { title: 'Transcribe', desc: 'AI transcribes your audio in English or 20+ Indian languages within seconds.', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', bg: 'bg-gradient-to-br from-teal-500 to-emerald-600' },
+  { title: 'Record', desc: 'Open Echobit on your phone or browser and hit record. Runs in the background so you stay fully present.', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', bg: 'bg-gradient-to-br from-emerald-500 to-green-600' },
+  { title: 'Transcribe', desc: 'AI transcribes your audio in English or Indian languages — Hindi, Tamil, Telugu, and more.', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', bg: 'bg-gradient-to-br from-teal-500 to-emerald-600' },
   { title: 'Summarise', desc: 'Gemini AI generates a clean summary with action items and key decisions.', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', bg: 'bg-gradient-to-br from-green-500 to-teal-600' },
   { title: 'Export', desc: 'Download professional meeting minutes as PDF or share directly from the app.', icon: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4', bg: 'bg-gradient-to-br from-emerald-600 to-green-700' },
 ];
 
 const features = [
   { title: 'Background Recording', desc: 'Keep recording while using other apps. Echobit runs silently in the background on Android.', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400' },
-  { title: 'AI Transcription', desc: 'OpenAI Whisper transcribes your audio with 99% accuracy. Handles accents, crosstalk, and noise.', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z', iconBg: 'bg-green-500/15', iconColor: 'text-green-400' },
+  { title: 'AI Transcription', desc: 'High-accuracy transcription in English and Indian languages. Handles accents, crosstalk, and background noise.', icon: 'M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z', iconBg: 'bg-green-500/15', iconColor: 'text-green-400' },
   { title: 'Smart Summaries', desc: 'Google Gemini extracts the most important points into a concise, readable summary.', icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z', iconBg: 'bg-teal-500/15', iconColor: 'text-teal-400' },
   { title: 'Meeting Minutes', desc: 'Auto-generate professional meeting minutes with attendees, decisions, and action items — PDF ready.', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z', iconBg: 'bg-emerald-500/15', iconColor: 'text-emerald-400' },
   { title: 'Action Item Extraction', desc: 'Automatically identifies tasks, owners, and deadlines from your conversation.', icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4', iconBg: 'bg-green-500/15', iconColor: 'text-green-400' },
@@ -463,8 +462,8 @@ const testimonials = [
   },
 ];
 
-const freeTeaserFeatures = ['5 recordings/month', '30 min max', 'AI transcription', 'Basic summary', '1 GB storage'];
-const proTeaserFeatures = ['Unlimited recordings', '3 hours max', '20+ languages', 'Meeting minutes', 'PDF export', '10 GB storage'];
+const freeTeaserFeatures = ['3 recordings/month', '20 min max', 'English + Malayalam', 'AI transcription', 'AI summary', '1 GB storage'];
+const proTeaserFeatures = ['40 recordings/month', '2 hours max', '15+ languages', 'Meeting minutes', 'Action items', 'PDF export', '10 GB storage'];
 
 // Intersection observer for scroll animations
 let observer;

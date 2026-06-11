@@ -123,8 +123,10 @@
       <!-- Mobile User section -->
       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
         <div class="flex items-center space-x-3 px-2">
-          <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
-            {{ userInitials }}
+          <div class="shrink-0" :class="isPaid ? 'ring-2 ring-emerald-400 ring-offset-2 rounded-full' : ''">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold text-sm">
+              {{ userInitials }}
+            </div>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-900 truncate">{{ userName }}</p>
@@ -229,8 +231,10 @@
       <!-- Desktop User section -->
       <div class="absolute bottom-0 left-0 right-0 p-4 border-t border-gray-200">
         <div class="flex items-center space-x-3 px-2">
-          <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold">
-            {{ userInitials }}
+          <div class="shrink-0" :class="isPaid ? 'ring-2 ring-emerald-400 ring-offset-2 rounded-full' : ''">
+            <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-green-600 rounded-full flex items-center justify-center text-white font-bold">
+              {{ userInitials }}
+            </div>
           </div>
           <div class="flex-1 min-w-0">
             <p class="text-sm font-medium text-gray-900 truncate">{{ userName }}</p>
@@ -283,8 +287,10 @@ const subscription = ref(
 );
 const isPaid = computed(() => subscription.value.plan !== 'free' && subscription.value.isActive);
 const planLabel = computed(() => {
-  const p = subscription.value.plan;
-  return p === 'pro' ? 'Pro' : p === 'team' ? 'Team' : 'Free';
+  const labels = {
+    free: 'Free', starter: 'Starter', pro: 'Pro', growth: 'Growth', team: 'Team',
+  };
+  return labels[subscription.value.plan] || 'Free';
 });
 
 onMounted(async () => {

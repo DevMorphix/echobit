@@ -47,8 +47,14 @@
             </div>
           </div>
 
+          <!-- Local Recording Badge -->
+          <div v-if="isLocalRecording" class="local-badge">
+            <ion-icon :icon="lockClosedOutline"></ion-icon>
+            <span>Saved locally · Cloud Sync off</span>
+          </div>
+
           <!-- Compact Audio Player -->
-          <div class="player-section" v-if="recording.audioUrl">
+          <div class="player-section" v-if="recording.audioUrl || localAudioUrl">
             <button class="player-btn" @click="togglePlay">
               <ion-icon :icon="isPlaying ? pauseOutline : playOutline"></ion-icon>
             </button>
@@ -62,7 +68,7 @@
                 <span>{{ totalTime }}</span>
               </div>
             </div>
-            <audio ref="audioRef" :src="recording.audioUrl" @timeupdate="updateProgress" @loadedmetadata="onLoaded" @ended="isPlaying = false"></audio>
+            <audio ref="audioRef" :src="recording.audioUrl || localAudioUrl" @timeupdate="updateProgress" @loadedmetadata="onLoaded" @ended="isPlaying = false"></audio>
           </div>
 
           <!-- AI Actions -->
@@ -176,11 +182,13 @@
                     <button
                       v-if="activeTab === 'summary' || activeTab === 'minutes'"
                       class="action-btn"
+                      :class="{ 'action-btn-locked': !pdfEnabled }"
                       :disabled="generatingPDF"
                       @click="activeTab === 'minutes' ? downloadMinutesPDF() : downloadSummaryPDF()"
-                      title="Download PDF"
+                      :title="pdfEnabled ? 'Download PDF' : 'PDF export not available on your plan'"
                     >
                       <ion-spinner v-if="generatingPDF" name="crescent" style="width:16px;height:16px"></ion-spinner>
+                      <ion-icon v-else-if="!pdfEnabled" :icon="lockClosedOutline"></ion-icon>
                       <ion-icon v-else :icon="shareOutline"></ion-icon>
                     </button>
                   </template>
@@ -295,7 +303,7 @@ import {
   textOutline, sparklesOutline, listOutline, checkmarkOutline, copyOutline,
   alertCircleOutline, shareOutline, trashOutline, calendarOutline, timeOutline,
   downloadOutline, createOutline, addOutline, pencilOutline, closeOutline, saveOutline,
-  checkmarkCircleOutline, personOutline, languageOutline, refreshOutline
+  checkmarkCircleOutline, personOutline, languageOutline, refreshOutline, lockClosedOutline
 } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
@@ -306,6 +314,7 @@ interface DownloaderPlugin {
 }
 const Downloader = registerPlugin<DownloaderPlugin>('Downloader');
 import { useRecordingsStore } from '@/stores/recordings';
+import { api } from '@/services/api';
 import { loadTemplates, saveCustomTemplates, loadLogo, saveLogo, removeLogo } from '@/services/pdfTemplates';
 import type { PdfTemplate } from '@/services/pdfTemplates';
 import { generateMinutesPdf, generateSummaryPdf } from '@/services/pdfGenerator';
@@ -357,11 +366,16 @@ const isPlaying = ref(false);
 const progress = ref(0);
 const currentTime = ref('0:00');
 const totalTime = ref('0:00');
+const localAudioUrl = ref<string | undefined>(undefined);
 
 // Declare these first — used by watches below (avoids temporal dead zone errors)
 const recording = computed(() => recordingsStore.currentRecording);
 const loading = computed(() => recordingsStore.loading);
 const processing = computed(() => recordingsStore.processing);
+
+const isLocalRecording = computed(() =>
+  !!recording.value && !recording.value.audioKey && !recording.value.audioUrl
+);
 
 // Todo list local state
 const localCompleted = ref<boolean[]>([]);
@@ -442,6 +456,14 @@ async function saveTranscript() {
 const templates = ref<Record<string, PdfTemplate>>({});
 const selectedTemplate = ref('professional');
 const generatingPDF = ref(false);
+const pdfEnabled = ref(true); // default true; overridden by limits fetch
+
+onMounted(async () => {
+  try {
+    const data = await api.getLimits();
+    pdfEnabled.value = data.limits.pdfExport;
+  } catch { /* keep default */ }
+});
 const logoBase64 = ref<string | null>(null);
 const showTemplateEditor = ref(false);
 const editingTemplateKey = ref<string | null>(null);
@@ -503,6 +525,11 @@ const deleteButtons = [
     role: 'destructive',
     handler: async () => {
       const id = route.params.id as string;
+      const rec = recordingsStore.currentRecording;
+      if (rec && !rec.audioKey && !rec.audioUrl) {
+        const ext = rec.audioMimeType?.split('/')[1]?.split(';')[0] || 'webm';
+        try { await Filesystem.deleteFile({ path: `audio_${id}.${ext}`, directory: Directory.Data }); } catch {}
+      }
       await recordingsStore.deleteRecording(id);
       router.replace('/recordings');
     }
@@ -612,6 +639,22 @@ watch(recording, (rec) => {
   }
 });
 
+// Load local audio file for recordings saved with Cloud Sync OFF
+watch(recording, async (rec) => {
+  if (rec && !rec.audioUrl && !rec.audioKey) {
+    const ext = rec.audioMimeType?.split('/')[1]?.split(';')[0] || 'webm';
+    const localPath = `audio_${rec._id}.${ext}`;
+    try {
+      const { data } = await Filesystem.readFile({ path: localPath, directory: Directory.Data });
+      localAudioUrl.value = `data:${rec.audioMimeType || 'audio/webm'};base64,${data}`;
+    } catch {
+      localAudioUrl.value = undefined;
+    }
+  } else {
+    localAudioUrl.value = undefined;
+  }
+});
+
 // Only set the default tab on first load — never override while user is actively on a tab
 watch(recording, (rec, oldRec) => {
   if (rec && !oldRec) {
@@ -661,48 +704,110 @@ function formatTime(s: number) {
 
 async function handleTranscribe() {
   if (!recording.value) return;
+
+  if (isLocalRecording.value) {
+    const toast = await toastController.create({
+      message: recording.value?.transcript
+        ? 'Already transcribed. Retry by enabling Cloud Sync in Profile settings.'
+        : 'Transcription failed during save. Enable Cloud Sync and try again.',
+      duration: 4000,
+      color: 'warning',
+      position: 'bottom',
+    });
+    await toast.present();
+    return;
+  }
+
+  const id = recording.value._id;
   processingAction.value = 'transcribe';
-  await recordingsStore.transcribeRecording(recording.value._id);
+  let result = await recordingsStore.transcribeRecording(id);
+  if (!result || !result.transcript) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.transcribeRecording(id);
+  }
   processingAction.value = '';
+  if (!result || !result.transcript) {
+    const msg = recordingsStore.error || 'Failed to transcribe. Please try again.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleTranscribe() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
   activeTab.value = 'transcript';
 }
 
 async function handleSummarize() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
-  if (recording.value.summary) {
-    await recordingsStore.updateRecording(recording.value._id, { summary: '' } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'summarize';
-  await recordingsStore.summarizeRecording(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'summary');
+  let result = await recordingsStore.summarizeRecording(id);
+  if (!result || !result.summary) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.summarizeRecording(id);
+  }
   processingAction.value = '';
+  if (!result || !result.summary) {
+    const msg = recordingsStore.error || 'Failed to generate summary.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleSummarize() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'summary');
   activeTab.value = 'summary';
 }
 
 async function handleMinutes() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
-  if (recording.value.minutes) {
-    await recordingsStore.updateRecording(recording.value._id, { minutes: '' } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'minutes';
-  await recordingsStore.generateMinutes(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'minutes');
+  let result = await recordingsStore.generateMinutes(id);
+  if (!result || !result.minutes) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.generateMinutes(id);
+  }
   processingAction.value = '';
+  if (!result || !result.minutes) {
+    const msg = recordingsStore.error || 'Failed to generate minutes.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleMinutes() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'minutes');
   activeTab.value = 'minutes';
 }
 
 async function handleActionItems() {
   if (!recording.value) return;
-  // Clear existing so the store regenerates fresh
-  if (recording.value.actionItems?.length) {
-    await recordingsStore.updateRecording(recording.value._id, { actionItems: [] } as any);
-  }
+  const id = recording.value._id;
   processingAction.value = 'actions';
-  await recordingsStore.generateActionItems(recording.value._id);
-  saveGeneratedAt(recording.value._id, 'actions');
+  let result = await recordingsStore.generateActionItems(id);
+  if (!result || !result.actionItems?.length) {
+    await new Promise(r => setTimeout(r, 1500));
+    result = await recordingsStore.generateActionItems(id);
+  }
   processingAction.value = '';
+  if (!result || !result.actionItems?.length) {
+    const msg = recordingsStore.error || 'Failed to extract action items.';
+    const toast = await toastController.create({
+      message: msg, color: 'danger', position: 'bottom', duration: 6000,
+      buttons: [{ text: 'Retry', handler: () => handleActionItems() }]
+    });
+    await toast.present();
+    return;
+  }
+  if (recordingsStore.currentRecording?._id !== id) recordingsStore.currentRecording = result;
+  saveGeneratedAt(id, 'actions');
   activeTab.value = 'actions';
 }
 
@@ -737,6 +842,11 @@ async function copyActiveContent() {
 // PDF Download
 async function downloadMinutesPDF() {
   if (!recording.value?.minutes) return;
+  if (!pdfEnabled.value) {
+    const toast = await toastController.create({ message: 'PDF export is not available on your current plan. Upgrade to unlock it.', duration: 3000, color: 'warning', position: 'bottom' });
+    await toast.present();
+    return;
+  }
   generatingPDF.value = true;
   try {
     const template = templates.value[selectedTemplate.value] || templates.value.professional;
@@ -759,6 +869,11 @@ async function downloadMinutesPDF() {
 
 async function downloadSummaryPDF() {
   if (!recording.value?.summary) return;
+  if (!pdfEnabled.value) {
+    const toast = await toastController.create({ message: 'PDF export is not available on your current plan. Upgrade to unlock it.', duration: 3000, color: 'warning', position: 'bottom' });
+    await toast.present();
+    return;
+  }
   generatingPDF.value = true;
   try {
     const template = templates.value[selectedTemplate.value] || templates.value.professional;
@@ -1044,6 +1159,22 @@ function applyInlineFormatting(text: string): string {
   justify-content: center;
   margin-bottom: 16px;
 }
+
+.local-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  background: rgba(99, 102, 241, 0.08);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+  border-radius: var(--radius-full);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ion-color-tertiary);
+  margin-bottom: 16px;
+}
+
+.local-badge ion-icon { font-size: 13px; }
 
 .empty-icon-wrap ion-icon { font-size: 28px; color: var(--ion-color-warning); }
 .empty-state h3 { font-size: 18px; font-weight: 700; color: var(--app-text); margin: 0 0 12px; }
@@ -1370,6 +1501,11 @@ function applyInlineFormatting(text: string): string {
 }
 
 .action-btn ion-icon { font-size: 16px; }
+
+.action-btn-locked {
+  color: var(--app-text-muted) !important;
+  background: var(--app-surface-hover) !important;
+}
 
 /* Template Bar */
 .template-bar {

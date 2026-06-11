@@ -1,59 +1,61 @@
 <template>
+  <!-- Fixed elements outside overflow-x-hidden to avoid Android WebView fixed-positioning bug -->
+
+  <!-- Payment status toast -->
+  <transition name="fade">
+    <div v-if="paymentStatus"
+      class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium max-w-sm w-full"
+      :class="paymentStatus.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'"
+    >
+      <svg v-if="paymentStatus.type === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
+      </svg>
+      <svg v-else class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+      <span class="flex-1">{{ paymentStatus.message }}</span>
+      <button @click="paymentStatus = null" class="opacity-70 hover:opacity-100 text-lg leading-none ml-2">×</button>
+    </div>
+  </transition>
+
+  <!-- Fixed Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 pt-9 bg-black/30 backdrop-blur-md border-b border-white/5">
+    <div class="max-w-7xl mx-auto flex justify-between items-center">
+      <router-link to="/" class="flex items-center space-x-2">
+        <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
+        <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
+      </router-link>
+      <div class="flex items-center space-x-2 sm:space-x-4">
+        <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
+          Contact
+        </router-link>
+        <template v-if="authState.isAuthenticated">
+          <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
+            Dashboard
+          </router-link>
+          <router-link to="/dashboard" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-2 rounded-full transition text-sm font-medium">
+            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold leading-none">
+              {{ (authState.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
+            </div>
+            <span class="hidden sm:inline">{{ authState.user?.name?.split(' ')[0] }}</span>
+          </router-link>
+        </template>
+        <template v-else>
+          <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">
+            Sign In
+          </router-link>
+          <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
+            Get Started
+          </router-link>
+        </template>
+      </div>
+    </div>
+  </nav>
+
   <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 min-h-screen overflow-x-hidden">
 
-    <!-- Payment status toast -->
-    <transition name="fade">
-      <div v-if="paymentStatus"
-        class="fixed top-4 left-1/2 -translate-x-1/2 z-[200] flex items-center gap-3 px-5 py-3 rounded-2xl shadow-2xl text-sm font-medium max-w-sm w-full"
-        :class="paymentStatus.type === 'success' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'"
-      >
-        <svg v-if="paymentStatus.type === 'success'" class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-        </svg>
-        <svg v-else class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-        </svg>
-        <span class="flex-1">{{ paymentStatus.message }}</span>
-        <button @click="paymentStatus = null" class="opacity-70 hover:opacity-100 text-lg leading-none ml-2">×</button>
-      </div>
-    </transition>
-
-    <!-- Fixed Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 bg-black/30 backdrop-blur-md border-b border-white/5">
-      <div class="max-w-7xl mx-auto flex justify-between items-center">
-        <router-link to="/" class="flex items-center space-x-2">
-          <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
-          <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
-        </router-link>
-        <div class="flex items-center space-x-2 sm:space-x-4">
-          <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
-            Contact
-          </router-link>
-          <template v-if="authState.isAuthenticated">
-            <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
-              Dashboard
-            </router-link>
-            <router-link to="/dashboard" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-2 rounded-full transition text-sm font-medium">
-              <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold leading-none">
-                {{ (authState.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
-              </div>
-              <span class="hidden sm:inline">{{ authState.user?.name?.split(' ')[0] }}</span>
-            </router-link>
-          </template>
-          <template v-else>
-            <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">
-              Sign In
-            </router-link>
-            <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
-              Get Started
-            </router-link>
-          </template>
-        </div>
-      </div>
-    </nav>
-
     <!-- Hero -->
-    <section class="pt-32 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
+    <section class="pt-40 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none overflow-hidden">
         <div class="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
         <div class="absolute -bottom-20 -left-40 w-80 h-80 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
@@ -94,6 +96,44 @@
             </button>
           </div>
         </div>
+
+        <!-- Coupon input -->
+        <div class="flex items-center justify-center mt-6">
+          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl px-4 py-2.5 w-full max-w-sm">
+            <svg class="w-4 h-4 text-white/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z" />
+            </svg>
+            <input
+              v-model="couponInput"
+              @keyup.enter="applyCoupon"
+              placeholder="Coupon code"
+              :disabled="couponApplied"
+              class="flex-1 bg-transparent text-white placeholder-white/40 text-sm outline-none uppercase tracking-widest"
+            />
+            <button
+              v-if="!couponApplied"
+              @click="applyCoupon"
+              :disabled="!couponInput.trim() || couponValidating"
+              class="text-xs font-bold text-emerald-400 hover:text-emerald-300 disabled:opacity-40 transition shrink-0"
+            >
+              {{ couponValidating ? '…' : 'Apply' }}
+            </button>
+            <button
+              v-else
+              @click="removeCoupon"
+              class="text-xs font-bold text-red-400 hover:text-red-300 transition shrink-0"
+            >
+              Remove
+            </button>
+          </div>
+        </div>
+        <div v-if="couponError" class="text-red-400 text-xs text-center mt-2">{{ couponError }}</div>
+        <div v-if="couponApplied" class="flex items-center justify-center gap-1.5 mt-2">
+          <span class="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold px-3 py-1 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+            {{ couponApplied.discountType === 'percent' ? couponApplied.discountValue + '% off' : '₹' + (couponApplied.discountValue / 100) + ' off' }} applied
+          </span>
+        </div>
       </div>
     </section>
 
@@ -126,11 +166,10 @@
             </div>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in freeFeatures" :key="f" class="flex items-start gap-2.5 text-white/70 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in freeFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/70' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('free')" class="rounded-2xl bg-white/5 border border-white/20 px-4 py-3 text-center">
@@ -163,18 +202,18 @@
             <p class="text-white/50 text-xs">For regular users</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 99 : 149 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? starterAnnualMo : starterMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? starterAnnualMo : starterMonthly) : (annual ? starterAnnualMo : starterMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed ₹1,188/year</p>
+            <p v-if="annual" class="text-blue-400 text-xs mt-1">Billed {{ starterAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in starterFeatures" :key="f" class="flex items-start gap-2.5 text-white/70 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in starterFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/70' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('starter')" class="rounded-2xl bg-blue-500/10 border border-blue-500/30 px-4 py-3 text-center">
@@ -212,18 +251,18 @@
             <p class="text-white/50 text-xs">For power users</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 399 : 499 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? proAnnualMo : proMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? proAnnualMo : proMonthly) : (annual ? proAnnualMo : proMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed ₹4,788/year</p>
+            <p v-if="annual" class="text-emerald-400 text-xs mt-1">Billed {{ proAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in proFeatures" :key="f" class="flex items-start gap-2.5 text-white/80 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in proFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('pro')" class="rounded-2xl bg-emerald-500/10 border border-emerald-500/30 px-4 py-3 text-center">
@@ -261,18 +300,18 @@
             <p class="text-white/50 text-xs">Unlimited power</p>
           </div>
           <div class="mb-5">
-            <div class="flex items-end gap-1">
-              <span class="text-4xl font-bold text-white">₹{{ annual ? 799 : 999 }}</span>
+            <div class="flex items-end gap-1.5">
+              <span v-if="couponApplied" class="text-2xl font-bold text-white/40 line-through">{{ annual ? growthAnnualMo : growthMonthly }}</span>
+              <span class="text-4xl font-bold text-white">{{ couponApplied ? applyDiscount(annual ? growthAnnualMo : growthMonthly) : (annual ? growthAnnualMo : growthMonthly) }}</span>
               <span class="text-white/50 mb-1.5">/mo</span>
             </div>
-            <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed ₹9,588/year</p>
+            <p v-if="annual" class="text-purple-400 text-xs mt-1">Billed {{ growthAnnualTt }}/year</p>
           </div>
           <ul class="space-y-2.5 flex-1 mb-7">
-            <li v-for="f in growthFeatures" :key="f" class="flex items-start gap-2.5 text-white/80 text-sm">
-              <svg class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-              </svg>
-              {{ f }}
+            <li v-for="f in growthFeatures" :key="f.text" :class="['flex items-start gap-2.5 text-sm', f.included ? 'text-white/80' : 'text-white/30']">
+              <svg v-if="f.included" class="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/></svg>
+              <svg v-else class="w-4 h-4 text-white/25 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+              {{ f.text }}
             </li>
           </ul>
           <div v-if="isCurrentPlan('growth')" class="rounded-2xl bg-purple-500/10 border border-purple-500/30 px-4 py-3 text-center">
@@ -397,7 +436,7 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from 'vue';
-import { paymentsApi, authState } from '@/api';
+import { paymentsApi, authApi, authState, plansApi } from '@/api';
 import { useRouter } from 'vue-router';
 
 const annual = ref(false);
@@ -407,6 +446,55 @@ const router = useRouter();
 const paying = ref(false);
 const activePlan = ref<string | null>(null);
 const paymentStatus = ref<{ type: 'success' | 'error'; message: string } | null>(null);
+
+// Coupon
+const couponInput = ref('');
+const couponValidating = ref(false);
+const couponError = ref('');
+const couponApplied = ref<{ discountType: string; discountValue: number } | null>(null);
+
+async function applyCoupon() {
+  const code = couponInput.value.trim();
+  if (!code) return;
+  couponValidating.value = true;
+  couponError.value = '';
+  // Try all paid plans — coupon may be restricted to a specific one
+  const plansToTry = ['pro_monthly', 'starter_monthly', 'growth_monthly', 'pro_annual', 'starter_annual', 'growth_annual'];
+  let lastError = 'Invalid coupon code';
+  for (const plan of plansToTry) {
+    try {
+      const res = await paymentsApi.validateCoupon(code, plan);
+      couponApplied.value = { discountType: res.discountType, discountValue: res.discountValue };
+      couponValidating.value = false;
+      return;
+    } catch (err: any) {
+      lastError = err.message || lastError;
+    }
+  }
+  couponError.value = lastError;
+  couponApplied.value = null;
+  couponValidating.value = false;
+}
+
+function removeCoupon() {
+  couponApplied.value = null;
+  couponInput.value = '';
+  couponError.value = '';
+}
+
+function applyDiscount(priceStr: string): string {
+  if (!couponApplied.value || !priceStr) return priceStr;
+  const num = parseFloat(priceStr.replace(/[₹,]/g, ''));
+  if (isNaN(num)) return priceStr;
+  const paise = Math.round(num * 100);
+  let final = paise;
+  if (couponApplied.value.discountType === 'percent') {
+    final = Math.round(paise * (1 - couponApplied.value.discountValue / 100));
+  } else {
+    final = Math.max(0, paise - couponApplied.value.discountValue);
+  }
+  return '₹' + Math.round(final / 100);
+}
 
 function buildSubFromUser(user: any) {
   if (!user) return null;
@@ -436,6 +524,24 @@ const expiryLabel = computed(() => {
 });
 
 onMounted(async () => {
+  // Auto-login when coming from the mobile app (?token=...)
+  const params = new URLSearchParams(window.location.search);
+  const appToken = params.get('token');
+  if (appToken) {
+    // Always attempt login with the app token — it's fresher than any cached session
+    await authApi.loginWithToken(appToken);
+    // Strip token from URL immediately so it doesn't sit in browser history
+    params.delete('token');
+    const clean = params.toString() ? `${window.location.pathname}?${params}` : window.location.pathname;
+    window.history.replaceState({}, '', clean);
+  }
+
+  // Load admin-editable plan features
+  try {
+    const data = await plansApi.getAll();
+    planData.value = data;
+  } catch { /* keep empty defaults */ }
+
   if (authState.isAuthenticated) {
     try { subscription.value = await paymentsApi.getStatus(); } catch { /* keep default */ }
   }
@@ -474,7 +580,7 @@ async function pay(plan: string) {
   try {
     await loadRazorpayScript();
 
-    const order = await paymentsApi.createOrder(plan);
+    const order = await paymentsApi.createOrder(plan, couponApplied.value ? couponInput.value.trim() : undefined);
 
     if (order.mock) {
       paymentStatus.value = { type: 'success', message: `[Mock] ${PLAN_LABELS[plan]} order created (ID: ${order.order_id}). Razorpay keys pending activation.` };
@@ -483,7 +589,7 @@ async function pay(plan: string) {
       return;
     }
 
-    const options = {
+    const options: Record<string, any> = {
       key: import.meta.env.VITE_RAZORPAY_KEY_ID,
       amount: order.amount,
       currency: order.currency,
@@ -496,6 +602,8 @@ async function pay(plan: string) {
         email: authState.user?.email || '',
       },
       theme: { color: '#10b981' },
+      config_id: import.meta.env.VITE_RAZORPAY_CONFIG_ID || undefined,
+      webview_intent: true,
       handler: async (response: any) => {
         try {
           await paymentsApi.verifyPayment({
@@ -550,58 +658,52 @@ watch(paymentStatus, (val) => {
   if (val) toastTimer = setTimeout(() => { paymentStatus.value = null; }, 6000);
 });
 
-const freeFeatures = [
-  '3 recordings/month',
-  'Up to 20 min per recording',
-  'AI transcription (English + Malayalam)',
-  'Basic AI summary',
-  '1 GB storage',
-  'Mobile app access',
-];
+// Plan data loaded from API (admin-editable features + prices)
+type PlanData = { features: { text: string; included: boolean }[]; monthlyPrice: string; annualMonthly: string; annualTotal: string; gates?: { maxDurationMins?: number | null; recordingsPerMonth?: number | null; maxStorageGB?: number | null } };
+const planData = ref<Record<string, PlanData>>({});
+const freeFeatures    = computed(() => planData.value.free?.features    ?? []);
+const starterFeatures = computed(() => planData.value.starter?.features ?? []);
+const proFeatures     = computed(() => planData.value.pro?.features     ?? []);
+const growthFeatures  = computed(() => planData.value.growth?.features  ?? []);
 
-const starterFeatures = [
-  '15 recordings/month',
-  'Up to 45 min per recording',
-  'AI transcription (English + Hindi + Malayalam)',
-  'AI summary + notes',
-  '3 GB storage',
-  'Mobile app access',
-];
+const pd = (key: string): PlanData => planData.value[key] ?? { features: [], monthlyPrice: '', annualMonthly: '', annualTotal: '' };
+const starterMonthly  = computed(() => pd('starter').monthlyPrice  || '₹149');
+const starterAnnualMo = computed(() => pd('starter').annualMonthly || '₹99');
+const starterAnnualTt = computed(() => pd('starter').annualTotal   || '₹1,188');
+const proMonthly      = computed(() => pd('pro').monthlyPrice      || '₹499');
+const proAnnualMo     = computed(() => pd('pro').annualMonthly     || '₹399');
+const proAnnualTt     = computed(() => pd('pro').annualTotal       || '₹4,788');
+const growthMonthly   = computed(() => pd('growth').monthlyPrice   || '₹999');
+const growthAnnualMo  = computed(() => pd('growth').annualMonthly  || '₹799');
+const growthAnnualTt  = computed(() => pd('growth').annualTotal    || '₹9,588');
 
-const proFeatures = [
-  '40 recordings/month',
-  'Up to 2 hours per recording',
-  'AI transcription (15+ languages)',
-  'AI summary + meeting minutes',
-  'Action item extraction',
-  'PDF export',
-  '10 GB storage',
-  'Priority processing',
-];
+function fmtMins(mins: number): string {
+  if (mins < 60) return `${mins} min`;
+  const h = mins / 60;
+  return `${h % 1 === 0 ? h : h.toFixed(1)} hour${h !== 1 ? 's' : ''}`;
+}
 
-const growthFeatures = [
-  'Unlimited recordings',
-  'Up to 3 hours per recording',
-  'AI transcription (20+ languages)',
-  'Everything in Pro',
-  '25 GB storage',
-  'Priority processing + support',
-];
-
-const comparison = [
-  { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },
-  { feature: 'Max recording length',  free: '20 min',   starter: '45 min',   pro: '2 hours',   growth: '3 hours'   },
-  { feature: 'AI Transcription',      free: true,       starter: true,       pro: true,        growth: true        },
-  { feature: 'Languages',             free: 'Eng+Mal',  starter: '3 langs',  pro: '15+',       growth: '20+'       },
-  { feature: 'AI Summary',            free: true,       starter: true,       pro: true,        growth: true        },
-  { feature: 'AI Notes',              free: false,      starter: true,       pro: true,        growth: true        },
-  { feature: 'Meeting Minutes',       free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Action Items',          free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'PDF Export',            free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Priority Processing',   free: false,      starter: false,      pro: true,        growth: true        },
-  { feature: 'Priority Support',      free: false,      starter: false,      pro: false,       growth: true        },
-  { feature: 'Storage',               free: '1 GB',     starter: '3 GB',     pro: '10 GB',     growth: '25 GB'     },
-];
+const comparison = computed(() => {
+  const gates = (plan: string) => planData.value[plan]?.gates ?? {};
+  const dur = (plan: string, fallbackMins: number): string => {
+    const m = gates(plan).maxDurationMins;
+    return fmtMins(m != null ? m : fallbackMins);
+  };
+  return [
+    { feature: 'Recordings / month',    free: '3',        starter: '15',       pro: '40',        growth: 'Unlimited' },
+    { feature: 'Max recording length',  free: dur('free', 20), starter: dur('starter', 45), pro: dur('pro', 120), growth: dur('growth', 180) },
+    { feature: 'AI Transcription',      free: true,       starter: true,       pro: true,        growth: true        },
+    { feature: 'Languages',             free: 'Eng+Mal',  starter: '3 langs',  pro: '15+',       growth: '20+'       },
+    { feature: 'AI Summary',            free: true,       starter: true,       pro: true,        growth: true        },
+    { feature: 'AI Notes',              free: false,      starter: true,       pro: true,        growth: true        },
+    { feature: 'Meeting Minutes',       free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Action Items',          free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'PDF Export',            free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Priority Processing',   free: false,      starter: false,      pro: true,        growth: true        },
+    { feature: 'Priority Support',      free: false,      starter: false,      pro: false,       growth: true        },
+    { feature: 'Storage',               free: '1 GB',     starter: '3 GB',     pro: '10 GB',     growth: '25 GB'     },
+  ];
+});
 
 const faqs = [
   {
@@ -614,11 +716,13 @@ const faqs = [
   },
   {
     q: 'What languages are supported?',
-    a: 'English and Malayalam are available on Free. Starter adds Hindi. Pro unlocks 15+ languages and Growth unlocks 20+ languages including Tamil, Telugu, Bengali, Kannada, Marathi, Gujarati, Punjabi, and more via Sarvam AI.',
+    a: 'English and Malayalam are available on Free. Starter adds Hindi. Pro unlocks 15+ languages and Growth unlocks 20+ languages including Tamil, Telugu, Bengali, Kannada, Marathi, Gujarati, Punjabi, and more.',
   },
   {
     q: 'How does annual billing work?',
-    a: 'Annual plans are billed as a single payment upfront — Starter at ₹1,188/yr, Pro at ₹4,788/yr, and Growth at ₹9,588/yr — saving you up to 33% versus monthly billing.',
+    get a() {
+      return `Annual plans are billed as a single payment upfront — Starter at ${starterAnnualTt.value}/yr, Pro at ${proAnnualTt.value}/yr, and Growth at ${growthAnnualTt.value}/yr — saving you up to 33% versus monthly billing.`;
+    },
   },
   {
     q: 'Is my data secure?',

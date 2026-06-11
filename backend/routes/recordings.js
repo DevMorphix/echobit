@@ -6,7 +6,8 @@ import { uploadAudio, getAudioUrl, deleteAudio, getUploadUrl } from '../config/s
 import { transcribeAudio, transcribeFromUrl } from '../config/transcription.js';
 import { transcribeAudioSarvam, transcribeFromUrlSarvam, translateText, LANG_TO_SARVAM_CODE } from '../config/sarvam.js';
 import { generateSummary, generateMeetingMinutes, extractActionItems, generateTitle } from '../config/gemini.js';
-import { getPlanLimits, getActivePlan } from '../utils/planLimits.js';
+import { getPlanLimits, getActivePlan, getEffectiveLimits } from '../utils/planLimits.js';
+import { logError } from '../utils/logError.js';
 
 // ─── Plan limit helpers ──────────────────────────────────────────────────────
 
@@ -29,7 +30,7 @@ const getUserStorageUsed = async (userId) => {
  * Returns { ok: true } or { ok: false, status, error, code }.
  */
 const checkCreateLimits = async (userId, userDoc, durationSecs, incomingBytes) => {
-  const limits = getPlanLimits(userDoc);
+  const limits = await getEffectiveLimits(userDoc);
 
   if (limits.recordingsPerMonth !== null) {
     const count = await Recording.countDocuments({
@@ -229,7 +230,7 @@ router.post('/finalize-upload', async (req, res) => {
 router.get('/limits', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     const plan = getActivePlan(userDoc);
 
     const [monthlyCount, storageUsed] = await Promise.all([
@@ -250,6 +251,7 @@ router.get('/limits', async (req, res) => {
         indianLanguages: limits.indianLanguages,
         meetingMinutes: limits.meetingMinutes,
         actionItems: limits.actionItems,
+        pdfExport: limits.pdfExport,
       },
     });
   } catch (error) {
@@ -333,7 +335,7 @@ router.post('/upload-url', async (req, res) => {
 // Create new recording
 router.post('/', async (req, res) => {
   try {
-    const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe } = req.body;
+    const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe, tempUpload } = req.body;
 
     console.log('Creating recording:', {
       title,
@@ -342,14 +344,16 @@ router.post('/', async (req, res) => {
       audioKey,
       duration,
       mimeType,
+      tempUpload: !!tempUpload,
       hasR2Config: !!process.env.R2_ACCESS_KEY_ID,
       hasOpenAIKey: !!process.env.OPENAI_API_KEY
     });
 
     // Plan limit checks
     // For presigned-URL uploads, the client reports the file size since the server never saw the bytes.
+    // tempUpload = audio is processed but not permanently stored; don't count toward storage quota.
     const userDoc = await User.findById(req.user.id);
-    const incomingBytes = audioData
+    const incomingBytes = (audioData && !tempUpload)
       ? Buffer.byteLength(audioData, 'base64')
       : (audioKey ? (clientAudioSize || 0) : 0);
     const check = await checkCreateLimits(req.user.id, userDoc, duration || 0, incomingBytes);
@@ -383,27 +387,29 @@ router.post('/', async (req, res) => {
         }
       }
     }
-    // Option 2: Base64 audioData provided (upload to R2)
-    else if (audioData && process.env.R2_ACCESS_KEY_ID) {
+    // Option 2: Base64 audioData provided
+    else if (audioData) {
       try {
-        console.log('Uploading audio to R2...');
         // Strip data URL prefix — handles "audio/webm;codecs=opus;base64," etc.
         const base64Data = audioData.replace(/^data:[^,]+,/, '');
         audioBuffer = Buffer.from(base64Data, 'base64');
         console.log('Audio buffer size:', audioBuffer.length);
-        const uploaded = await uploadAudio(audioBuffer, req.user.id, mimeType || 'audio/webm');
-        audioInfo = {
-          audioKey: uploaded.key,
-          audioUrl: uploaded.url,
-          audioSize: uploaded.size
-        };
-        console.log('R2 upload success:', audioInfo.audioKey);
+
+        if (process.env.R2_ACCESS_KEY_ID && !tempUpload) {
+          // Permanent cloud storage: upload to R2 and keep the key
+          console.log('Uploading audio to R2...');
+          const uploaded = await uploadAudio(audioBuffer, req.user.id, mimeType || 'audio/webm');
+          audioInfo = { audioKey: uploaded.key, audioUrl: uploaded.url, audioSize: uploaded.size };
+          console.log('R2 upload success:', audioInfo.audioKey);
+        } else {
+          // tempUpload or no R2 config: use buffer for processing, no permanent audio storage
+          console.log('[TempUpload] Processing audio from buffer without permanent cloud storage');
+        }
       } catch (uploadError) {
-        console.error('R2 upload error:', uploadError);
-        // Continue without audio if R2 is not configured
+        console.error('Audio processing error:', uploadError);
       }
     } else {
-      console.log('Skipping R2 operations:', { hasAudioData: !!audioData, hasAudioKey: !!audioKey, hasR2Config: !!process.env.R2_ACCESS_KEY_ID });
+      console.log('Skipping audio operations:', { hasAudioData: !!audioData, hasAudioKey: !!audioKey, hasR2Config: !!process.env.R2_ACCESS_KEY_ID });
     }
 
     // Auto-transcribe if requested and we have audio
@@ -594,15 +600,16 @@ router.post('/:id/transcribe', async (req, res) => {
       recording.status = 'transcribed';
       await recording.save();
 
-      res.json({ 
-        transcript: result.text, 
+      res.json({
+        transcript: result.text,
         duration: result.duration,
-        recording 
+        recording
       });
     } catch (transcribeError) {
       console.error('Transcription error:', transcribeError.message);
       recording.status = 'failed';
       await recording.save();
+      logError('transcription_failed', transcribeError.message, { userId: req.user.id, recordingId: recording._id });
       throw transcribeError;
     }
   } catch (error) {
@@ -642,6 +649,7 @@ router.post('/:id/summarize', async (req, res) => {
     res.json({ summary, recording });
   } catch (error) {
     console.error('Error generating summary:', error);
+    logError('summary_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to generate summary: ' + error.message });
   }
 });
@@ -650,7 +658,7 @@ router.post('/:id/summarize', async (req, res) => {
 router.post('/:id/minutes', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     if (!limits.meetingMinutes) {
       return res.status(403).json({
         error: 'Meeting minutes require a Pro or Team plan. Upgrade to unlock this feature.',
@@ -672,13 +680,25 @@ router.post('/:id/minutes', async (req, res) => {
     }
 
     console.log('Generating minutes for recording:', recording._id);
-    const englishTranscript2 = await toEnglishTranscript(recording.transcript, userDoc);
-    let minutes = await generateMeetingMinutes(
-      englishTranscript2,
+
+    // Determine output language — let Gemini handle it natively instead of
+    // post-translating via Sarvam (which breaks markdown with 900-char chunks)
+    const LANG_LABELS = {
+      hindi: 'Hindi', tamil: 'Tamil', telugu: 'Telugu', bengali: 'Bengali',
+      kannada: 'Kannada', malayalam: 'Malayalam', marathi: 'Marathi',
+      gujarati: 'Gujarati', punjabi: 'Punjabi', odia: 'Odia',
+    };
+    const prefLang = userDoc?.summaryLanguage?.toLowerCase().trim();
+    const outputLanguage = (prefLang && prefLang !== 'english' && prefLang !== 'en')
+      ? (LANG_LABELS[prefLang] || null)
+      : null;
+
+    const minutes = await generateMeetingMinutes(
+      recording.transcript,   // pass raw transcript — Gemini handles any language
       recording.summary,
-      recording.title
+      recording.title,
+      outputLanguage          // null = English output
     );
-    minutes = await toPreferredLanguage(minutes, userDoc);
 
     recording.minutes = minutes;
     recording.status = 'completed';
@@ -687,6 +707,7 @@ router.post('/:id/minutes', async (req, res) => {
     res.json({ minutes, recording });
   } catch (error) {
     console.error('Error generating minutes:', error);
+    logError('minutes_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to generate minutes: ' + error.message });
   }
 });
@@ -695,7 +716,7 @@ router.post('/:id/minutes', async (req, res) => {
 router.post('/:id/actions', async (req, res) => {
   try {
     const userDoc = await User.findById(req.user.id);
-    const limits = getPlanLimits(userDoc);
+    const limits = await getEffectiveLimits(userDoc);
     if (!limits.actionItems) {
       return res.status(403).json({
         error: 'Action item extraction requires a Pro or Team plan. Upgrade to unlock this feature.',
@@ -725,6 +746,7 @@ router.post('/:id/actions', async (req, res) => {
     res.json({ actionItems, recording });
   } catch (error) {
     console.error('Error extracting action items:', error);
+    logError('actions_failed', error.message, { userId: req.user.id });
     res.status(500).json({ error: 'Failed to extract action items: ' + error.message });
   }
 });

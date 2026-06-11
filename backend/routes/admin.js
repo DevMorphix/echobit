@@ -1,6 +1,9 @@
 import express from 'express';
 import User from '../models/User.js';
 import Recording from '../models/Recording.js';
+import Coupon from '../models/Coupon.js';
+import PlanConfig from '../models/PlanConfig.js';
+import ErrorLog from '../models/ErrorLog.js';
 import { requireAdmin } from '../middleware/auth.js';
 import { deleteAudio } from '../config/storage.js';
 
@@ -120,6 +123,25 @@ router.delete('/users/:id', async (req, res) => {
   }
 });
 
+// ── Per-user feature overrides ───────────────────────────────────────────────
+router.patch('/users/:id/overrides', async (req, res) => {
+  try {
+    const FIELDS = ['meetingMinutes', 'actionItems', 'pdfExport', 'indianLanguages'];
+    const update = {};
+    for (const f of FIELDS) {
+      if (f in req.body) update[`featureOverrides.${f}`] = req.body[f] ?? null;
+    }
+    if (Object.keys(update).length === 0)
+      return res.status(400).json({ error: 'No valid fields provided' });
+    const user = await User.findByIdAndUpdate(req.params.id, { $set: update }, { new: true });
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    res.json({ user });
+  } catch (error) {
+    console.error('Override update error:', error);
+    res.status(500).json({ error: 'Failed to update overrides' });
+  }
+});
+
 // ── Recordings list ──────────────────────────────────────────────────────────
 router.get('/recordings', async (req, res) => {
   try {
@@ -225,15 +247,22 @@ router.get('/activity', async (req, res) => {
   try {
     const limit = Math.min(50, parseInt(req.query.limit) || 30);
 
-    const [recentUsers, recentRecordings] = await Promise.all([
+    const [recentUsers, recentRecordings, recentErrors] = await Promise.all([
       User.find().select('name email createdAt isVerified privacyAccepted googleId').sort({ createdAt: -1 }).limit(limit).lean(),
       Recording.find().populate('user', 'name email').select('title status createdAt user').sort({ createdAt: -1 }).limit(limit).lean(),
+      ErrorLog.find().populate('userId', 'name email').sort({ createdAt: -1 }).limit(limit).lean(),
     ]);
+
+    const TYPE_LABEL = {
+      transcription_failed: 'Transcription failed',
+      summary_failed:       'Summary generation failed',
+      minutes_failed:       'Minutes generation failed',
+      actions_failed:       'Action items failed',
+    };
 
     const events = [
       ...recentUsers.map(u => ({
         type: 'register',
-        icon: 'user',
         text: `${u.name} (${u.email}) registered${u.googleId ? ' via Google' : ''}`,
         verified: u.isVerified,
         privacyAccepted: u.privacyAccepted,
@@ -241,10 +270,15 @@ router.get('/activity', async (req, res) => {
       })),
       ...recentRecordings.map(r => ({
         type: 'recording',
-        icon: 'mic',
         text: `${r.user?.name || 'Unknown'} created "${r.title}"`,
         status: r.status,
         timestamp: r.createdAt,
+      })),
+      ...recentErrors.map(e => ({
+        type: 'error',
+        text: `${TYPE_LABEL[e.type] || e.type}${e.userId?.name ? ` — ${e.userId.name}` : ''}: ${e.message}`,
+        errorType: e.type,
+        timestamp: e.createdAt,
       })),
     ].sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).slice(0, limit);
 
@@ -374,22 +408,42 @@ router.get('/subscriptions', async (req, res) => {
     );
     const freeUsers = allUsers.filter(u => !u.plan || u.plan === 'free');
 
-    const MONTHLY_VALUE = { pro: 749, team: 1999 };
-    const ANNUAL_VALUE  = { pro: Math.round(7499 / 12), team: Math.round(19999 / 12) };
+    // Use admin-configured prices if available, else fall back to defaults
+    const planConfigs = await PlanConfig.find().lean();
+    const DEFAULT_PAISE = { free: 0, starter: 14900, pro: 49900, growth: 99900, team: 79900 };
+    const planPaise = {};
+    for (const key of ['free','starter','pro','growth','team']) {
+      const cfg = planConfigs.find(c => c.plan === key);
+      planPaise[key] = cfg?.monthlyPaise || DEFAULT_PAISE[key];
+    }
     let mrr = 0;
     for (const u of activePaid) {
-      mrr += ((u.planBillingCycle === 'annual' ? ANNUAL_VALUE : MONTHLY_VALUE)[u.plan] || 0);
+      const monthly = planPaise[u.plan] || 0;
+      const value = u.planBillingCycle === 'annual'
+        ? Math.round(monthly * 12 / 12)  // annual subscribers count monthly equivalent
+        : monthly;
+      mrr += value;
     }
+    mrr = Math.round(mrr / 100); // convert paise to rupees
+
+    const arr = mrr * 12;
+    const arpu = activePaid.length > 0 ? Math.round(mrr / activePaid.length) : 0;
+    const churnRate = allUsers.length > 0
+      ? Math.round((churned.length / allUsers.length) * 100)
+      : 0;
 
     res.json({
       stats: {
-        totalUsers: allUsers.length,
-        activePaid: activePaid.length,
-        activePro:  activePaid.filter(u => u.plan === 'pro').length,
-        activeTeam: activePaid.filter(u => u.plan === 'team').length,
-        freeUsers:  freeUsers.length,
+        totalUsers:   allUsers.length,
+        activePaid:   activePaid.length,
+        activePro:    activePaid.filter(u => u.plan === 'pro').length,
+        activeTeam:   activePaid.filter(u => u.plan === 'team').length,
+        freeUsers:    freeUsers.length,
         churnedUsers: churned.length,
-        mrrInr: Math.round(mrr),
+        mrrInr:       mrr,
+        arrInr:       arr,
+        arpuInr:      arpu,
+        churnRate,
       },
       planBreakdown: {
         pro:     activePaid.filter(u => u.plan === 'pro').length,
@@ -404,6 +458,98 @@ router.get('/subscriptions', async (req, res) => {
   } catch (error) {
     console.error('Admin subscriptions error:', error);
     res.status(500).json({ error: 'Failed to fetch subscription data' });
+  }
+});
+
+// ── Coupons ───────────────────────────────────────────────────────────────────
+router.get('/coupons', async (req, res) => {
+  try {
+    const coupons = await Coupon.find().sort({ createdAt: -1 }).lean();
+    res.json({ coupons });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to fetch coupons' });
+  }
+});
+
+router.post('/coupons', async (req, res) => {
+  try {
+    const { code, discountType, discountValue, applicablePlans, maxUses, expiresAt } = req.body;
+    if (!code || !discountType || discountValue == null) {
+      return res.status(400).json({ error: 'code, discountType, and discountValue are required' });
+    }
+    const coupon = await Coupon.create({
+      code: code.toUpperCase().trim(),
+      discountType,
+      discountValue: Number(discountValue),
+      applicablePlans: applicablePlans || [],
+      maxUses: maxUses ? Number(maxUses) : null,
+      expiresAt: expiresAt || null,
+    });
+    res.status(201).json({ coupon });
+  } catch (err) {
+    if (err.code === 11000) return res.status(400).json({ error: 'Coupon code already exists' });
+    res.status(500).json({ error: 'Failed to create coupon' });
+  }
+});
+
+router.patch('/coupons/:id', async (req, res) => {
+  try {
+    const { isActive, maxUses, expiresAt } = req.body;
+    const update = {};
+    if (isActive !== undefined) update.isActive = isActive;
+    if (maxUses !== undefined) update.maxUses = maxUses ? Number(maxUses) : null;
+    if (expiresAt !== undefined) update.expiresAt = expiresAt || null;
+    const coupon = await Coupon.findByIdAndUpdate(req.params.id, update, { new: true });
+    if (!coupon) return res.status(404).json({ error: 'Coupon not found' });
+    res.json({ coupon });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to update coupon' });
+  }
+});
+
+router.delete('/coupons/:id', async (req, res) => {
+  try {
+    await Coupon.findByIdAndDelete(req.params.id);
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to delete coupon' });
+  }
+});
+
+// ── Plan feature config ──────────────────────────────────────────────────────
+router.get('/plans', async (req, res) => {
+  try {
+    const configs = await PlanConfig.find().lean();
+    res.json(configs);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to load plan configs' });
+  }
+});
+
+router.put('/plans/:plan', async (req, res) => {
+  const { plan } = req.params;
+  if (!['free', 'starter', 'pro', 'growth', 'team'].includes(plan)) {
+    return res.status(400).json({ error: 'Invalid plan' });
+  }
+  const { features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates } = req.body;
+  if (!Array.isArray(features)) {
+    return res.status(400).json({ error: 'features must be an array' });
+  }
+  try {
+    const update = { features };
+    if (monthlyPrice  !== undefined) update.monthlyPrice  = monthlyPrice;
+    if (annualMonthly !== undefined) update.annualMonthly = annualMonthly;
+    if (annualTotal   !== undefined) update.annualTotal   = annualTotal;
+    if (monthlyPaise  !== undefined) update.monthlyPaise  = Number(monthlyPaise);
+    if (gates         !== undefined) update.gates         = gates;
+    const config = await PlanConfig.findOneAndUpdate(
+      { plan },
+      update,
+      { upsert: true, new: true }
+    );
+    res.json(config);
+  } catch (err) {
+    res.status(500).json({ error: 'Failed to save plan config' });
   }
 });
 

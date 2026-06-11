@@ -1,5 +1,4 @@
 <template>
-  <div class="mt-10"></div>
   <ion-app>
     <ion-router-outlet />
   </ion-app>
@@ -8,17 +7,30 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { IonApp, IonRouterOutlet } from '@ionic/vue';
+import { IonApp, IonRouterOutlet, alertController } from '@ionic/vue';
 import { App } from '@capacitor/app';
+import { useAuthStore } from '@/stores/auth';
 
 const router = useRouter();
+const authStore = useAuthStore();
 
 let backButtonHandler: any = null;
+let appStateHandler: any = null;
+
+async function showWelcomeToPro(plan: string) {
+  const label = plan === 'team' ? 'Team' : 'Pro';
+  const alert = await alertController.create({
+    header: `🎉 Welcome to ${label}!`,
+    message: `Your ${label} plan is now active. Enjoy unlimited recordings, all languages, PDF export and more.`,
+    buttons: [{ text: 'Let\'s go!', role: 'confirm' }],
+    cssClass: 'welcome-alert',
+  });
+  await alert.present();
+}
 
 onMounted(() => {
   backButtonHandler = App.addListener('backButton', ({ canGoBack }) => {
     const currentRoute = router.currentRoute.value;
-    // On home screen, exit the app
     if (currentRoute.name === 'Home' || currentRoute.name === 'Splash') {
       App.exitApp();
     } else if (canGoBack) {
@@ -27,9 +39,23 @@ onMounted(() => {
       App.exitApp();
     }
   });
+
+  // Refresh user plan when app comes back to foreground (e.g. after paying on web)
+  appStateHandler = App.addListener('appStateChange', async ({ isActive }) => {
+    if (isActive && authStore.isAuthenticated) {
+      const planBefore = authStore.user?.plan ?? 'free';
+      await authStore.fetchUser();
+      const planAfter = authStore.user?.plan ?? 'free';
+      if (planBefore === 'free' && planAfter !== 'free') {
+        await showWelcomeToPro(planAfter);
+      }
+    }
+  });
+
 });
 
 onUnmounted(() => {
   backButtonHandler?.remove();
+  appStateHandler?.remove();
 });
 </script>

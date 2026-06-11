@@ -84,14 +84,9 @@
         <footer class="record-footer" v-if="!isProcessing">
           <!-- Record Button -->
           <div class="controls" v-if="!showPreview">
-            <div class="record-btn-wrap" v-if="!isRecording">
-              <button class="record-btn" @click="() => startRecording()">
-                <div class="btn-inner">
-                  <ion-icon :icon="mic"></ion-icon>
-                </div>
-              </button>
-            </div>
-            <div class="recording-row" v-else>
+
+            <!-- Active recording controls -->
+            <div class="recording-row" v-if="isRecording">
               <button class="pause-btn" @click="togglePause">
                 <ion-icon :icon="isPaused ? playOutline : pauseOutline"></ion-icon>
               </button>
@@ -105,16 +100,37 @@
                 <div class="pulse-ring pulse-ring-2" v-if="!isPaused"></div>
               </div>
             </div>
-            <p class="hint">{{ !isRecording ? 'Tap to record' : isPaused ? 'Paused' : 'Recording...' }}</p>
-            <p class="lang-notice" v-if="!isRecording">English is the only supported language in this version.<br> We appreciate your patience.</p>
+
+            <!-- Limit reached — grayed disabled button -->
+            <div class="record-btn-wrap" v-else-if="limitReached">
+              <button class="record-btn record-btn-disabled" disabled>
+                <div class="btn-inner">
+                  <ion-icon :icon="lockClosedOutline"></ion-icon>
+                </div>
+              </button>
+            </div>
+
+            <!-- Normal record button -->
+            <div class="record-btn-wrap" v-else>
+              <button class="record-btn" @click="() => startRecording()">
+                <div class="btn-inner">
+                  <ion-icon :icon="mic"></ion-icon>
+                </div>
+              </button>
+            </div>
+
+            <p class="hint" v-if="isRecording">{{ isPaused ? 'Paused' : 'Recording...' }}</p>
+            <p class="hint" v-else-if="limitReached" style="color: var(--ion-color-medium);">{{ usageCount }}/{{ limitCount }} recordings used · <span style="color: var(--app-primary); font-weight: 700; cursor: pointer;" @click="router.push('/pricing')">Upgrade</span></p>
+            <p class="hint" v-else>Tap to record</p>
+            <p class="lang-notice" v-if="!isRecording && !limitReached">English is the only supported language in this version.<br> We appreciate your patience.</p>
 
             <!-- Upload Option -->
-            <div class="upload-divider" v-if="!isRecording">
+            <div class="upload-divider" v-if="!isRecording && !limitReached">
               <span class="divider-line"></span>
               <span class="divider-text">or</span>
               <span class="divider-line"></span>
             </div>
-            <button class="upload-btn" v-if="!isRecording" @click="triggerFileUpload">
+            <button class="upload-btn" v-if="!isRecording && !limitReached" @click="triggerFileUpload">
               <ion-icon :icon="cloudUploadOutline"></ion-icon>
               <span>Upload Audio File</span>
             </button>
@@ -144,6 +160,14 @@
           </div>
         </footer>
 
+        <!-- Duration warning toast -->
+        <transition name="toast">
+          <div class="warning-toast" v-if="isRecording && nearingLimit && !atLimit">
+            <ion-icon :icon="alertCircleOutline"></ion-icon>
+            <span>Under 1 min left — recording will auto-save at the {{ planLabel }} plan limit.</span>
+          </div>
+        </transition>
+
         <!-- Error -->
         <transition name="toast">
           <div class="error-toast" v-if="error" @click="error = ''">
@@ -158,14 +182,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onUnmounted } from 'vue';
+import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonSpinner, alertController } from '@ionic/vue';
-import { closeOutline, mic, playOutline, pauseOutline, trashOutline, checkmarkOutline, alertCircleOutline, cloudUploadOutline } from 'ionicons/icons';
+import { closeOutline, mic, playOutline, pauseOutline, trashOutline, checkmarkOutline, alertCircleOutline, cloudUploadOutline, lockClosedOutline } from 'ionicons/icons';
 import { Capacitor, registerPlugin } from '@capacitor/core';
+import { Filesystem, Directory } from '@capacitor/filesystem';
 import type { PluginListenerHandle } from '@capacitor/core';
 import { CapacitorVoiceRecorder } from '@lgicc/capacitor-voice-recorder';
 import { useRecordingsStore } from '@/stores/recordings';
+import { useAuthStore } from '@/stores/auth';
 import { api } from '@/services/api';
 
 // ── Foreground-service bridge (Android only) ────────────────────────────────
@@ -187,6 +213,35 @@ async function stopBgService() {
 
 const router = useRouter();
 const recordingsStore = useRecordingsStore();
+const authStore = useAuthStore();
+const autoSave = computed(() => authStore.user?.autoSave !== false);
+
+// Plan limits
+const usageCount = ref(0);
+const limitCount = ref<number | null>(null);
+const maxDurationSecs = ref<number | null>(null);
+const planLabel = ref('Free');
+const limitReached = computed(() =>
+  limitCount.value !== null && usageCount.value >= limitCount.value
+);
+const nearingLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value - 60
+);
+const atLimit = computed(() =>
+  maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value
+);
+
+onMounted(async () => {
+  try {
+    const data = await api.getLimits();
+    usageCount.value = data.usage.recordingsThisMonth;
+    limitCount.value = data.limits.recordingsPerMonth;
+    maxDurationSecs.value = data.limits.maxDurationSecs ?? null;
+    planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
+  } catch {
+    // non-critical — backend will still block at save time
+  }
+});
 
 // State
 const isRecording = ref(false);
@@ -243,7 +298,7 @@ function releaseWakeLock() {
   wakeLock = null;
 }
 
-const MAX_RECORDING_TIME = 600; // 10 minutes
+const MAX_RECORDING_TIME = 600; // fallback until limits load
 
 const headerTitle = computed(() => {
   if (isRecording.value) return isPaused.value ? 'Paused' : 'Recording';
@@ -268,7 +323,8 @@ const formattedTime = computed(() => {
 
 const ringOffset = computed(() => {
   const circumference = 2 * Math.PI * 90;
-  const progress = Math.min(recordingTime.value / MAX_RECORDING_TIME, 1);
+  const limit = maxDurationSecs.value ?? MAX_RECORDING_TIME;
+  const progress = Math.min(recordingTime.value / limit, 1);
   return circumference * (1 - progress);
 });
 
@@ -432,7 +488,11 @@ async function startRecording(retryCount = 0) {
         stopVisualization();
       };
 
-      showPreview.value = true;
+      if (autoSave.value) {
+        saveRecording();
+      } else {
+        showPreview.value = true;
+      }
     };
 
     mediaRecorder.value.start(100);
@@ -540,7 +600,11 @@ async function stopRecording() {
         stopVisualization();
       };
 
-      showPreview.value = true;
+      if (autoSave.value) {
+        await saveRecording();
+      } else {
+        showPreview.value = true;
+      }
     } catch (err: any) {
       await stopBgService(); // ensure service is stopped even on error
       error.value = err.message || 'Failed to finish recording';
@@ -606,19 +670,47 @@ async function saveRecording() {
     let recording;
 
     if (Capacitor.isNativePlatform()) {
-      // Android/iOS: R2 presigned PUT is blocked by Android WebView/carrier proxies.
-      // Send the full audio as base64 to POST /recordings — the server handles R2 upload.
-      processingStatus.value = 'Preparing audio...';
-      const base64 = await blobToBase64(audioBlob.value);
-      const sizeMB = ((base64.length * 0.75) / 1024 / 1024).toFixed(1);
-      console.log(`[Upload] Native — base64 ~${sizeMB} MB → backend`);
-      processingStatus.value = 'Uploading audio...';
-      recording = await recordingsStore.createRecording({
-        audioData: base64,
-        duration,
-        mimeType,
-        autoTranscribe: false,
-      });
+      const cloudSync = authStore.user?.cloudSync !== false;
+
+      if (cloudSync) {
+        // Cloud Sync ON: upload audio to backend → R2
+        processingStatus.value = 'Preparing audio...';
+        const base64 = await blobToBase64(audioBlob.value);
+        console.log(`[Upload] Cloud — base64 ~${((base64.length * 0.75) / 1024 / 1024).toFixed(1)} MB → backend`);
+        processingStatus.value = 'Uploading audio...';
+        recording = await recordingsStore.createRecording({
+          audioData: base64,
+          duration,
+          mimeType,
+          autoTranscribe: false,
+        });
+      } else {
+        // Cloud Sync OFF: send audio to server for temporary processing (transcription),
+        // then save audio locally. Audio is never permanently stored in cloud.
+        processingStatus.value = 'Preparing audio...';
+        const base64Full = await blobToBase64(audioBlob.value);
+        const base64Data = base64Full.replace(/^data:[^,]+,/, '');
+        processingStatus.value = 'Transcribing...';
+        recording = await recordingsStore.createRecording({
+          audioData: base64Full,
+          duration,
+          mimeType,
+          autoTranscribe: true,
+          tempUpload: true,
+        });
+        if (recording) {
+          // Save audio to device for local playback
+          processingStatus.value = 'Saving to device...';
+          const extFromMime = mimeType.split('/')[1]?.split(';')[0] || 'webm';
+          const filename = `audio_${recording._id}.${extFromMime}`;
+          await Filesystem.writeFile({
+            path: filename,
+            data: base64Data,
+            directory: Directory.Data,
+            recursive: true,
+          });
+        }
+      }
     } else {
       // Web: direct R2 presigned URL upload
       uploadProgress.value = 0;
@@ -739,7 +831,13 @@ function formatTime(s: number): string {
 }
 
 function startTimer() {
-  timerInterval.value = window.setInterval(() => recordingTime.value++, 1000);
+  timerInterval.value = window.setInterval(() => {
+    if (isPaused.value) return;
+    recordingTime.value++;
+    if (maxDurationSecs.value !== null && recordingTime.value >= maxDurationSecs.value) {
+      stopRecording();
+    }
+  }, 1000);
 }
 
 function stopTimer() {
@@ -1148,6 +1246,15 @@ function stopVisualization() {
   box-shadow: 0 8px 32px rgba(239, 68, 68, 0.35);
 }
 
+.record-btn-disabled {
+  background: var(--app-border) !important;
+  box-shadow: none !important;
+  cursor: not-allowed !important;
+  opacity: 0.6;
+}
+
+.record-btn-disabled:active { transform: none !important; }
+
 .btn-inner {
   width: 100%;
   height: 100%;
@@ -1337,6 +1444,25 @@ function stopVisualization() {
 
 .ctrl-btn.save .ctrl-icon ion-icon { color: white; }
 
+/* Warning Toast */
+.warning-toast {
+  position: fixed;
+  bottom: calc(120px + env(safe-area-inset-bottom));
+  left: 20px;
+  right: 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  background: #f59e0b;
+  color: white;
+  border-radius: var(--radius-xl);
+  font-size: 14px;
+  font-weight: 600;
+  z-index: 100;
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.35);
+}
+
 /* Error Toast */
 .error-toast {
   position: fixed;
@@ -1368,6 +1494,8 @@ function stopVisualization() {
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* Plan limit block */
 
 /* Compact layout for short screens */
 @media (max-height: 680px) {

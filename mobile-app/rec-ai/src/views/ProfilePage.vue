@@ -43,9 +43,33 @@
           </div>
         </div>
 
-        <!-- Settings Sections -->
-        <!-- Upgrade Banner -->
-        <div class="upgrade-banner" @click="openPricing">
+        <!-- Subscription Status / Upgrade Banner -->
+        <div v-if="isPaid" class="sub-card">
+          <div class="sub-card-header">
+            <div class="sub-badge">
+              <ion-icon :icon="flashOutline"></ion-icon>
+              <span>{{ planLabel }} Plan</span>
+            </div>
+            <span class="sub-status-dot"></span>
+          </div>
+          <div class="sub-details">
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Billing</span>
+              <span class="sub-detail-value">{{ billingCycleLabel }}</span>
+            </div>
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Expires</span>
+              <span class="sub-detail-value">{{ expiryDateLabel }}</span>
+            </div>
+            <div class="sub-detail-row">
+              <span class="sub-detail-label">Days left</span>
+              <span class="sub-detail-value sub-days-left">{{ daysLeft }} days</span>
+            </div>
+          </div>
+          <button class="sub-manage-btn" @click="subscribe">Manage Plan</button>
+        </div>
+
+        <div v-else class="upgrade-banner" @click="subscribe">
           <div class="upgrade-icon">
             <ion-icon :icon="flashOutline"></ion-icon>
           </div>
@@ -126,6 +150,21 @@
               <ion-toggle :checked="autoSave" @ionChange="onAutoSaveChange($event.detail.checked)" mode="ios"></ion-toggle>
             </div>
 
+            <div class="setting-item">
+              <div class="setting-icon" :style="cloudSyncEnabled ? 'background: rgba(16, 185, 129, 0.08);' : 'background: rgba(99, 102, 241, 0.08);'">
+                <ion-icon :icon="cloudSyncEnabled ? cloudUploadOutline : lockClosedOutline" :style="cloudSyncEnabled ? 'color: var(--app-primary);' : 'color: var(--ion-color-tertiary);'"></ion-icon>
+              </div>
+              <div class="setting-body">
+                <span class="setting-title">Cloud Sync</span>
+                <span class="setting-desc">{{ cloudSyncEnabled ? 'Audio uploaded to cloud' : 'Audio saved on device only' }}</span>
+              </div>
+              <ion-toggle :checked="cloudSyncEnabled" @ionChange="onCloudSyncChange($event.detail.checked)" mode="ios"></ion-toggle>
+            </div>
+            <div v-if="!cloudSyncEnabled" class="cloud-sync-warning">
+              <ion-icon :icon="warningOutline" class="warning-icon"></ion-icon>
+              <span>Audio files are stored privately on this device and cannot be recovered if the app is uninstalled.</span>
+            </div>
+
             <div class="setting-item" v-if="isIndianUser">
               <div class="setting-icon" style="background: rgba(99, 102, 241, 0.08);">
                 <ion-icon :icon="languageOutline" style="color: var(--ion-color-tertiary);"></ion-icon>
@@ -152,22 +191,6 @@
         </div>
 
         <div class="settings-group">
-          <h3 class="group-label">Plans</h3>
-          <div class="settings-card">
-            <button class="setting-item" @click="openPricing">
-              <div class="setting-icon" style="background: rgba(16, 185, 129, 0.1);">
-                <ion-icon :icon="flashOutline" style="color: #10b981;"></ion-icon>
-              </div>
-              <div class="setting-body">
-                <span class="setting-title">Upgrade to Pro</span>
-                <span class="setting-desc">View plans &amp; pricing</span>
-              </div>
-              <ion-icon :icon="chevronForwardOutline" class="setting-chevron"></ion-icon>
-            </button>
-          </div>
-        </div>
-
-        <div class="settings-group">
           <h3 class="group-label">Support</h3>
           <div class="settings-card">
             <button class="setting-item" @click="openHelp">
@@ -187,7 +210,7 @@
               </div>
               <div class="setting-body">
                 <span class="setting-title">About</span>
-                <span class="setting-desc">Version 0.1.0</span>
+                <span class="setting-desc">Version {{ appVersion }} ({{ appBuild }})</span>
               </div>
               <ion-icon :icon="chevronForwardOutline" class="setting-chevron"></ion-icon>
             </button>
@@ -201,7 +224,7 @@
         </button>
 
         <!-- Version -->
-        <p class="version-text">Echobits v0.1.0</p>
+        <p class="version-text">Echobits v{{ appVersion }}</p>
       </div>
 
       <!-- Edit Profile Modal -->
@@ -301,7 +324,7 @@
                 <img src="/logo.png" alt="App Logo" style="width: 58px; height: 58px; object-fit: contain;" />
               </div>
               <h3>Echobits</h3>
-              <p class="about-version">Version 0.1.0</p>
+              <p class="about-version">Version {{ appVersion }} (build {{ appBuild }})</p>
               <p class="about-desc">Your intelligent voice recorder with AI-powered transcription, summaries, and meeting minutes.</p>
               <p class="about-copy">&copy; 2024 Echobits. All rights reserved.</p>
             </div>
@@ -322,14 +345,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue';
+import { ref, computed, onMounted, onBeforeMount } from 'vue';
 import { useRouter } from 'vue-router';
 import { IonPage, IonContent, IonIcon, IonToggle, IonModal, IonAlert, IonSpinner, toastController } from '@ionic/vue';
 import {
   chevronBackOutline, chevronForwardOutline, personOutline, cloudOutline,
   sunnyOutline, moonOutline, notificationsOutline, helpCircleOutline,
   informationCircleOutline, logOutOutline, closeOutline, micOutline,
-  documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline
+  documentTextOutline, mailOutline, saveOutline, languageOutline, flashOutline,
+  cloudUploadOutline, lockClosedOutline, warningOutline
 } from 'ionicons/icons';
 import { useAuthStore } from '@/stores/auth';
 import { useRecordingsStore } from '@/stores/recordings';
@@ -337,6 +361,18 @@ import { useRecordingsStore } from '@/stores/recordings';
 const router = useRouter();
 const authStore = useAuthStore();
 const recordingsStore = useRecordingsStore();
+
+const appVersion = ref('1.3.0');
+const appBuild   = ref('9');
+
+onBeforeMount(async () => {
+  try {
+    const { App: CapApp } = await import('@capacitor/app');
+    const info = await CapApp.getInfo();
+    appVersion.value = info.version;
+    appBuild.value   = info.build;
+  } catch { /* web/dev — keep defaults */ }
+});
 
 const showEditProfile = ref(false);
 const showStorage = ref(false);
@@ -346,6 +382,7 @@ const notifications = ref(true);
 const isDark = ref(false);
 const saving = ref(false);
 const autoSave = ref(true);
+const cloudSyncEnabled = ref(true);
 const summaryLanguage = ref('');
 
 const editName = ref('');
@@ -364,6 +401,39 @@ const LANG_LABELS: Record<string, string> = {
 const summaryLanguageLabel = computed(() => LANG_LABELS[summaryLanguage.value] || 'English');
 
 const user = computed(() => authStore.user);
+
+const isPaid = computed(() => {
+  if (!user.value?.plan || user.value.plan === 'free') return false;
+  if (!user.value.planExpiresAt) return false;
+  return new Date(user.value.planExpiresAt) > new Date();
+});
+
+const planLabel = computed(() => {
+  const labels: Record<string, string> = {
+    free: 'Free', starter: 'Starter', pro: 'Pro', growth: 'Growth', team: 'Team',
+  };
+  return labels[user.value?.plan || 'free'] || 'Free';
+});
+
+const billingCycleLabel = computed(() => {
+  const c = user.value?.planBillingCycle;
+  if (c === 'monthly') return 'Monthly';
+  if (c === 'annual') return 'Annual';
+  return '—';
+});
+
+const expiryDateLabel = computed(() => {
+  if (!user.value?.planExpiresAt) return '—';
+  return new Date(user.value.planExpiresAt).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
+});
+
+const daysLeft = computed(() => {
+  if (!user.value?.planExpiresAt) return 0;
+  const diff = new Date(user.value.planExpiresAt).getTime() - Date.now();
+  return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+});
 
 const userInitials = computed(() => {
   const name = user.value?.name || 'User';
@@ -406,8 +476,9 @@ onMounted(() => {
   if (user.value) {
     editName.value = user.value.name;
     editEmail.value = user.value.email;
-    autoSave.value = (user.value as any).autoSave !== false;
-    summaryLanguage.value = (user.value as any).summaryLanguage || '';
+    autoSave.value = user.value.autoSave !== false;
+    cloudSyncEnabled.value = user.value.cloudSync !== false;
+    summaryLanguage.value = user.value.summaryLanguage || '';
   }
 });
 
@@ -438,15 +509,26 @@ async function saveProfile() {
   }
 }
 
+function subscribe() {
+  const token = authStore.token;
+  const url = `https://echobits.devmorphix.com/pricing?token=${token}`;
+  window.open(url, '_blank');
+}
+
 async function onAutoSaveChange(val: boolean) {
   autoSave.value = val;
   localStorage.setItem('autoSave', val ? 'true' : 'false');
-  await authStore.updateProfile({ autoSave: val } as any);
+  await authStore.updateProfile({ autoSave: val });
+}
+
+async function onCloudSyncChange(val: boolean) {
+  cloudSyncEnabled.value = val;
+  await authStore.updateProfile({ cloudSync: val });
 }
 
 async function onSummaryLangChange() {
   localStorage.setItem('summaryLanguage', summaryLanguage.value);
-  await authStore.updateProfile({ summaryLanguage: summaryLanguage.value } as any);
+  await authStore.updateProfile({ summaryLanguage: summaryLanguage.value });
 }
 
 function openHelp() {
@@ -454,7 +536,7 @@ function openHelp() {
 }
 
 function openPricing() {
-  window.open('https://echobit.badhusha.dev/pricing', '_system');
+  router.push('/pricing');
 }
 </script>
 
@@ -605,6 +687,96 @@ function openPricing() {
   height: 32px;
   background: var(--app-border);
 }
+
+/* Subscription Card */
+.sub-card {
+  background: var(--app-surface);
+  border: 1.5px solid var(--app-primary);
+  border-radius: var(--radius-2xl);
+  padding: 18px;
+  margin-bottom: 24px;
+  box-shadow: var(--shadow-primary);
+}
+
+.sub-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+
+.sub-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--app-gradient);
+  color: white;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+}
+
+.sub-badge ion-icon { font-size: 14px; }
+
+.sub-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--app-primary);
+  box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2);
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 3px rgba(5, 150, 105, 0.2); }
+  50%       { box-shadow: 0 0 0 6px rgba(5, 150, 105, 0.08); }
+}
+
+.sub-details {
+  background: var(--app-bg);
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.sub-detail-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.sub-detail-label {
+  font-size: 12px;
+  color: var(--app-text-muted);
+  font-weight: 500;
+}
+
+.sub-detail-value {
+  font-size: 13px;
+  color: var(--app-text);
+  font-weight: 600;
+}
+
+.sub-days-left { color: var(--app-primary); }
+
+.sub-manage-btn {
+  width: 100%;
+  height: 40px;
+  border-radius: var(--radius-full);
+  background: var(--app-primary-ultra-light);
+  border: 1.5px solid var(--app-primary);
+  color: var(--app-primary);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.sub-manage-btn:active { background: var(--app-primary); color: white; }
 
 /* Upgrade Banner */
 .upgrade-banner {
@@ -757,6 +929,26 @@ function openPricing() {
   font-size: 18px;
   color: var(--app-text-muted);
   flex-shrink: 0;
+}
+
+.cloud-sync-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 4px 0 8px 0;
+  padding: 10px 12px;
+  background: rgba(251, 191, 36, 0.08);
+  border: 1px solid rgba(251, 191, 36, 0.2);
+  border-radius: 10px;
+  font-size: 12px;
+  color: #fbbf24;
+  line-height: 1.5;
+}
+
+.cloud-sync-warning .warning-icon {
+  font-size: 15px;
+  flex-shrink: 0;
+  margin-top: 1px;
 }
 
 /* Theme Toggle */

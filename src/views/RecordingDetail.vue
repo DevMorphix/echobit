@@ -462,19 +462,24 @@
                   </button>
                 </div>
                 <div class="flex items-center space-x-2">
-                  <button 
+                  <button
                     @click="downloadMinutesPDF"
                     :disabled="generatingPDF"
-                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition disabled:opacity-50 flex items-center space-x-2 text-sm font-medium"
+                    :class="['px-4 py-2 rounded-lg transition flex items-center space-x-2 text-sm font-medium disabled:opacity-50',
+                      pdfEnabled ? 'bg-green-600 text-white hover:bg-green-700' : 'bg-gray-200 text-gray-500 cursor-not-allowed']"
+                    :title="pdfEnabled ? '' : 'PDF export not available on your plan'"
                   >
                     <svg v-if="generatingPDF" class="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                       <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                     </svg>
+                    <svg v-else-if="!pdfEnabled" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                    </svg>
                     <svg v-else class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
-                    <span>{{ generatingPDF ? 'Generating...' : 'Download PDF' }}</span>
+                    <span>{{ generatingPDF ? 'Generating...' : pdfEnabled ? 'Download PDF' : 'PDF Locked' }}</span>
                   </button>
                   <button 
                     @click="downloadMinutesMD"
@@ -628,7 +633,7 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue';
 import { useRoute } from 'vue-router';
-import { recordingsApi } from '../api';
+import { recordingsApi, paymentsApi, authState } from '../api';
 import { jsPDF } from 'jspdf';
 import html2canvas from 'html2canvas';
 
@@ -646,6 +651,7 @@ const generatingTitle = ref(false);
 const activeAITab = ref('summary');
 const selectedTemplate = ref('professional');
 const generatingPDF = ref(false);
+const pdfEnabled = ref(true);
 const minutesPreview = ref(null);
 const showTemplateEditor = ref(false);
 const editingTemplate = ref(null);
@@ -892,6 +898,10 @@ const downloadMinutesMD = () => {
 };
 
 const downloadMinutesPDF = async () => {
+  if (!pdfEnabled.value) {
+    alert('PDF export is not available on your current plan. Upgrade to unlock it.');
+    return;
+  }
   generatingPDF.value = true;
   
   try {
@@ -1059,5 +1069,11 @@ onMounted(async () => {
   } finally {
     loading.value = false;
   }
+
+  // Check if PDF export is enabled for this user's plan
+  try {
+    const limits = await recordingsApi.getLimits();
+    pdfEnabled.value = limits.limits?.pdfExport ?? true;
+  } catch { /* keep default true */ }
 });
 </script>

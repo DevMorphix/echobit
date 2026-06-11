@@ -44,6 +44,7 @@ const userSchema = new mongoose.Schema({
   resetPasswordOTPExpires: { type: Date, default: null },
   privacyAccepted: { type: Boolean, default: false },
   privacyAcceptedAt: { type: Date, default: null },
+  onboardingSeen: { type: Boolean, default: false },
   role: { type: String, enum: ['user', 'admin'], default: 'user' },
   lastLoginAt: { type: Date, default: null },
   loginCount: { type: Number, default: 0 },
@@ -52,6 +53,13 @@ const userSchema = new mongoose.Schema({
   preferredLanguage: { type: String, default: null, trim: true },
   summaryLanguage: { type: String, default: null, trim: true }, // null = English
   autoSave: { type: Boolean, default: true },
+  cloudSync: { type: Boolean, default: true },
+  featureOverrides: {
+    meetingMinutes:  { type: Boolean, default: null },
+    actionItems:     { type: Boolean, default: null },
+    pdfExport:       { type: Boolean, default: null },
+    indianLanguages: { type: Boolean, default: null },
+  },
   plan: { type: String, enum: ['free', 'starter', 'pro', 'growth', 'team'], default: 'free' },
   planBillingCycle: { type: String, enum: ['monthly', 'annual'], default: null },
   planStartDate: { type: Date, default: null },
