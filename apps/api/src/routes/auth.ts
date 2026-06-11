@@ -13,6 +13,7 @@ import { sendOTPEmail, sendDeletionRequestEmail } from '../lib/email.ts';
 import { serializeUser } from '../lib/serialize.ts';
 import { getUserByEmail, getUserById, nowIso, updateRow } from '../lib/db.ts';
 import { deleteAudio } from '../lib/storage.ts';
+import { parseBody, schemas } from '../lib/validate.ts';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { Env, HonoEnv, UserRow, RateLimitBinding } from '../types.ts';
 
@@ -117,12 +118,11 @@ const insertUser = async (
 // Register
 auth.post('/register', async (c) => {
   try {
-    const { name, email, password, country, profession, preferredLanguage } =
-      await c.req.json<Record<string, string | undefined>>();
-
-    if (!name || !email || !password) {
+    const body = await parseBody(c.req, schemas.register);
+    if (!body || !body.name || !body.email || !body.password) {
       return c.json({ error: 'All fields are required' }, 400);
     }
+    const { name, email, password, country, profession, preferredLanguage } = body;
     // Validation parity with the Mongoose schema messages
     if (name.trim().length < 2) {
       return c.json({ error: 'Name must be at least 2 characters' }, 400);
@@ -170,10 +170,11 @@ auth.post('/login', async (c) => {
     return c.json({ error: 'Too many login attempts. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email, password } = await c.req.json<Record<string, string | undefined>>();
-    if (!email || !password) {
+    const body = await parseBody(c.req, schemas.login);
+    if (!body || !body.email || !body.password) {
       return c.json({ error: 'Email and password are required' }, 400);
     }
+    const { email, password } = body;
 
     const user = await getUserByEmail(c.env, email);
     if (!user) return c.json({ error: 'Invalid credentials' }, 401);
@@ -209,7 +210,8 @@ auth.post('/send-verification', async (c) => {
     return c.json({ error: 'Too many requests. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email } = await c.req.json<Record<string, string | undefined>>();
+    const body = await parseBody(c.req, schemas.emailOnly);
+    const email = body?.email;
     if (!email) return c.json({ error: 'Email is required' }, 400);
 
     const user = await getUserByEmail(c.env, email);
@@ -237,8 +239,11 @@ auth.post('/verify-email', async (c) => {
     return c.json({ error: 'Too many requests. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email, otp } = await c.req.json<Record<string, string | undefined>>();
-    if (!email || !otp) return c.json({ error: 'Email and code are required' }, 400);
+    const body = await parseBody(c.req, schemas.verifyEmail);
+    if (!body || !body.email || !body.otp) {
+      return c.json({ error: 'Email and code are required' }, 400);
+    }
+    const { email, otp } = body;
 
     const user = await getUserByEmail(c.env, email);
     if (!user) return c.json({ error: 'No account found' }, 404);
@@ -281,7 +286,8 @@ auth.post('/forgot-password', async (c) => {
     return c.json({ error: 'Too many requests. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email } = await c.req.json<Record<string, string | undefined>>();
+    const body = await parseBody(c.req, schemas.emailOnly);
+    const email = body?.email;
     if (!email) return c.json({ error: 'Email is required' }, 400);
 
     const user = await getUserByEmail(c.env, email);
@@ -309,10 +315,11 @@ auth.post('/reset-password', async (c) => {
     return c.json({ error: 'Too many requests. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email, otp, newPassword } = await c.req.json<Record<string, string | undefined>>();
-    if (!email || !otp || !newPassword) {
+    const body = await parseBody(c.req, schemas.resetPassword);
+    if (!body || !body.email || !body.otp || !body.newPassword) {
       return c.json({ error: 'Email, code and new password are required' }, 400);
     }
+    const { email, otp, newPassword } = body;
     if (newPassword.length < 6) {
       return c.json({ error: 'Password must be at least 6 characters' }, 400);
     }
@@ -365,17 +372,18 @@ auth.patch('/profile', async (c) => {
     const decoded = await verifyToken(c.env.JWT_SECRET, token);
     if (!decoded) return c.json({ error: 'Failed to update profile' }, 500);
 
-    const body = await c.req.json<Record<string, unknown>>();
+    const body = await parseBody(c.req, schemas.profilePatch);
+    if (!body) return c.json({ error: 'Failed to update profile' }, 500);
     const updates: Record<string, string | number | null | undefined> = {
-      name: body.name !== undefined ? String(body.name) : undefined,
-      avatar: body.avatar !== undefined ? (body.avatar as string | null) : undefined,
+      name: body.name,
+      avatar: body.avatar,
     };
-    if (body.country !== undefined) updates.country = body.country as string | null;
-    if (body.profession !== undefined) updates.profession = body.profession as string | null;
+    if (body.country !== undefined) updates.country = body.country;
+    if (body.profession !== undefined) updates.profession = body.profession;
     if (body.preferredLanguage !== undefined)
-      updates.preferred_language = body.preferredLanguage as string | null;
+      updates.preferred_language = body.preferredLanguage;
     if (body.summaryLanguage !== undefined)
-      updates.summary_language = body.summaryLanguage as string | null;
+      updates.summary_language = body.summaryLanguage;
     if (body.autoSave !== undefined) updates.auto_save = body.autoSave ? 1 : 0;
     if (body.cloudSync !== undefined) updates.cloud_sync = body.cloudSync ? 1 : 0;
     if (body.privacyAccepted === true) {
@@ -396,7 +404,8 @@ auth.patch('/profile', async (c) => {
 // Google Sign-In
 auth.post('/google', async (c) => {
   try {
-    const { idToken } = await c.req.json<Record<string, string | undefined>>();
+    const body = await parseBody(c.req, schemas.googleAuth);
+    const idToken = body?.idToken;
     if (!idToken) return c.json({ error: 'ID token required' }, 400);
 
     const profile = await verifyGoogleIdToken(idToken, c.env.GOOGLE_CLIENT_ID ?? '');
@@ -451,10 +460,11 @@ auth.post('/delete-account', async (c) => {
     return c.json({ error: 'Too many requests. Please try again in 15 minutes.' }, 429);
   }
   try {
-    const { email, password } = await c.req.json<Record<string, string | undefined>>();
-    if (!email || !password) {
+    const body = await parseBody(c.req, schemas.deleteAccount);
+    if (!body || !body.email || !body.password) {
       return c.json({ error: 'Email and password are required' }, 400);
     }
+    const { email, password } = body;
 
     const user = await getUserByEmail(c.env, email);
     if (!user) return c.json({ error: 'No account found with this email' }, 404);
@@ -487,11 +497,11 @@ auth.post('/delete-account', async (c) => {
 // Public account deletion REQUEST (no login required — emails support)
 auth.post('/request-deletion', async (c) => {
   try {
-    const { name, email, reason, additionalInfo } =
-      await c.req.json<Record<string, string | undefined>>();
-    if (!name || !email || !reason) {
+    const body = await parseBody(c.req, schemas.requestDeletion);
+    if (!body || !body.name || !body.email || !body.reason) {
       return c.json({ error: 'Name, email and reason are required' }, 400);
     }
+    const { name, email, reason, additionalInfo } = body;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return c.json({ error: 'Invalid email address' }, 400);
     }

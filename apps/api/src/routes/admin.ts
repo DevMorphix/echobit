@@ -7,6 +7,7 @@ import { requireAdmin } from '../middleware/auth.ts';
 import { serializeCoupon, serializeUser } from '../lib/serialize.ts';
 import { nowIso, updateRow } from '../lib/db.ts';
 import { deleteAudio } from '../lib/storage.ts';
+import { parseBody, schemas } from '../lib/validate.ts';
 import type { CouponRow, HonoEnv, PlanConfigRow, UserRow } from '../types.ts';
 
 const admin = new Hono<HonoEnv>();
@@ -186,7 +187,8 @@ admin.delete('/users/:id', async (c) => {
 admin.patch('/users/:id/overrides', async (c) => {
   try {
     const FIELDS = ['meetingMinutes', 'actionItems', 'pdfExport', 'indianLanguages'] as const;
-    const body = await c.req.json<Record<string, boolean | null | undefined>>();
+    const body = await parseBody(c.req, schemas.overridesPatch);
+    if (!body) return c.json({ error: 'No valid fields provided' }, 400);
 
     const user = await c.env.DB.prepare('SELECT * FROM users WHERE id = ?')
       .bind(c.req.param('id'))
@@ -592,18 +594,11 @@ admin.get('/coupons', async (c) => {
 
 admin.post('/coupons', async (c) => {
   try {
-    const { code, discountType, discountValue, applicablePlans, maxUses, expiresAt } =
-      await c.req.json<{
-        code?: string;
-        discountType?: string;
-        discountValue?: number | string;
-        applicablePlans?: string[];
-        maxUses?: number | string | null;
-        expiresAt?: string | null;
-      }>();
-    if (!code || !discountType || discountValue == null) {
+    const body = await parseBody(c.req, schemas.couponCreate);
+    if (!body || !body.code || !body.discountType || body.discountValue == null) {
       return c.json({ error: 'code, discountType, and discountValue are required' }, 400);
     }
+    const { code, discountType, discountValue, applicablePlans, maxUses, expiresAt } = body;
 
     const normalizedCode = code.toUpperCase().trim();
     const existing = await c.env.DB.prepare('SELECT id FROM coupons WHERE code = ?')
@@ -639,11 +634,9 @@ admin.post('/coupons', async (c) => {
 
 admin.patch('/coupons/:id', async (c) => {
   try {
-    const { isActive, maxUses, expiresAt } = await c.req.json<{
-      isActive?: boolean;
-      maxUses?: number | string | null;
-      expiresAt?: string | null;
-    }>();
+    const body = await parseBody(c.req, schemas.couponPatch);
+    if (!body) return c.json({ error: 'Failed to update coupon' }, 500);
+    const { isActive, maxUses, expiresAt } = body;
 
     const existing = await c.env.DB.prepare('SELECT * FROM coupons WHERE id = ?')
       .bind(c.req.param('id'))
@@ -703,18 +696,11 @@ admin.put('/plans/:plan', async (c) => {
   if (!['free', 'starter', 'pro', 'growth', 'team'].includes(plan)) {
     return c.json({ error: 'Invalid plan' }, 400);
   }
-  const { features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates } =
-    await c.req.json<{
-      features?: unknown;
-      monthlyPrice?: string;
-      annualMonthly?: string;
-      annualTotal?: string;
-      monthlyPaise?: number | string;
-      gates?: Record<string, unknown>;
-    }>();
-  if (!Array.isArray(features)) {
+  const body = await parseBody(c.req, schemas.planConfigPut);
+  if (!body || !Array.isArray(body.features)) {
     return c.json({ error: 'features must be an array' }, 400);
   }
+  const { features, monthlyPrice, annualMonthly, annualTotal, monthlyPaise, gates } = body;
   try {
     const existing = await c.env.DB.prepare('SELECT * FROM plan_configs WHERE plan = ?')
       .bind(plan)

@@ -6,6 +6,7 @@ import { PAYMENT_PLANS } from '@echobit/shared/plans';
 import { createRazorpayOrder, verifyRazorpaySignature } from '../lib/razorpay.ts';
 import { serializeCoupon } from '../lib/serialize.ts';
 import { getUserById, nowIso, updateRow } from '../lib/db.ts';
+import { parseBody, schemas } from '../lib/validate.ts';
 import { authenticateToken } from '../middleware/auth.ts';
 import type { CouponRow, Env, HonoEnv } from '../types.ts';
 
@@ -65,8 +66,11 @@ const incrementCouponUse = (env: Env, couponId: string) =>
 // POST /api/payments/validate-coupon
 payments.post('/validate-coupon', async (c) => {
   try {
-    const { code, plan } = await c.req.json<{ code?: string; plan?: string }>();
-    if (!code || !plan) return c.json({ error: 'code and plan are required' }, 400);
+    const body = await parseBody(c.req, schemas.validateCoupon);
+    if (!body || !body.code || !body.plan) {
+      return c.json({ error: 'code and plan are required' }, 400);
+    }
+    const { code, plan } = body;
 
     const planConfig = PAYMENT_PLANS[plan];
     if (!planConfig) return c.json({ error: 'Invalid plan' }, 400);
@@ -92,7 +96,8 @@ payments.post('/validate-coupon', async (c) => {
 // POST /api/payments/create-order
 payments.post('/create-order', async (c) => {
   try {
-    const { plan, couponCode } = await c.req.json<{ plan?: string; couponCode?: string }>();
+    const body = await parseBody(c.req, schemas.createOrder);
+    const { plan, couponCode } = body ?? {};
 
     const planConfig = plan ? PAYMENT_PLANS[plan] : undefined;
     if (!plan || !planConfig) {
@@ -162,16 +167,11 @@ payments.post('/create-order', async (c) => {
 // POST /api/payments/verify
 payments.post('/verify', async (c) => {
   try {
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = await c.req.json<{
-      razorpay_order_id?: string;
-      razorpay_payment_id?: string;
-      razorpay_signature?: string;
-      plan?: string;
-    }>();
-
-    if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature) {
+    const body = await parseBody(c.req, schemas.verifyPayment);
+    if (!body || !body.razorpay_order_id || !body.razorpay_payment_id || !body.razorpay_signature) {
       return c.json({ error: 'Missing required payment fields' }, 400);
     }
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, plan } = body;
 
     const valid = await verifyRazorpaySignature(
       c.env.RAZORPAY_KEY_SECRET ?? '',

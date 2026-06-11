@@ -23,6 +23,7 @@ import {
 import { getEffectiveLimits, userPlanView } from '../lib/limits.ts';
 import { deleteAudio, getAudioUrl, getUploadUrl, hasR2Credentials, uploadAudio } from '../lib/storage.ts';
 import { logError } from '../lib/log-error.ts';
+import { parseBody, schemas } from '../lib/validate.ts';
 import {
   assembleUpload,
   deleteStagedUpload,
@@ -161,15 +162,13 @@ recordings.post('/upload-chunk', async (c) => {
       return c.json({ error: 'Chunk too large' }, 413);
     }
 
-    const { uploadId, chunkIndex, totalChunks, chunk } = await c.req.json<{
-      uploadId?: string;
-      chunkIndex?: number;
-      totalChunks?: number;
-      chunk?: string;
-    }>();
-    if (!uploadId || chunkIndex === undefined || !totalChunks || chunk === undefined) {
+    // Schema enforces types and bounds chunkIndex/totalChunks (≤500) so a
+    // hostile payload can't drive unbounded staging keys or finalize loops.
+    const body = await parseBody(c.req, schemas.uploadChunk);
+    if (!body) {
       return c.json({ error: 'Missing required fields' }, 400);
     }
+    const { uploadId, chunkIndex, totalChunks, chunk } = body;
 
     // Staged under the caller's userId — another user's same uploadId can't collide
     await putChunk(c.env, c.get('user').id, uploadId, chunkIndex, totalChunks, chunk);
@@ -182,12 +181,8 @@ recordings.post('/upload-chunk', async (c) => {
 
 recordings.post('/finalize-upload', async (c) => {
   try {
-    const { uploadId, duration, mimeType, title } = await c.req.json<{
-      uploadId?: string;
-      duration?: number;
-      mimeType?: string;
-      title?: string;
-    }>();
+    const body = await parseBody(c.req, schemas.finalizeUpload);
+    const { uploadId, duration, mimeType, title } = body ?? {};
     const userId = c.get('user').id;
 
     const meta = uploadId ? await getUploadMeta(c.env, userId, uploadId) : null;
@@ -328,7 +323,8 @@ recordings.get('/:id', async (c) => {
 
 recordings.post('/upload-url', async (c) => {
   try {
-    const { mimeType, duration } = await c.req.json<{ mimeType?: string; duration?: number }>();
+    const body = await parseBody(c.req, schemas.uploadUrl);
+    const { mimeType, duration } = body ?? {};
     const userId = c.get('user').id;
     const userRow = await getUserById(c.env, userId);
     const check = await checkCreateLimits(c.env, userId, userRow, duration || 0, 0);
@@ -346,18 +342,8 @@ recordings.post('/upload-url', async (c) => {
 
 recordings.post('/', async (c) => {
   try {
-    const body = await c.req.json<{
-      title?: string;
-      audioData?: string;
-      audioKey?: string;
-      audioSize?: number;
-      duration?: number;
-      transcript?: string;
-      mimeType?: string;
-      autoTranscribe?: boolean;
-      tempUpload?: boolean;
-      async?: boolean;
-    }>();
+    const body = await parseBody(c.req, schemas.createRecording);
+    if (!body) return c.json({ error: 'Failed to create recording' }, 500);
     const { title, audioData, audioKey, audioSize: clientAudioSize, duration, transcript, mimeType, autoTranscribe, tempUpload } = body;
     const userId = c.get('user').id;
     const userRow = await getUserById(c.env, userId);
@@ -477,15 +463,9 @@ recordings.post('/', async (c) => {
 
 recordings.patch('/:id', async (c) => {
   try {
-    const { title, transcript, summary, minutes, status, tags, actionItems } = await c.req.json<{
-      title?: string;
-      transcript?: string;
-      summary?: string;
-      minutes?: string;
-      status?: RecordingRow['status'];
-      tags?: string[];
-      actionItems?: unknown[];
-    }>();
+    const body = await parseBody(c.req, schemas.recordingPatch);
+    if (!body) return c.json({ error: 'Failed to update recording' }, 500);
+    const { title, transcript, summary, minutes, status, tags, actionItems } = body;
 
     const existing = await getRecordingForUser(c.env, c.req.param('id'), c.get('user').id);
     if (!existing) return c.json({ error: 'Recording not found' }, 404);
@@ -544,7 +524,7 @@ recordings.post('/:id/transcribe', async (c) => {
     await updateRow(c.env, 'recordings', row.id, { status: 'transcribing' });
 
     // Async mode (new web client): hand off to the queue, client polls GET /:id
-    const body = await c.req.json<{ async?: boolean }>().catch(() => ({ async: false }));
+    const body = (await parseBody(c.req, schemas.asyncFlag)) ?? { async: false };
     if (body.async) {
       await c.env.JOBS.send({ task: 'transcribe', recordingId: row.id, userId });
       const pending = await getRecordingForUser(c.env, row.id, userId);
@@ -590,7 +570,7 @@ recordings.post('/:id/summarize', async (c) => {
     const row = await getRecordingForUser(c.env, c.req.param('id'), userId);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
 
-    const body = await c.req.json<{ transcript?: string }>().catch(() => ({}) as { transcript?: string });
+    const body = (await parseBody(c.req, schemas.summarize)) ?? {};
     const transcript = row.transcript || body.transcript || '';
     if (!transcript || transcript.length < 50) {
       return c.json({ error: 'Transcript too short to summarize' }, 400);
