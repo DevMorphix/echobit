@@ -1,163 +1,75 @@
-# Rec-AI 🎙️
+# Echobit 🎙️
 
-An AI-powered voice recording and transcription application that transforms your audio recordings into actionable insights with automatic transcription, summaries, meeting minutes, and action items.
+AI-powered voice recording and transcription SaaS — record meetings, get automatic transcription (15+ Indian languages), AI summaries, meeting minutes, and action items.
 
-## ✨ Features
+**v2 runs entirely on the Cloudflare stack**: one Worker serves the web app and the API, with D1, R2, Queues, Workers AI, and Email Service behind it.
 
-- **🎤 Live Recording** - Record audio directly in your browser with real-time waveform visualization
-- **📁 File Upload** - Upload existing audio files for processing
-- **🤖 AI Transcription** - Automatic speech-to-text using OpenAI Whisper
-- **📝 Smart Summaries** - AI-generated summaries powered by Google Gemini 2.5 Flash
-- **📋 Meeting Minutes** - Professional meeting minutes generation
-- **✅ Action Items** - Automatic extraction of tasks and action items
-- **🏷️ Auto-Titling** - AI-generated titles based on recording content
-- **☁️ Cloud Storage** - Secure audio storage with Cloudflare R2
-- **🔐 User Authentication** - JWT-based secure authentication
-- **📱 Responsive Design** - Works seamlessly on desktop and mobile
+## Monorepo layout (Bun workspaces)
 
-## 🛠️ Tech Stack
+```
+apps/web/          Vue 3 SPA (Vite + Tailwind 4) — built into apps/web/dist
+apps/api/          Hono Worker: /api/* + SPA static assets, queue consumer
+packages/shared/   Plan limits, pricing constants, id generation
+scripts/migrate/   MongoDB → D1 migration + API contract test suite
+mobile-app/        Ionic/Capacitor Android app (published — frozen API contract)
+backend/           Legacy Express backend (kept until cutover, then deleted)
+```
 
-### Frontend
-- **Vue.js 3** - Progressive JavaScript framework
-- **Vue Router** - Client-side routing
-- **Tailwind CSS 4** - Utility-first CSS framework
-- **Vite 7** - Next-generation frontend tooling
-- **html2canvas & jsPDF** - PDF export functionality
+## Stack
 
-### Backend
-- **Node.js & Express** - Server framework
-- **MongoDB & Mongoose** - Database and ODM
-- **JWT** - Authentication tokens
-- **bcryptjs** - Password hashing
+| Concern | Technology |
+|---|---|
+| Web + API hosting | Cloudflare Workers (static assets + Hono) |
+| Database | Cloudflare D1 (SQLite) |
+| Audio storage | Cloudflare R2 (+ multipart chunk assembly) |
+| Transcription | Workers AI Whisper large-v3-turbo · Sarvam AI (Indian languages) |
+| Summaries/minutes | Gemini 2.5 Flash (fallback: Workers AI Llama 3.3) |
+| Async jobs | Cloudflare Queues (+ dead-letter queue) |
+| Email (OTP etc.) | Cloudflare Email Service |
+| Payments | Razorpay (REST + WebCrypto HMAC) |
+| Tooling | Bun, wrangler, Vite |
 
-### AI & Cloud Services
-- **OpenAI Whisper** - Speech-to-text transcription
-- **Google Gemini 2.5 Flash** - Text summarization and analysis
-- **Cloudflare R2** - Object storage for audio files
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 18+
-- MongoDB instance
-- Cloudflare R2 bucket (optional)
-- OpenAI API key
-- Google Gemini API key
-
-### Frontend Setup
+## Development
 
 ```bash
-# Install dependencies
-npm install
+bun install
 
-# Start development server
-npm run dev
+# Terminal 1 — API (local D1/R2; copy apps/api/.dev.vars.example → .dev.vars)
+bun run --cwd apps/api db:migrate:local
+bun run dev:api          # http://localhost:8787
 
-# Build for production
-npm run build
+# Terminal 2 — Web ( /api proxied to :8787 )
+bun run dev:web          # http://localhost:5173
+
+bun test                 # unit tests
+bun run typecheck        # API typecheck
 ```
 
-### Backend Setup
+## Deployment
 
 ```bash
-cd backend
-
-# Install dependencies
-npm install
-
-# Start development server
-npm run dev
-
-# Start production server
-npm start
+bun run deploy           # vite build + wrangler deploy
 ```
 
-### Environment Variables
+One-time setup: create the D1 database + queues, onboard `echobits.xyz` to Email Service, set secrets (`wrangler secret put JWT_SECRET SARVAM_API_KEY GEMINI_API_KEY RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET GOOGLE_CLIENT_ID R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY`), add an R2 lifecycle rule deleting the `uploads/` prefix after 1 day, and attach the custom domains (`echobits.xyz`, plus `recapi.badhusha.dev` for the published mobile app).
 
-Create a `.env` file in the `backend` directory:
+## Data migration (Mongo → D1)
 
-```env
-# Database
-MONGODB_URI=your_mongodb_connection_string
-
-# Authentication
-JWT_SECRET=your_jwt_secret_key
-
-# OpenAI (Whisper Transcription)
-OPENAI_API_KEY=your_openai_api_key
-
-# Google Gemini (AI Summaries)
-GEMINI_API_KEY=your_gemini_api_key
-
-# Cloudflare R2 (Audio Storage)
-R2_ACCESS_KEY_ID=your_r2_access_key
-R2_SECRET_ACCESS_KEY=your_r2_secret_key
-R2_BUCKET_NAME=your_bucket_name
-R2_ACCOUNT_ID=your_cloudflare_account_id
-R2_PUBLIC_URL=your_r2_public_url
+```bash
+cd scripts/migrate
+MONGODB_URI=... bun run export-mongo.ts        # → dump/*.ndjson
+bun run transform.ts                            # → dump/sql/*.sql (≤90KB statements)
+for f in dump/sql/*.sql; do (cd ../../apps/api && bunx wrangler d1 execute echobit --remote --file=../../scripts/migrate/$f); done
+bun run verify.ts                               # row counts + sums vs the dump
 ```
 
-## 🚀 Usage
+Compatibility proof before cutover: run the contract suite against the old and new backends with identical fixtures —
 
-1. **Register/Login** - Create an account or sign in
-2. **Record or Upload** - Start a new recording or upload an audio file
-3. **Auto-Transcription** - Your recording is automatically transcribed
-4. **Generate Insights** - Get AI-powered summaries, meeting minutes, and action items
-5. **Export** - Download your recordings and insights as PDF
-
-## 📁 Project Structure
-
-```
-rec-ai/
-├── src/                    # Frontend Vue.js application
-│   ├── api/                # API client
-│   ├── components/         # Reusable Vue components
-│   ├── router/             # Vue Router configuration
-│   └── views/              # Page components
-│       ├── Dashboard.vue
-│       ├── NewRecording.vue
-│       ├── RecordingDetail.vue
-│       └── RecordingsList.vue
-├── backend/                # Node.js Express API
-│   ├── config/             # Configuration modules
-│   │   ├── database.js     # MongoDB connection
-│   │   ├── gemini.js       # Google Gemini AI
-│   │   ├── storage.js      # Cloudflare R2
-│   │   └── transcription.js # OpenAI Whisper
-│   ├── middleware/         # Express middleware
-│   ├── models/             # Mongoose schemas
-│   └── routes/             # API routes
-├── public/                 # Static assets
-└── py-server/              # Python server (optional)
+```bash
+OLD_BASE=https://recapi.badhusha.dev/api NEW_BASE=https://staging.../api \
+TEST_EMAIL=... TEST_PASSWORD=... bun test scripts/migrate/contract.test.ts
 ```
 
-## 🔌 API Endpoints
+## License
 
-### Authentication
-- `POST /api/auth/register` - Register new user
-- `POST /api/auth/login` - User login
-
-### Recordings (Protected)
-- `GET /api/recordings` - Get all user recordings
-- `GET /api/recordings/:id` - Get single recording
-- `POST /api/recordings` - Create new recording
-- `PATCH /api/recordings/:id` - Update recording
-- `DELETE /api/recordings/:id` - Delete recording
-- `POST /api/recordings/:id/summarize` - Generate AI summary
-- `POST /api/recordings/:id/minutes` - Generate meeting minutes
-- `POST /api/recordings/:id/action-items` - Extract action items
-
-### Health
-- `GET /api/health` - Server health check
-
-## 🌐 Deployment
-
-The project is configured for deployment on Vercel.
-
-## 📄 License
-
-MIT License
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+MIT

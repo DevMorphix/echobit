@@ -1,0 +1,14 @@
+{
+  "name": "@echobit/migrate",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "export": "bun run export-mongo.ts",
+    "transform": "bun run transform.ts",
+    "verify": "bun run verify.ts"
+  },
+  "dependencies": {
+    "mongodb": "^7.3.0"
+  }
+}

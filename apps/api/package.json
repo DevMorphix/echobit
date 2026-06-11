@@ -1,0 +1,27 @@
+{
+  "name": "@echobit/api",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy",
+    "typecheck": "tsc --noEmit",
+    "db:migrate:local": "wrangler d1 migrations apply echobit --local",
+    "db:migrate:remote": "wrangler d1 migrations apply echobit --remote"
+  },
+  "dependencies": {
+    "@echobit/shared": "workspace:*",
+    "aws4fetch": "^1.0.20",
+    "bcryptjs": "^3.0.3",
+    "hono": "^4.11.9",
+    "jose": "^6.2.0",
+    "mimetext": "^3.0.27",
+    "nanoid": "^5.1.6"
+  },
+  "devDependencies": {
+    "@cloudflare/workers-types": "^4.20260610.0",
+    "typescript": "^5.9.0",
+    "wrangler": "^4.28.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "name": "@echobit/shared",
+  "private": true,
+  "version": "2.0.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./plan-limits": "./src/plan-limits.ts",
+    "./ids": "./src/ids.ts",
+    "./plans": "./src/plans.ts"
+  },
+  "dependencies": {
+    "nanoid": "^5.1.6"
+  }
+}
