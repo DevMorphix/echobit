@@ -30,6 +30,9 @@ export interface Env {
   SUPPORT_EMAIL: string;
   R2_BUCKET_NAME: string;
   ALLOWED_ORIGINS?: string;
+  // AI Gateway (optional) — unset routes AI calls directly to providers
+  AI_GATEWAY_URL?: string;
+  AI_GATEWAY_ID?: string;
 }
 
 /** JWT payload — exact claims the old backend issued (middleware/auth.js). */

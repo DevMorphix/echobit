@@ -6,15 +6,24 @@ import { withRetry } from './retry.ts';
 import type { Env } from '../types.ts';
 import type { ActionItem } from '../lib/serialize.ts';
 
-const GEMINI_URL =
-  'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
+const GEMINI_PATH = 'v1beta/models/gemini-2.5-flash:generateContent';
 const FALLBACK_MODEL = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
+// AI_GATEWAY_URL set → route via the gateway's google-ai-studio provider
+// endpoint (same request/response JSON); unset → straight to Google.
 const callGemini = async (env: Env, prompt: string): Promise<string> => {
   if (!env.GEMINI_API_KEY) throw new Error('GEMINI_API_KEY is not configured');
-  const res = await fetch(`${GEMINI_URL}?key=${env.GEMINI_API_KEY}`, {
+  const url = env.AI_GATEWAY_URL
+    ? `${env.AI_GATEWAY_URL}/google-ai-studio/${GEMINI_PATH}`
+    : `https://generativelanguage.googleapis.com/${GEMINI_PATH}`;
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    'x-goog-api-key': env.GEMINI_API_KEY,
+  };
+  if (env.AI_GATEWAY_URL) headers['cf-aig-request-timeout'] = '60000';
+  const res = await fetch(url, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
   });
   if (!res.ok) {
@@ -29,9 +38,11 @@ const callGemini = async (env: Env, prompt: string): Promise<string> => {
 };
 
 const callWorkersAiFallback = async (env: Env, prompt: string): Promise<string> => {
-  const res = (await env.AI.run(FALLBACK_MODEL as keyof AiModels, {
-    messages: [{ role: 'user', content: prompt }],
-  })) as { response?: string };
+  const res = (await env.AI.run(
+    FALLBACK_MODEL as keyof AiModels,
+    { messages: [{ role: 'user', content: prompt }] },
+    env.AI_GATEWAY_ID ? { gateway: { id: env.AI_GATEWAY_ID } } : undefined,
+  )) as { response?: string };
   if (!res.response) throw new Error('Workers AI fallback returned an empty response');
   return res.response;
 };

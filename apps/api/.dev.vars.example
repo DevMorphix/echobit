@@ -11,3 +11,6 @@ GOOGLE_CLIENT_ID=1004219063159-uhcjuruvg9fp6c0ti5rad22gi64am8k4.apps.googleuserc
 R2_ACCOUNT_ID=
 R2_ACCESS_KEY_ID=
 R2_SECRET_ACCESS_KEY=
+# AI Gateway (optional) — leave unset to call providers directly
+#AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/<account_id>/echobit
+#AI_GATEWAY_ID=echobit

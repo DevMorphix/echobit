@@ -45,7 +45,11 @@ interface WhisperResponse {
 const runWhisper = async (env: Env, bytes: Uint8Array): Promise<WhisperResponse> =>
   withRetry(
     () =>
-      env.AI.run(WHISPER_MODEL as keyof AiModels, { audio: toBase64(bytes) }) as Promise<WhisperResponse>,
+      env.AI.run(
+        WHISPER_MODEL as keyof AiModels,
+        { audio: toBase64(bytes) },
+        env.AI_GATEWAY_ID ? { gateway: { id: env.AI_GATEWAY_ID } } : undefined,
+      ) as Promise<WhisperResponse>,
     { label: 'workers-ai whisper' },
   );
 
