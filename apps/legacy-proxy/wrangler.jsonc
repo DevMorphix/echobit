@@ -1,0 +1,18 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "echobit-legacy-proxy",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-06-01",
+
+  "observability": { "enabled": true },
+
+  "vars": {
+    // Canonical home of the new API (apps/api). Point at the workers.dev
+    // URL until the echobits.xyz custom domain is attached.
+    "UPSTREAM": "https://echobits.xyz"
+  }
+
+  // Deploy this Worker in the Cloudflare account that owns badhusha.dev,
+  // then attach the old API hostname at cutover:
+  // "routes": [{ "pattern": "recapi.badhusha.dev", "custom_domain": true }]
+}
