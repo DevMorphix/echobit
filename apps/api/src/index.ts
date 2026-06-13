@@ -14,6 +14,8 @@ import { r2AudioSource, transcribeAudio } from './audio/pipeline.ts';
 import { generateTitle } from './audio/gemini.ts';
 import type { Env, HonoEnv, JobMessage, RecordingRow } from './types.ts';
 
+export { TranscriptionWorkflow } from './workflows/transcribe.ts';
+
 const app = new Hono<HonoEnv>();
 
 // CORS — parity with the old hand-rolled middleware (server.js): configured
@@ -118,8 +120,35 @@ const runTranscriptionJob = async (env: Env, job: JobMessage): Promise<void> => 
   });
 };
 
+// ─── Cron sweep: recordings stuck mid-pipeline after a crash ─────────────────
+// Only "transcribing" is swept — it's the async in-flight marker. "pending" is
+// a legitimate terminal state (autoTranscribe: false), never touch it.
+
+const STUCK_AFTER_MS = 6 * 60 * 60 * 1000;
+
+const sweepStuckRecordings = async (env: Env): Promise<void> => {
+  const cutoff = new Date(Date.now() - STUCK_AFTER_MS).toISOString();
+  const stuck = await env.DB.prepare(
+    "SELECT id, user_id FROM recordings WHERE status = 'transcribing' AND updated_at < ?",
+  )
+    .bind(cutoff)
+    .all<{ id: string; user_id: string }>();
+
+  for (const row of stuck.results ?? []) {
+    await updateRow(env, 'recordings', row.id, { status: 'failed' });
+    await logError(env, 'transcription_failed', 'Stuck in transcribing >6h (cron sweep)', {
+      userId: row.user_id,
+      recordingId: row.id,
+    });
+  }
+};
+
 export default {
   fetch: app.fetch,
+
+  async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
+    await sweepStuckRecordings(env);
+  },
 
   async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
     if (batch.queue.endsWith('-dlq')) {

@@ -14,7 +14,9 @@ import { serializeUser } from '../lib/serialize.ts';
 import { getUserByEmail, getUserById, nowIso, updateRow } from '../lib/db.ts';
 import { deleteAudio } from '../lib/storage.ts';
 import { parseBody, schemas } from '../lib/validate.ts';
+import { turnstileRequired, verifyTurnstile } from '../lib/turnstile.ts';
 import { authenticateToken } from '../middleware/auth.ts';
+import type { Context } from 'hono';
 import type { Env, HonoEnv, UserRow, RateLimitBinding } from '../types.ts';
 
 const auth = new Hono<HonoEnv>();
@@ -32,6 +34,15 @@ const rateLimit = async (limiter: RateLimitBinding | undefined, key: string): Pr
   } catch {
     return true;
   }
+};
+
+/** Turnstile gate for OTP-sending endpoints (web-origin requests only). */
+const turnstileBlocked = async (
+  c: Context<HonoEnv>,
+  token: string | undefined,
+): Promise<boolean> => {
+  if (!turnstileRequired(c.env, c.req.header('origin'))) return false;
+  return !(await verifyTurnstile(c.env, token, clientIp(c)));
 };
 
 /** Small user payload used by login/verify-email/google (note `id`, not `_id`). */
@@ -121,6 +132,9 @@ auth.post('/register', async (c) => {
     const body = await parseBody(c.req, schemas.register);
     if (!body || !body.name || !body.email || !body.password) {
       return c.json({ error: 'All fields are required' }, 400);
+    }
+    if (await turnstileBlocked(c, body.turnstileToken)) {
+      return c.json({ error: 'Verification failed. Please refresh and try again.' }, 403);
     }
     const { name, email, password, country, profession, preferredLanguage } = body;
     // Validation parity with the Mongoose schema messages
@@ -213,6 +227,9 @@ auth.post('/send-verification', async (c) => {
     const body = await parseBody(c.req, schemas.emailOnly);
     const email = body?.email;
     if (!email) return c.json({ error: 'Email is required' }, 400);
+    if (await turnstileBlocked(c, body?.turnstileToken)) {
+      return c.json({ error: 'Verification failed. Please refresh and try again.' }, 403);
+    }
 
     const user = await getUserByEmail(c.env, email);
     // Anti-enumeration: respond identically whether or not the account exists
@@ -289,6 +306,9 @@ auth.post('/forgot-password', async (c) => {
     const body = await parseBody(c.req, schemas.emailOnly);
     const email = body?.email;
     if (!email) return c.json({ error: 'Email is required' }, 400);
+    if (await turnstileBlocked(c, body?.turnstileToken)) {
+      return c.json({ error: 'Verification failed. Please refresh and try again.' }, 403);
+    }
 
     const user = await getUserByEmail(c.env, email);
     if (!user || !user.is_verified) {

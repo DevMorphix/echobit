@@ -31,6 +31,16 @@
 
   "ai": { "binding": "AI" },
 
+  "workflows": [
+    {
+      "binding": "TRANSCRIBE_WF",
+      "name": "echobit-transcribe",
+      "class_name": "TranscriptionWorkflow"
+    }
+  ],
+
+  // Queue stays one release to drain in-flight messages, then remove
+  // (consumer code in index.ts, this config, and the JOBS binding).
   "queues": {
     "producers": [{ "binding": "JOBS", "queue": "echobit-jobs" }],
     "consumers": [
@@ -55,6 +65,12 @@
   },
 
   "limits": { "cpu_ms": 60000 },
+
+  // Run /api near the D1 primary — handlers issue many sequential queries.
+  "placement": { "mode": "smart" },
+
+  // Daily sweep: recordings stuck in "transcribing" → failed (see scheduled()).
+  "triggers": { "crons": ["17 3 * * *"] },
 
   "observability": { "enabled": true },
 

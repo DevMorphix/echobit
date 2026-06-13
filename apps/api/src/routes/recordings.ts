@@ -4,9 +4,9 @@
 // Pipeline execution modes:
 // - Legacy sync (published mobile app): POST /, /finalize-upload and
 //   /:id/transcribe await the shared pipeline in-request.
-// - Async (new web client sends `async: true`): job enqueued to JOBS queue,
-//   response returns immediately with status "transcribing"; client polls
-//   GET /:id. Same pipeline function either way.
+// - Async (new web client sends `async: true`): TranscriptionWorkflow instance
+//   created, response returns immediately with status "transcribing"; client
+//   polls GET /:id. Same pipeline function either way.
 
 import { Hono } from 'hono';
 import { newId } from '@echobit/shared/ids';
@@ -382,7 +382,7 @@ recordings.post('/', async (c) => {
         const uploaded = await uploadAudio(c.env, audioBytes, userId, mimeType || 'audio/webm');
         audioInfo = { audioKey: uploaded.key, audioUrl: uploaded.url, audioSize: uploaded.size };
       } else if (body.async) {
-        // tempUpload + async: stage bytes so the queue consumer can read them
+        // tempUpload + async: stage bytes so the workflow can read them
         // (lifecycle rule purges `uploads/` after a day)
         stagedTempKey = `uploads/tmp/${userId}/${newId()}`;
         await c.env.BUCKET.put(stagedTempKey, audioBytes);
@@ -391,7 +391,7 @@ recordings.post('/', async (c) => {
 
     const wantsTranscription = autoTranscribe !== false && (!!audioBytes || !!audioInfo.audioKey);
 
-    // ── Async path (new web client): enqueue and return immediately ──
+    // ── Async path (new web client): start workflow and return immediately ──
     if (body.async && wantsTranscription) {
       const recording = await insertRecording(c.env, {
         userId,
@@ -403,7 +403,7 @@ recordings.post('/', async (c) => {
         transcript: transcript || '',
         status: 'transcribing',
       });
-      await c.env.JOBS.send({ task: 'transcribe', recordingId: recording.id, userId });
+      await c.env.TRANSCRIBE_WF.create({ params: { task: 'transcribe', recordingId: recording.id, userId } });
       return c.json({ recording: serializeRecording(recording) }, 201);
     }
 
@@ -523,10 +523,10 @@ recordings.post('/:id/transcribe', async (c) => {
 
     await updateRow(c.env, 'recordings', row.id, { status: 'transcribing' });
 
-    // Async mode (new web client): hand off to the queue, client polls GET /:id
+    // Async mode (new web client): hand off to the workflow, client polls GET /:id
     const body = (await parseBody(c.req, schemas.asyncFlag)) ?? { async: false };
     if (body.async) {
-      await c.env.JOBS.send({ task: 'transcribe', recordingId: row.id, userId });
+      await c.env.TRANSCRIBE_WF.create({ params: { task: 'transcribe', recordingId: row.id, userId } });
       const pending = await getRecordingForUser(c.env, row.id, userId);
       return c.json({ recording: serializeRecording(pending as RecordingRow) }, 202);
     }

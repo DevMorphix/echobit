@@ -7,6 +7,7 @@ export interface Env {
   BUCKET: R2Bucket;
   AI: Ai;
   JOBS: Queue<JobMessage>;
+  TRANSCRIBE_WF: Workflow<JobMessage>;
   EMAIL: SendEmail;
   RL_LOGIN: RateLimitBinding;
   RL_OTP: RateLimitBinding;
@@ -20,6 +21,7 @@ export interface Env {
   RAZORPAY_KEY_SECRET?: string;
   RAZORPAY_MOCK?: string;
   GOOGLE_CLIENT_ID?: string;
+  TURNSTILE_SECRET?: string;
   // R2 S3 credentials only for presigned upload URLs (contract parity)
   R2_ACCOUNT_ID?: string;
   R2_ACCESS_KEY_ID?: string;
