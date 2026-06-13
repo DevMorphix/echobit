@@ -36,9 +36,11 @@
             {{ error }}
           </div>
 
+          <TurnstileWidget ref="turnstileRef" v-model="turnstileToken" />
+
           <button
             type="submit"
-            :disabled="loading"
+            :disabled="loading || (turnstileSiteKey && !turnstileToken)"
             class="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center space-x-2"
           >
             <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -152,6 +154,7 @@
 <script setup>
 import { ref } from 'vue';
 import { authApi } from '../api';
+import TurnstileWidget from '../components/TurnstileWidget.vue';
 
 const step = ref(1);
 const email = ref('');
@@ -160,15 +163,19 @@ const newPassword = ref('');
 const confirmPassword = ref('');
 const loading = ref(false);
 const error = ref('');
+const turnstileToken = ref('');
+const turnstileRef = ref(null);
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 async function handleSendOtp() {
   error.value = '';
   loading.value = true;
   try {
-    await authApi.forgotPassword(email.value);
+    await authApi.forgotPassword(email.value, turnstileToken.value);
     step.value = 2;
   } catch (err) {
     error.value = err.message || 'Failed to send reset code. Please try again.';
+    turnstileRef.value?.reset(); // token is single-use; get a fresh one
   } finally {
     loading.value = false;
   }

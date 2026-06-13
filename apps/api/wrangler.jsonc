@@ -31,6 +31,25 @@
 
   "ai": { "binding": "AI" },
 
+  // ffmpeg sidecar: transcodes non-WAV audio so Sarvam (Indian languages) can
+  // process web-recorder output instead of falling back to Whisper. Scales to
+  // zero (sleepAfter in FfmpegContainer). Needs `wrangler login` + Docker to
+  // build/deploy the image; container calls failing → Whisper fallback.
+  "containers": [
+    {
+      "class_name": "FfmpegContainer",
+      "image": "./container/Dockerfile",
+      "instance_type": "basic",
+      "max_instances": 5
+    }
+  ],
+
+  "durable_objects": {
+    "bindings": [{ "name": "FFMPEG", "class_name": "FfmpegContainer" }]
+  },
+
+  "migrations": [{ "tag": "v1", "new_sqlite_classes": ["FfmpegContainer"] }],
+
   "workflows": [
     {
       "binding": "TRANSCRIBE_WF",

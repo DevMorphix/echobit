@@ -11,6 +11,7 @@
     "db:migrate:remote": "wrangler d1 migrations apply echobit --remote"
   },
   "dependencies": {
+    "@cloudflare/containers": "^0.3.7",
     "@echobit/shared": "workspace:*",
     "aws4fetch": "^1.0.20",
     "bcryptjs": "^3.0.3",

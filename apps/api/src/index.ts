@@ -15,6 +15,7 @@ import { generateTitle } from './audio/gemini.ts';
 import type { Env, HonoEnv, JobMessage, RecordingRow } from './types.ts';
 
 export { TranscriptionWorkflow } from './workflows/transcribe.ts';
+export { FfmpegContainer } from './audio/transcode.ts';
 
 const app = new Hono<HonoEnv>();
 

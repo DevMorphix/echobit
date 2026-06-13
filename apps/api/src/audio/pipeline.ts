@@ -11,6 +11,7 @@
 import { getPlanLimits } from '@echobit/shared/plan-limits';
 import { transcribeWhisper, type TranscriptionResult } from './whisper.ts';
 import { LANG_TO_SARVAM_CODE, transcribeSarvam, translateText } from './sarvam.ts';
+import { transcodeToWav } from './transcode.ts';
 import { looksLikeWav, memoryRangeReader, type RangeReader } from './wav.ts';
 import { userPlanView } from '../lib/limits.ts';
 import type { Env, UserRow } from '../types.ts';
@@ -92,18 +93,39 @@ export const transcribeAudio = async (
   source: AudioSource,
   mimeType: string,
   user: UserRow | null,
+  audioKey?: string | null,
 ): Promise<TranscriptionResult> => {
   const limits = getPlanLimits(user ? userPlanView(user) : null);
   const read = source.read ?? memoryRangeReader(source.bytes ?? new Uint8Array(0));
   const head = await read(0, Math.min(512, source.size));
 
-  const useSarvam =
-    isIndianUser(user) && !!env.SARVAM_API_KEY && limits.indianLanguages && looksLikeWav(head);
+  const sarvamEligible = isIndianUser(user) && !!env.SARVAM_API_KEY && limits.indianLanguages;
+  const langCode = getSarvamLanguageCode(user);
 
-  if (useSarvam) {
-    console.log('[Transcription] Using Sarvam AI, lang:', getSarvamLanguageCode(user) ?? 'auto-detect');
-    return transcribeSarvam(env, source, getSarvamLanguageCode(user));
+  if (sarvamEligible && looksLikeWav(head)) {
+    console.log('[Transcription] Using Sarvam AI, lang:', langCode ?? 'auto-detect');
+    return transcribeSarvam(env, source, langCode);
   }
+
+  // Sarvam-eligible but non-WAV (web recorder output): transcode to WAV via the
+  // ffmpeg container, then run Sarvam. Any failure falls back to Whisper below.
+  if (sarvamEligible && env.FFMPEG && audioKey && !looksLikeWav(head)) {
+    try {
+      const wavKey = await transcodeToWav(env, audioKey, user?.id ?? 'anon');
+      try {
+        const wavSource = await r2AudioSource(env, wavKey);
+        if (wavSource) {
+          console.log('[Transcription] Transcoded to WAV → Sarvam, lang:', langCode ?? 'auto-detect');
+          return await transcribeSarvam(env, wavSource, langCode);
+        }
+      } finally {
+        await env.BUCKET.delete(wavKey).catch(() => {});
+      }
+    } catch (e) {
+      console.warn('[Transcription] ffmpeg→Sarvam failed, falling back to Whisper:', (e as Error).message);
+    }
+  }
+
   console.log('[Transcription] Using Workers AI Whisper');
   return transcribeWhisper(env, source, mimeType);
 };

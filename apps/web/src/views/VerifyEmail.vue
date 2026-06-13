@@ -54,12 +54,16 @@
           </button>
         </form>
 
-        <div class="mt-6 text-center">
+        <div class="mt-6 flex justify-center">
+          <TurnstileWidget ref="turnstileRef" v-model="turnstileToken" />
+        </div>
+
+        <div class="mt-4 text-center">
           <p class="text-white/50 text-sm">
             Didn't receive it?
             <button
               @click="resend"
-              :disabled="resendCooldown > 0 || resending"
+              :disabled="resendCooldown > 0 || resending || (turnstileSiteKey && !turnstileToken)"
               class="text-emerald-400 hover:text-emerald-300 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ml-1"
             >
               {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : resending ? 'Sending…' : 'Resend code' }}
@@ -81,6 +85,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { authApi } from '../api';
+import TurnstileWidget from '../components/TurnstileWidget.vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -91,6 +96,9 @@ const loading = ref(false);
 const resending = ref(false);
 const error = ref('');
 const resendCooldown = ref(0);
+const turnstileToken = ref('');
+const turnstileRef = ref(null);
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 let cooldownTimer = null;
 
@@ -123,12 +131,13 @@ async function resend() {
   resending.value = true;
   error.value = '';
   try {
-    await authApi.sendVerification(email.value);
+    await authApi.sendVerification(email.value, turnstileToken.value);
     startCooldown();
   } catch (err) {
     error.value = err.message || 'Failed to resend. Try again.';
   } finally {
     resending.value = false;
+    turnstileRef.value?.reset(); // token is single-use; refresh for next resend
   }
 }
 </script>

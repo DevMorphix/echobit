@@ -36,7 +36,7 @@ export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
           const source = await r2AudioSource(this.env, recording.audio_key);
           if (!source) throw new Error(`Audio object not found: ${recording.audio_key}`);
 
-          const result = await transcribeAudio(this.env, source, recording.audio_mime_type, userRow);
+          const result = await transcribeAudio(this.env, source, recording.audio_mime_type, userRow, recording.audio_key);
           return {
             text: result.text,
             duration: Math.round(result.duration || recording.duration),

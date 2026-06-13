@@ -419,7 +419,7 @@ recordings.post('/', async (c) => {
           : await r2AudioSource(c.env, audioInfo.audioKey as string);
         if (source) {
           if (source.size < 1000) throw new Error('Audio file is too small or corrupted');
-          const result = await transcribeAudio(c.env, source, mimeType || 'audio/webm', userRow);
+          const result = await transcribeAudio(c.env, source, mimeType || 'audio/webm', userRow, audioInfo.audioKey);
           finalTranscript = result.text;
           transcriptionDuration = result.duration || duration || 0;
           recordingStatus = 'transcribed';
@@ -536,7 +536,7 @@ recordings.post('/:id/transcribe', async (c) => {
       const source = await r2AudioSource(c.env, row.audio_key as string);
       if (!source) throw new Error('Audio object not found in storage');
 
-      const result = await transcribeAudio(c.env, source, row.audio_mime_type, userRow);
+      const result = await transcribeAudio(c.env, source, row.audio_mime_type, userRow, row.audio_key);
 
       await updateRow(c.env, 'recordings', row.id, {
         transcript: result.text,

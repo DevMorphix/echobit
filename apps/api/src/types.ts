@@ -8,6 +8,7 @@ export interface Env {
   AI: Ai;
   JOBS: Queue<JobMessage>;
   TRANSCRIBE_WF: Workflow<JobMessage>;
+  FFMPEG: DurableObjectNamespace<import('./audio/transcode.ts').FfmpegContainer>;
   EMAIL: SendEmail;
   RL_LOGIN: RateLimitBinding;
   RL_OTP: RateLimitBinding;

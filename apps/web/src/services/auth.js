@@ -15,22 +15,22 @@ export const authApi = {
     }
   },
 
-  async register(name, email, password, profile = {}) {
+  async register(name, email, password, profile = {}, turnstileToken) {
     authState.loading = true;
     try {
       return await apiRequest('/auth/register', {
         method: 'POST',
-        body: JSON.stringify({ name, email, password, ...profile }),
+        body: JSON.stringify({ name, email, password, ...profile, turnstileToken }),
       });
     } finally {
       authState.loading = false;
     }
   },
 
-  async sendVerification(email) {
+  async sendVerification(email, turnstileToken) {
     return apiRequest('/auth/send-verification', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, turnstileToken }),
     });
   },
 
@@ -43,10 +43,10 @@ export const authApi = {
     return data;
   },
 
-  async forgotPassword(email) {
+  async forgotPassword(email, turnstileToken) {
     return apiRequest('/auth/forgot-password', {
       method: 'POST',
-      body: JSON.stringify({ email }),
+      body: JSON.stringify({ email, turnstileToken }),
     });
   },
 

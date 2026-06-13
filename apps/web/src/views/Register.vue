@@ -172,9 +172,11 @@
             {{ error }}
           </div>
 
+          <TurnstileWidget ref="turnstileRef" v-model="turnstileToken" />
+
           <button
             type="submit"
-            :disabled="loading"
+            :disabled="loading || (turnstileSiteKey && !turnstileToken)"
             class="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3.5 rounded-2xl font-semibold hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 flex items-center justify-center gap-2 text-sm sm:text-base shadow-lg shadow-emerald-900/40"
           >
             <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
@@ -198,6 +200,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { authApi } from '../api';
+import TurnstileWidget from '../components/TurnstileWidget.vue';
 
 const router = useRouter();
 const name = ref('');
@@ -210,6 +213,9 @@ const profession = ref('');
 const loading = ref(false);
 const googleLoading = ref(false);
 const error = ref('');
+const turnstileToken = ref('');
+const turnstileRef = ref(null);
+const turnstileSiteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 
 const passwordStrength = computed(() => {
   const p = password.value;
@@ -303,10 +309,11 @@ const handleRegister = async () => {
       country: country.value || undefined,
       preferredLanguage: country.value === 'India' ? preferredLanguage.value : undefined,
       profession: profession.value || undefined,
-    });
+    }, turnstileToken.value);
     router.push(`/verify-email?email=${encodeURIComponent(email.value)}`);
   } catch (err) {
     error.value = err.message || 'Registration failed. Please try again.';
+    turnstileRef.value?.reset(); // token is single-use; get a fresh one
   } finally {
     loading.value = false;
   }
