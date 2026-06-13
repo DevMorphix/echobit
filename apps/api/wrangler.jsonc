@@ -58,21 +58,6 @@
     }
   ],
 
-  // Queue stays one release to drain in-flight messages, then remove
-  // (consumer code in index.ts, this config, and the JOBS binding).
-  "queues": {
-    "producers": [{ "binding": "JOBS", "queue": "echobit-jobs" }],
-    "consumers": [
-      {
-        "queue": "echobit-jobs",
-        "max_batch_size": 1,
-        "max_retries": 3,
-        "dead_letter_queue": "echobit-jobs-dlq"
-      },
-      { "queue": "echobit-jobs-dlq", "max_batch_size": 10, "max_retries": 0 }
-    ]
-  },
-
   "send_email": [{ "name": "EMAIL" }],
 
   "unsafe": {

@@ -1,5 +1,6 @@
 // Echobit API Worker — serves the Vue SPA (static assets, SPA fallback) and
-// the /api routes (run_worker_first), plus the async pipeline queue consumer.
+// the /api routes (run_worker_first). Async transcription runs in
+// TranscriptionWorkflow (see workflows/transcribe.ts).
 
 import { Hono } from 'hono';
 import authRoutes from './routes/auth.ts';
@@ -8,11 +9,9 @@ import paymentsRoutes from './routes/payments.ts';
 import adminRoutes from './routes/admin.ts';
 import plansRoutes from './routes/plans.ts';
 import { authenticateToken } from './middleware/auth.ts';
-import { getUserById, updateRow } from './lib/db.ts';
+import { updateRow } from './lib/db.ts';
 import { logError } from './lib/log-error.ts';
-import { r2AudioSource, transcribeAudio } from './audio/pipeline.ts';
-import { generateTitle } from './audio/gemini.ts';
-import type { Env, HonoEnv, JobMessage, RecordingRow } from './types.ts';
+import type { Env, HonoEnv } from './types.ts';
 
 export { TranscriptionWorkflow } from './workflows/transcribe.ts';
 export { FfmpegContainer } from './audio/transcode.ts';
@@ -83,44 +82,6 @@ app.onError((err, c) => {
   return c.json({ error: 'Something went wrong!' }, 500);
 });
 
-// ─── Queue consumer: async transcription jobs (+ DLQ) ───────────────────────
-
-const TEMP_PREFIX = 'uploads/tmp/';
-
-const runTranscriptionJob = async (env: Env, job: JobMessage): Promise<void> => {
-  const recording = await env.DB.prepare('SELECT * FROM recordings WHERE id = ?')
-    .bind(job.recordingId)
-    .first<RecordingRow>();
-  if (!recording || !recording.audio_key) {
-    console.warn('[queue] Recording gone or has no audio, skipping:', job.recordingId);
-    return;
-  }
-
-  const userRow = await getUserById(env, job.userId);
-  const source = await r2AudioSource(env, recording.audio_key);
-  if (!source) throw new Error(`Audio object not found: ${recording.audio_key}`);
-
-  const result = await transcribeAudio(env, source, recording.audio_mime_type, userRow);
-
-  // tempUpload (cloudSync off): audio was only staged for processing
-  const isTemp = recording.audio_key.startsWith(TEMP_PREFIX);
-  if (isTemp) await env.BUCKET.delete(recording.audio_key).catch(() => {});
-
-  let title: string | undefined;
-  if (/^Recording \d/.test(recording.title) && result.text.length > 20 && env.GEMINI_API_KEY) {
-    title = await generateTitle(env, result.text).catch(() => undefined);
-  }
-
-  await updateRow(env, 'recordings', recording.id, {
-    transcript: result.text,
-    duration: Math.round(result.duration || recording.duration),
-    status: 'transcribed',
-    title,
-    audio_key: isTemp ? null : undefined,
-    audio_url: isTemp ? null : undefined,
-  });
-};
-
 // ─── Cron sweep: recordings stuck mid-pipeline after a crash ─────────────────
 // Only "transcribing" is swept — it's the async in-flight marker. "pending" is
 // a legitimate terminal state (autoTranscribe: false), never touch it.
@@ -150,31 +111,4 @@ export default {
   async scheduled(_controller: ScheduledController, env: Env): Promise<void> {
     await sweepStuckRecordings(env);
   },
-
-  async queue(batch: MessageBatch<JobMessage>, env: Env): Promise<void> {
-    if (batch.queue.endsWith('-dlq')) {
-      // Permanently failed jobs: mark recording failed + log for admin
-      for (const msg of batch.messages) {
-        const job = msg.body;
-        await updateRow(env, 'recordings', job.recordingId, { status: 'failed' });
-        await logError(env, 'transcription_failed', 'Job exhausted retries (DLQ)', {
-          userId: job.userId,
-          recordingId: job.recordingId,
-          meta: { task: job.task },
-        });
-        msg.ack();
-      }
-      return;
-    }
-
-    for (const msg of batch.messages) {
-      try {
-        await runTranscriptionJob(env, msg.body);
-        msg.ack();
-      } catch (err) {
-        console.error('[queue] Job failed:', (err as Error).message);
-        msg.retry();
-      }
-    }
-  },
-} satisfies ExportedHandler<Env, JobMessage>;
+} satisfies ExportedHandler<Env>;

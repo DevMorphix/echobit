@@ -6,7 +6,6 @@ export interface Env {
   DB: D1Database;
   BUCKET: R2Bucket;
   AI: Ai;
-  JOBS: Queue<JobMessage>;
   TRANSCRIBE_WF: Workflow<JobMessage>;
   FFMPEG: DurableObjectNamespace<import('./audio/transcode.ts').FfmpegContainer>;
   EMAIL: SendEmail;
@@ -45,7 +44,7 @@ export interface AuthUser {
   name: string;
 }
 
-/** Async pipeline job (queue-backed path). */
+/** TranscriptionWorkflow payload (params passed to TRANSCRIBE_WF.create). */
 export interface JobMessage {
   task: 'transcribe';
   recordingId: string;

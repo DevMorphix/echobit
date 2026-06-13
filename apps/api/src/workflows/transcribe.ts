@@ -1,10 +1,7 @@
-// Durable transcription pipeline (Cloudflare Workflows) — replaces the JOBS
-// queue consumer for the async path. Each step checkpoints independently, so
-// a failure in title generation or the final save retries from that step
-// instead of re-running (and re-billing) Sarvam/Whisper transcription.
-//
-// The queue consumer in index.ts stays one release to drain in-flight
-// messages; remove it (and the queues config + JOBS binding) after that.
+// Durable transcription pipeline (Cloudflare Workflows) — the async path for
+// recording transcription. Each step checkpoints independently, so a failure
+// in title generation or the final save retries from that step instead of
+// re-running (and re-billing) Sarvam/Whisper transcription.
 
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { NonRetryableError } from 'cloudflare:workflows';
@@ -74,7 +71,7 @@ export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
         });
       });
     } catch (err) {
-      // Exhausted retries (parity with the old DLQ consumer): mark failed + log
+      // Exhausted retries: mark failed + log (was the queue's DLQ behavior)
       await step.do('mark-failed', async () => {
         await updateRow(this.env, 'recordings', recordingId, { status: 'failed' });
         await logError(this.env, 'transcription_failed', (err as Error).message, {

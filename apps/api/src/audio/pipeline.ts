@@ -1,6 +1,6 @@
 // The shared transcription pipeline — one implementation used by BOTH the
 // legacy-sync endpoints (published mobile app awaits in-request) and the
-// queue consumer (async web path with retries + DLQ).
+// TranscriptionWorkflow (async web path with per-step retries).
 //
 // Provider routing (parity with backend/routes/recordings.js):
 // - Indian users (or no country set) with plan.indianLanguages + SARVAM key

@@ -51,9 +51,9 @@ bun run typecheck        # API typecheck
 bun run deploy           # vite build + wrangler deploy
 ```
 
-One-time setup: create the D1 database + queues, onboard `echobits.xyz` to Email Service, set secrets (`wrangler secret put JWT_SECRET SARVAM_API_KEY GEMINI_API_KEY RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET GOOGLE_CLIENT_ID R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY`), add an R2 lifecycle rule deleting the `uploads/` prefix after 1 day, and attach the custom domains (`echobits.xyz`, plus `recapi.badhusha.dev` for the published mobile app).
+One-time setup: create the D1 database, onboard `echobits.xyz` to Email Service, set secrets (`wrangler secret put JWT_SECRET SARVAM_API_KEY GEMINI_API_KEY RAZORPAY_KEY_ID RAZORPAY_KEY_SECRET GOOGLE_CLIENT_ID R2_ACCOUNT_ID R2_ACCESS_KEY_ID R2_SECRET_ACCESS_KEY`), add an R2 lifecycle rule deleting the `uploads/` prefix after 1 day, and attach the custom domains (`echobits.xyz`, plus `recapi.badhusha.dev` for the published mobile app).
 
-`wrangler deploy` builds the ffmpeg container image (`apps/api/container/`), so Docker must be running and able to build `linux/amd64` (on Apple Silicon, enable Docker Desktop → Settings → "Use Rosetta for x86_64/amd64 emulation"). The async transcription path runs as a Workflow (`TranscriptionWorkflow`); the legacy `JOBS` queue is kept one release to drain in-flight messages, then removed. A daily cron sweeps recordings stuck in `transcribing` for >6h.
+`wrangler deploy` builds the ffmpeg container image (`apps/api/container/`), so Docker must be running and able to build `linux/amd64` (on Apple Silicon, enable Docker Desktop → Settings → "Use Rosetta for x86_64/amd64 emulation"). The async transcription path runs as a Workflow (`TranscriptionWorkflow`); a daily cron sweeps recordings stuck in `transcribing` for >6h.
 
 Optional — AI Gateway: create a gateway named `echobit` (dashboard → AI > AI Gateway) and set the `AI_GATEWAY_URL` + `AI_GATEWAY_ID` vars in `apps/api/wrangler.jsonc`. Gemini and Workers AI (Whisper + Llama fallback) calls then route through the gateway, giving per-request logs, real token/cost analytics, and spend limits in the gateway dashboard. Sarvam is not a supported gateway provider and always goes direct. With the vars unset, all AI calls go straight to the providers (no gateway needed for local dev).
 
