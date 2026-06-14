@@ -4,7 +4,7 @@
 
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { execSync } from 'node:child_process';
+import { execFileSync } from 'node:child_process';
 
 const dumpDir = process.argv[2]?.startsWith('--') ? './dump' : (process.argv[2] ?? './dump');
 const local = process.argv.includes('--local');
@@ -18,10 +18,10 @@ const TABLES: Record<string, string> = {
 };
 
 const d1 = (sql: string): Record<string, unknown>[] => {
-  // Escape backslashes before quotes so the shell-embedded SQL is fully sanitized.
-  const escaped = sql.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
-  const cmd = `wrangler d1 execute echobit ${local ? '--local' : '--remote'} --json --command "${escaped}"`;
-  const out = execSync(cmd, { cwd: '../../apps/api', encoding: 'utf8' });
+  // execFileSync (no shell) passes the SQL as a single argv entry — no manual
+  // quote/backslash escaping, and no shell-injection surface.
+  const args = ['d1', 'execute', 'echobit', local ? '--local' : '--remote', '--json', '--command', sql];
+  const out = execFileSync('wrangler', args, { cwd: '../../apps/api', encoding: 'utf8' });
   const parsed = JSON.parse(out) as { results: Record<string, unknown>[] }[];
   return parsed[0]?.results ?? [];
 };
