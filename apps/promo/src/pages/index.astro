@@ -1,20 +1,12 @@
 ---
 import Base from '../layouts/Base.astro';
+import { DEFAULT_PRICES, DEFAULT_FEATURES } from '@echobit/shared/plans';
 
 const steps = [
   { n: '01', title: 'Record', desc: 'Capture meetings and lectures on the web or the Android app — even while it runs in the background.' },
   { n: '02', title: 'Transcribe', desc: 'Accurate speech-to-text in English and 20+ Indian languages, with speaker-friendly formatting.' },
   { n: '03', title: 'Summarise', desc: 'AI distills the conversation into key points, decisions, and clear action items.' },
   { n: '04', title: 'Share', desc: 'Export polished, branded meeting minutes as PDF — or share them in a single tap.' },
-];
-
-const features = [
-  { title: 'Background recording', desc: 'Keep recording while you take notes or switch apps. Echobit runs quietly in the background on Android.', d: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z' },
-  { title: 'Multilingual transcription', desc: 'High-accuracy transcription across English and 20+ Indian languages — handles accents and crosstalk.', d: 'M3 5h12M9 3v2m1.048 3.5A18.022 18.022 0 016.412 9m6.088 9L21 21m-3-3a18.022 18.022 0 01-3.588-9M3 21l3-3' },
-  { title: 'AI summaries', desc: 'Get a concise, readable summary the moment your recording ends — no manual note-taking.', d: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z' },
-  { title: 'Meeting minutes', desc: 'Auto-generate professional minutes with attendees, decisions, and next steps — PDF ready.', d: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' },
-  { title: 'Action items', desc: 'Echobit pulls out tasks, owners, and deadlines so nothing slips after the meeting.', d: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4' },
-  { title: 'Export & templates', desc: 'Choose a template or build your own and export branded minutes your way.', d: 'M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4' },
 ];
 
 const languages = ['Hindi', 'Tamil', 'Telugu', 'Bengali', 'Kannada', 'Malayalam', 'Marathi', 'Gujarati', 'Punjabi', 'Odia', 'English'];
@@ -33,8 +25,9 @@ const testimonials = [
   { name: 'Sneha Patel', role: 'MBA Student, Ahmedabad', quote: 'Lectures become Gujarati summaries I can actually study from. Total game changer.', bg: 'bg-green-600' },
 ];
 
-const freeFeatures = ['3 recordings / month', 'English + Malayalam', 'AI transcription & summary', '1 GB storage'];
-const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes + action items', 'PDF export & templates'];
+// Pricing teaser stays in sync with the app/web (shared plan source of truth).
+const freeFeatures = DEFAULT_FEATURES.free.filter((f) => f.included).map((f) => f.text).slice(0, 4);
+const proFeatures = DEFAULT_FEATURES.pro.filter((f) => f.included).map((f) => f.text).slice(0, 4);
 
 const stats: { count?: number; suffix?: string; text?: string; label: string }[] = [
   { count: 20, suffix: '+', label: 'Indian languages' },
@@ -48,8 +41,6 @@ const faqs = [
   { q: 'Is there a free plan?', a: 'Yes — Echobit has a free forever plan with 3 recordings per month, AI transcription, and summaries. No credit card required to start.' },
   { q: 'Can I record on my phone?', a: 'Yes. Echobit has an Android app that keeps recording in the background, plus a web app. Recordings sync to your account when Cloud Sync is on.' },
   { q: 'How accurate is the transcription?', a: 'Echobit uses state-of-the-art speech-to-text models and stays accurate even with accents, crosstalk, and background noise. Clear audio gives the best results.' },
-  { q: 'How long can a recording be?', a: 'Up to 3 hours per recording, depending on your plan. Long recordings are processed automatically.' },
-  { q: 'Can I export meeting minutes?', a: 'Yes — generate professional meeting minutes with attendees, decisions, and action items, and export them as PDF using built-in or custom templates.' },
   { q: 'Is my data private and secure?', a: 'Yes. Your data is encrypted in transit, never sold, and you can request full account and data deletion at any time from the app or our deletion page.' },
 ];
 
@@ -85,14 +76,9 @@ const pageSchema = [
 <Base path="/" jsonLd={pageSchema}>
   <!-- Hero -->
   <section class="relative overflow-hidden">
-    <div class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute inset-0 bg-dots"></div>
-      <div class="absolute left-1/2 top-[-8rem] h-[26rem] w-[42rem] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl animate-float-slow"></div>
-      <div class="absolute right-[-6rem] top-24 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl animate-float"></div>
-      <div class="absolute left-[-6rem] top-44 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl animate-float-slow"></div>
-    </div>
+    <div class="hero-dots" aria-hidden="true"></div>
     <div class="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-      <a href="/#features" class="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-sm transition-colors hover:border-emerald-400/40 hover:text-white">
+      <a href="/features" class="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-sm transition-colors hover:border-emerald-400/40 hover:text-white">
         <span class="relative flex h-1.5 w-1.5">
           <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
           <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
@@ -104,9 +90,8 @@ const pageSchema = [
         <span class="text-gradient"> in your language.</span>
       </h1>
       <p class="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
-        Stop scrambling for notes. Echobit records your meetings and lectures, transcribes them in
-        English and 20+ Indian languages, and hands you a clean summary, action items, and
-        ready-to-share minutes — in seconds, automatically.
+        Echobit records your meetings and lectures, transcribes them in English and 20+ Indian
+        languages, and hands you a clean summary, action items, and shareable minutes — in seconds.
       </p>
       <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
         <a href="/register" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
@@ -185,27 +170,6 @@ const pageSchema = [
           <p class="mt-2 text-sm text-slate-400 leading-relaxed">{s.desc}</p>
         </div>
       ))}
-    </div>
-  </section>
-
-  <!-- Features -->
-  <section id="features" class="section-alt">
-    <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
-      <div class="max-w-2xl mb-14">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Features</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Everything you need after the meeting ends</h2>
-      </div>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {features.map((f) => (
-          <div data-stagger class="card group rounded-2xl p-6">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-400/20 transition-transform duration-300 group-hover:scale-110">
-              <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d={f.d} /></svg>
-            </div>
-            <h3 class="mt-4 text-lg font-semibold text-white">{f.title}</h3>
-            <p class="mt-2 text-sm text-slate-400 leading-relaxed">{f.desc}</p>
-          </div>
-        ))}
-      </div>
     </div>
   </section>
 
@@ -289,7 +253,7 @@ const pageSchema = [
       <div class="card rounded-2xl p-7 flex flex-col">
         <h3 class="text-lg font-semibold text-white">Free</h3>
         <p class="mt-1 text-sm text-slate-400">For getting started</p>
-        <p class="mt-4 text-4xl font-bold text-white">₹0<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <p class="mt-4 text-4xl font-bold text-white">{DEFAULT_PRICES.free.monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span></p>
         <ul class="mt-6 space-y-2.5 flex-1">
           {freeFeatures.map((f) => (
             <li class="flex items-center gap-2.5 text-sm text-slate-300">
@@ -304,7 +268,7 @@ const pageSchema = [
         <span class="absolute -top-3 left-7 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a]">Most popular</span>
         <h3 class="text-lg font-semibold text-white">Pro</h3>
         <p class="mt-1 text-sm text-slate-400">For power users</p>
-        <p class="mt-4 text-4xl font-bold text-white">₹499<span class="text-base font-normal text-slate-400">/mo</span></p>
+        <p class="mt-4 text-4xl font-bold text-white">{DEFAULT_PRICES.pro.monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span></p>
         <ul class="mt-6 space-y-2.5 flex-1">
           {proFeatures.map((f) => (
             <li class="flex items-center gap-2.5 text-sm text-slate-200">
@@ -371,10 +335,10 @@ const pageSchema = [
 
   <!-- Final CTA -->
   <section class="max-w-6xl mx-auto px-6 py-20 sm:py-28">
-    <div class="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-white/[0.02] to-cyan-500/10 px-8 py-16 text-center">
+    <div class="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-white/[0.02] to-teal-500/10 px-8 py-16 text-center">
       <div class="pointer-events-none absolute inset-0 -z-0">
         <div class="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/30 blur-3xl animate-float"></div>
-        <div class="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-cyan-500/25 blur-3xl animate-float-slow"></div>
+        <div class="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-teal-500/25 blur-3xl animate-float-slow"></div>
       </div>
       <div class="relative">
         <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">Start your first recording today</h2>

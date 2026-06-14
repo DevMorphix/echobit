@@ -24,14 +24,6 @@
 @keyframes shimmer { to { background-position: 200% center; } }
 @keyframes glow { 0%, 100% { opacity: .55; } 50% { opacity: 1; } }
 
-/* Slow-drifting, hue-shifting color background (the "aurora"). */
-@keyframes aurora {
-  0%   { transform: translate3d(0, 0, 0) scale(1); }
-  50%  { transform: translate3d(2.5%, -2%, 0) scale(1.12); }
-  100% { transform: translate3d(-2.5%, 2.5%, 0) scale(1.06); }
-}
-@keyframes hue { to { filter: blur(40px) hue-rotate(360deg); } }
-
 /* Live audio equalizer bars. */
 @keyframes eq { 0%, 100% { transform: scaleY(.25); } 50% { transform: scaleY(1); } }
 
@@ -57,45 +49,41 @@ html, body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-body { position: relative; overflow-x: hidden; }
-
-/* Animated color background — drifts and slowly cycles hue. */
-body::before {
-  content: "";
-  position: fixed;
-  inset: -25%;
-  z-index: -2;
-  background:
-    radial-gradient(32% 38% at 18% 18%, rgba(16, 185, 129, 0.30), transparent 62%),
-    radial-gradient(30% 34% at 84% 12%, rgba(13, 148, 136, 0.26), transparent 62%),
-    radial-gradient(42% 46% at 78% 82%, rgba(6, 182, 212, 0.22), transparent 62%),
-    radial-gradient(36% 42% at 14% 88%, rgba(5, 150, 105, 0.26), transparent 62%),
-    radial-gradient(30% 30% at 50% 50%, rgba(52, 211, 153, 0.10), transparent 70%);
-  filter: blur(40px);
-  animation: aurora 24s ease-in-out infinite alternate, hue 55s linear infinite;
-  will-change: transform, filter;
-}
-
-/* Faint grid + top vignette over the aurora. */
-body::after {
-  content: "";
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background-image:
-    linear-gradient(rgba(148, 163, 184, 0.05) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.05) 1px, transparent 1px);
-  background-size: 64px 64px;
-  -webkit-mask-image: radial-gradient(ellipse 95% 75% at 50% 0%, #000 25%, transparent 78%);
-  mask-image: radial-gradient(ellipse 95% 75% at 50% 0%, #000 25%, transparent 78%);
-}
+body { position: relative; overflow-x: hidden; background: #05080a; }
 
 h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
+/* ── Hero background ────────────────────────────────────────────────────────
+   The ONLY animated background on the site, and CSS-only (no WebGL): a faint
+   emerald dot grid with a single soft emerald glow that drifts slowly across
+   it. Confined to the hero's relative + overflow-hidden wrapper, and masked so
+   it fades out before the hero content starts. */
+.hero-dots {
+  position: absolute;
+  inset: 0;
+  z-index: -10;
+  overflow: hidden;
+  pointer-events: none;
+  background-image: radial-gradient(circle, rgba(52, 211, 153, 0.16) 1px, transparent 1.6px);
+  background-size: 24px 24px;
+  -webkit-mask-image: radial-gradient(ellipse 78% 62% at 50% 26%, #000 32%, transparent 80%);
+  mask-image: radial-gradient(ellipse 78% 62% at 50% 26%, #000 32%, transparent 80%);
+}
+.hero-dots::after {
+  content: "";
+  position: absolute;
+  inset: -15%;
+  background: radial-gradient(circle at 50% 40%, rgba(16, 185, 129, 0.20), transparent 50%);
+  animation: hero-glow 16s ease-in-out infinite;
+}
+@keyframes hero-glow {
+  0%, 100% { transform: translate(-6%, -3%) scale(1); }
+  50%      { transform: translate(6%, 4%) scale(1.12); }
+}
+
 /* Animated gradient text (hero accent). */
 .text-gradient {
-  background: linear-gradient(90deg, #34d399, #2dd4bf, #22d3ee, #34d399, #6ee7b7);
+  background: linear-gradient(90deg, #34d399, #10b981, #6ee7b7, #2dd4bf, #34d399);
   background-size: 200% auto;
   -webkit-background-clip: text;
   background-clip: text;
@@ -248,7 +236,7 @@ html.js .reveal.in [data-stagger] { animation: stagger-in .6s cubic-bezier(.22, 
   html { scroll-behavior: auto; }
   html.js .reveal { opacity: 1; transform: none; }
   .text-gradient { animation: none; }
-  body::before { animation: none; }
+  .hero-dots::after { animation: none; }
   [class*="animate-"],
   .eq > span,
   .rec-dot,
