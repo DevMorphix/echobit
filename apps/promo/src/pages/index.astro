@@ -9,7 +9,21 @@ const steps = [
   { n: '04', title: 'Share', desc: 'Export polished, branded meeting minutes as PDF — or share them in a single tap.' },
 ];
 
-const languages = ['Hindi', 'Tamil', 'Telugu', 'Bengali', 'Kannada', 'Malayalam', 'Marathi', 'Gujarati', 'Punjabi', 'Odia', 'English'];
+// Each language shown in its own script (endonym), with the English name as a
+// small label so the marquee reads for everyone.
+const languages = [
+  { native: 'हिन्दी',    en: 'Hindi' },
+  { native: 'தமிழ்',     en: 'Tamil' },
+  { native: 'తెలుగు',    en: 'Telugu' },
+  { native: 'বাংলা',     en: 'Bengali' },
+  { native: 'ಕನ್ನಡ',     en: 'Kannada' },
+  { native: 'മലയാളം',   en: 'Malayalam' },
+  { native: 'मराठी',     en: 'Marathi' },
+  { native: 'ગુજરાતી',   en: 'Gujarati' },
+  { native: 'ਪੰਜਾਬੀ',    en: 'Punjabi' },
+  { native: 'ଓଡ଼ିଆ',     en: 'Odia' },
+  { native: 'English',   en: 'English' },
+];
 const langRow2 = languages.slice().reverse();
 
 const useCases = [
@@ -213,12 +227,18 @@ const pageSchema = [
     <div class="mt-16 overflow-hidden marquee-mask reveal">
       <div class="flex w-max gap-3 animate-marquee">
         {[...languages, ...languages].map((l) => (
-          <span class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm whitespace-nowrap">{l}</span>
+          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
+            <span class="text-base font-semibold text-slate-100">{l.native}</span>
+            {l.en !== l.native && <span class="text-xs font-medium text-slate-500">{l.en}</span>}
+          </span>
         ))}
       </div>
       <div class="mt-3 flex w-max gap-3 animate-marquee-rev">
         {[...langRow2, ...langRow2].map((l) => (
-          <span class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm whitespace-nowrap">{l}</span>
+          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
+            <span class="text-base font-semibold text-slate-100">{l.native}</span>
+            {l.en !== l.native && <span class="text-xs font-medium text-slate-500">{l.en}</span>}
+          </span>
         ))}
       </div>
     </div>
