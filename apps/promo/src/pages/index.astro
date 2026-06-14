@@ -33,15 +33,21 @@ const useCases = [
   { emoji: '🎙️', title: 'Journalists', desc: 'Transcribe interviews and press briefings in seconds, in any language.' },
 ];
 
+// Real-feeling mix — not every review is a glowing 5★.
 const testimonials = [
-  { name: 'Priya Sharma', role: 'Product Manager, Bengaluru', quote: 'The action-item extraction alone saves me half an hour after every sprint meeting.', bg: 'bg-emerald-600' },
-  { name: 'Arjun Nair', role: 'Medical Resident, Kochi', quote: 'I record ward rounds in Malayalam and the accuracy is genuinely impressive — even the medical terms.', bg: 'bg-teal-600' },
-  { name: 'Sneha Patel', role: 'MBA Student, Ahmedabad', quote: 'Lectures become Gujarati summaries I can actually study from. Total game changer.', bg: 'bg-green-600' },
+  { name: 'Priya Sharma', role: 'Product Manager, Bengaluru', rating: 5, quote: 'The action-item extraction alone saves me half an hour after every sprint meeting.', bg: 'bg-emerald-600' },
+  { name: 'Arjun Nair', role: 'Medical Resident, Kochi', rating: 5, quote: 'I record ward rounds in Malayalam and the accuracy is genuinely impressive — even the medical terms.', bg: 'bg-teal-600' },
+  { name: 'Sneha Patel', role: 'MBA Student, Ahmedabad', rating: 4, quote: 'Lectures become Gujarati summaries I can actually study from. It trips up a little on heavy crosstalk, but still a huge help.', bg: 'bg-green-600' },
+  { name: 'Rahul Verma', role: 'Founder, Pune', rating: 3, quote: 'Transcription and summaries are solid. My main gripe is processing speed on long recordings — I hope that gets faster.', bg: 'bg-emerald-700' },
+  { name: 'Fatima Sheikh', role: 'Journalist, Hyderabad', rating: 4, quote: 'Interview transcripts in Telugu and Urdu save me hours. Export options could be richer, but the core is reliable.', bg: 'bg-teal-700' },
+  { name: 'Karan Mehta', role: 'Sales Lead, Mumbai', rating: 5, quote: 'Every client call ends with clean minutes I can share in one tap. It is just part of my workflow now.', bg: 'bg-green-700' },
 ];
 
 // Pricing teaser stays in sync with the app/web (shared plan source of truth).
 const freeFeatures = DEFAULT_FEATURES.free.filter((f) => f.included).map((f) => f.text).slice(0, 4);
 const proFeatures = DEFAULT_FEATURES.pro.filter((f) => f.included).map((f) => f.text).slice(0, 4);
+const toNum = (s: string) => parseInt(s.replace(/[^\d]/g, ''), 10) || 0;
+const proSave = Math.round((1 - toNum(DEFAULT_PRICES.pro.annualMonthly) / toNum(DEFAULT_PRICES.pro.monthlyPrice)) * 100);
 
 const stats: { count?: number; suffix?: string; text?: string; label: string }[] = [
   { count: 20, suffix: '+', label: 'Indian languages' },
@@ -90,8 +96,9 @@ const pageSchema = [
 <Base path="/" jsonLd={pageSchema}>
   <!-- Hero -->
   <section class="relative isolate overflow-hidden">
-    <div class="hero-dots" aria-hidden="true"></div>
-    <div class="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
+    <div class="hero-glow" aria-hidden="true"></div>
+    <div id="dot-field" class="dot-field" aria-hidden="true"></div>
+    <div class="max-w-5xl mx-auto px-6 pt-28 sm:pt-32 pb-12 text-center">
       <a href="/features" class="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-sm transition-colors hover:border-emerald-400/40 hover:text-white">
         <span class="relative flex h-1.5 w-1.5">
           <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
@@ -99,11 +106,10 @@ const pageSchema = [
         </span>
         AI meeting companion · now in 20+ Indian languages
       </a>
-      <h1 class="mt-7 text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
-        Every meeting, captured and summarised
-        <span class="text-gradient"> in your language.</span>
+      <h1 class="mt-10 text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05] text-balance">
+        Every meeting, captured and <br class="hidden sm:block" />summarised<span class="text-gradient"> in your language.</span>
       </h1>
-      <p class="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
+      <p class="mt-8 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
         Echobit records your meetings and lectures, transcribes them in English and 20+ Indian
         languages, and hands you a clean summary, action items, and shareable minutes — in seconds.
       </p>
@@ -268,65 +274,94 @@ const pageSchema = [
     <div class="text-center max-w-2xl mx-auto mb-12">
       <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Pricing</p>
       <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Start free. Upgrade when you grow.</h2>
+      <p class="mt-4 text-slate-400">No credit card to start. Pay monthly or save up to {proSave}% on annual billing.</p>
     </div>
-    <div class="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
+    <div class="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto items-stretch">
+      <!-- Free -->
       <div class="card rounded-2xl p-7 flex flex-col">
         <h3 class="text-lg font-semibold text-white">Free</h3>
         <p class="mt-1 text-sm text-slate-400">For getting started</p>
-        <p class="mt-4 text-4xl font-bold text-white">{DEFAULT_PRICES.free.monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span></p>
-        <ul class="mt-6 space-y-2.5 flex-1">
+        <p class="mt-5 flex items-baseline gap-1.5">
+          <span class="text-4xl font-bold text-white">{DEFAULT_PRICES.free.monthlyPrice}</span>
+          <span class="text-sm text-slate-400">/mo</span>
+        </p>
+        <p class="mt-1.5 text-xs text-slate-500">Free forever · no card needed</p>
+        <ul class="mt-6 space-y-3 flex-1 border-t border-white/10 pt-6">
           {freeFeatures.map((f) => (
-            <li class="flex items-center gap-2.5 text-sm text-slate-300">
-              <svg class="h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+            <li class="flex items-start gap-2.5 text-sm text-slate-300">
+              <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
               {f}
             </li>
           ))}
         </ul>
-        <a href="/register" class="mt-7 block rounded-xl border border-white/15 bg-white/5 py-3 text-center text-sm font-semibold text-slate-200 hover:bg-white/10 transition-colors">Get started</a>
+        <a href="/register" class="mt-7 block rounded-xl border border-white/15 bg-white/5 py-3 text-center text-sm font-semibold text-slate-200 hover:bg-white/10 transition-colors">Get started free</a>
       </div>
+      <!-- Pro -->
       <div class="card-featured rounded-2xl p-7 flex flex-col relative">
         <span class="absolute -top-3 left-7 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a]">Most popular</span>
-        <h3 class="text-lg font-semibold text-white">Pro</h3>
+        <div class="flex items-center justify-between gap-2">
+          <h3 class="text-lg font-semibold text-white">Pro</h3>
+          <span class="rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-300 ring-1 ring-inset ring-emerald-400/30">Save {proSave}%</span>
+        </div>
         <p class="mt-1 text-sm text-slate-400">For power users</p>
-        <p class="mt-4 text-4xl font-bold text-white">{DEFAULT_PRICES.pro.monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span></p>
-        <ul class="mt-6 space-y-2.5 flex-1">
+        <p class="mt-5 flex items-baseline gap-1.5">
+          <span class="text-4xl font-bold text-white">{DEFAULT_PRICES.pro.monthlyPrice}</span>
+          <span class="text-sm text-slate-400">/mo</span>
+        </p>
+        <p class="mt-1.5 text-xs text-emerald-300">or {DEFAULT_PRICES.pro.annualMonthly}/mo billed yearly</p>
+        <ul class="mt-6 space-y-3 flex-1 border-t border-white/10 pt-6">
           {proFeatures.map((f) => (
-            <li class="flex items-center gap-2.5 text-sm text-slate-200">
-              <svg class="h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+            <li class="flex items-start gap-2.5 text-sm text-slate-200">
+              <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
               {f}
             </li>
           ))}
         </ul>
-        <a href="/pricing" class="btn-primary mt-7 block rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">See all plans</a>
+        <a href="/register" class="btn-primary mt-7 block rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">Get Pro</a>
       </div>
     </div>
+    <p class="mt-8 text-center text-sm text-slate-400">
+      Need more recordings or a team plan? <a href="/pricing" class="font-medium text-emerald-400 underline hover:text-emerald-300">Compare all four plans →</a>
+    </p>
   </section>
 
-  <!-- Testimonials -->
+  <!-- Testimonials carousel — 3 visible, 6 rotating -->
   <section class="section-alt">
-    <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
-      <div class="max-w-2xl mb-14">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Loved by busy people</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">What our users say</h2>
+    <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28">
+      <div class="flex items-end justify-between gap-4 mb-12 reveal">
+        <div class="max-w-2xl">
+          <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Loved by busy people</p>
+          <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">What our users say</h2>
+        </div>
+        <div class="hidden sm:flex gap-2 flex-shrink-0">
+          <button id="t-prev" type="button" aria-label="Previous testimonials" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 transition-colors hover:border-emerald-400/40 hover:bg-white/10 hover:text-white">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+          </button>
+          <button id="t-next" type="button" aria-label="Next testimonials" class="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/5 text-slate-300 transition-colors hover:border-emerald-400/40 hover:bg-white/10 hover:text-white">
+            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" /></svg>
+          </button>
+        </div>
       </div>
-      <div class="grid sm:grid-cols-3 gap-6">
-        {testimonials.map((t) => (
-          <figure data-stagger class="card rounded-2xl p-6 flex flex-col">
-            <div class="flex gap-0.5 text-amber-400 mb-3">
-              {[1,2,3,4,5].map(() => (
-                <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.29c.3.92-.76 1.69-1.54 1.12l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.78.57-1.83-.2-1.54-1.12l1.07-3.29a1 1 0 00-.36-1.12L2.07 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 00.95-.69L9.05 2.93z"/></svg>
-              ))}
-            </div>
-            <blockquote class="text-sm text-slate-300 leading-relaxed flex-1">“{t.quote}”</blockquote>
-            <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
-              <span class={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${t.bg}`}>{t.name[0]}</span>
-              <span>
-                <span class="block text-sm font-medium text-white">{t.name}</span>
-                <span class="block text-xs text-slate-400">{t.role}</span>
-              </span>
-            </figcaption>
-          </figure>
-        ))}
+      <div id="t-carousel" class="t-carousel">
+        <div id="t-track" class="t-track">
+          {testimonials.map((t) => (
+            <figure class="t-card card rounded-2xl p-6 flex flex-col">
+              <div class="flex gap-0.5 mb-3">
+                {[1,2,3,4,5].map((n) => (
+                  <svg class={`h-4 w-4 fill-current ${n <= t.rating ? 'text-amber-400' : 'text-slate-700'}`} viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.29c.3.92-.76 1.69-1.54 1.12l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.78.57-1.83-.2-1.54-1.12l1.07-3.29a1 1 0 00-.36-1.12L2.07 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 00.95-.69L9.05 2.93z"/></svg>
+                ))}
+              </div>
+              <blockquote class="text-sm text-slate-300 leading-relaxed flex-1">“{t.quote}”</blockquote>
+              <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
+                <span class={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${t.bg}`}>{t.name[0]}</span>
+                <span>
+                  <span class="block text-sm font-medium text-white">{t.name}</span>
+                  <span class="block text-xs text-slate-400">{t.role}</span>
+                </span>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
       </div>
     </div>
   </section>
@@ -372,6 +407,57 @@ const pageSchema = [
   </section>
 
   <script>
+    import { initDotField } from '../scripts/dot-field';
+
+    // ReactBits "Dot Field" behind the hero, in Echobit's emerald palette.
+    const dotFieldEl = document.getElementById('dot-field');
+    if (dotFieldEl) {
+      initDotField(dotFieldEl, {
+        gradientFrom: 'rgba(16, 185, 129, 0.38)',
+        gradientTo: 'rgba(45, 212, 191, 0.24)',
+        glowColor: 'rgba(52, 211, 153, 0.18)',
+        dotSpacing: 17,
+        dotRadius: 1.5,
+      });
+    }
+
+    // Testimonials carousel — 3 visible (responsive), 6 rotating, seamless loop.
+    const tTrack = document.getElementById('t-track');
+    const tCarousel = document.getElementById('t-carousel');
+    if (tTrack && tCarousel) {
+      const GAP = 24; // matches .t-track gap (1.5rem)
+      const total = tTrack.children.length; // 6 originals
+      const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+      // Clone the first three so the forward loop is seamless.
+      Array.from(tTrack.children).slice(0, 3).forEach((c) => tTrack.appendChild(c.cloneNode(true)));
+      let index = 0;
+      let timer = 0;
+      const stepPx = () => (tTrack.children[0] as HTMLElement).getBoundingClientRect().width + GAP;
+      const apply = (animate: boolean) => {
+        tTrack.style.transition = animate ? 'transform .6s cubic-bezier(.22,1,.36,1)' : 'none';
+        tTrack.style.transform = `translateX(${-index * stepPx()}px)`;
+      };
+      const next = () => {
+        index++;
+        apply(true);
+        if (index >= total) window.setTimeout(() => { index = 0; apply(false); }, 620);
+      };
+      const prev = () => {
+        if (index <= 0) { index = total; apply(false); void tTrack.offsetWidth; }
+        index--;
+        apply(true);
+      };
+      const stop = () => window.clearInterval(timer);
+      const start = () => { stop(); if (!reduce) timer = window.setInterval(next, 4500); };
+      document.getElementById('t-next')?.addEventListener('click', () => { next(); start(); });
+      document.getElementById('t-prev')?.addEventListener('click', () => { prev(); start(); });
+      tCarousel.addEventListener('mouseenter', stop);
+      tCarousel.addEventListener('mouseleave', start);
+      window.addEventListener('resize', () => apply(false));
+      apply(false);
+      start();
+    }
+
     // Count-up animation for the stats (runs once when scrolled into view).
     const nums = document.querySelectorAll<HTMLElement>('.stat');
     const run = (el: HTMLElement) => {
