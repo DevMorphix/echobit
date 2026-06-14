@@ -225,17 +225,17 @@ const pageSchema = [
 
     <!-- Language marquee -->
     <div class="mt-16 overflow-hidden marquee-mask reveal">
-      <div class="flex w-max gap-3 animate-marquee">
+      <div class="flex w-max animate-marquee">
         {[...languages, ...languages].map((l) => (
-          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
+          <span class="mr-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
             <span class="text-base font-semibold text-slate-100">{l.native}</span>
             {l.en !== l.native && <span class="text-xs font-medium text-slate-500">{l.en}</span>}
           </span>
         ))}
       </div>
-      <div class="mt-3 flex w-max gap-3 animate-marquee-rev">
+      <div class="mt-3 flex w-max animate-marquee-rev">
         {[...langRow2, ...langRow2].map((l) => (
-          <span class="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
+          <span class="mr-3 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-4 py-2 backdrop-blur-sm whitespace-nowrap">
             <span class="text-base font-semibold text-slate-100">{l.native}</span>
             {l.en !== l.native && <span class="text-xs font-medium text-slate-500">{l.en}</span>}
           </span>
