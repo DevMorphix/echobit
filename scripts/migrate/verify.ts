@@ -18,7 +18,9 @@ const TABLES: Record<string, string> = {
 };
 
 const d1 = (sql: string): Record<string, unknown>[] => {
-  const cmd = `wrangler d1 execute echobit ${local ? '--local' : '--remote'} --json --command "${sql.replace(/"/g, '\\"')}"`;
+  // Escape backslashes before quotes so the shell-embedded SQL is fully sanitized.
+  const escaped = sql.replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+  const cmd = `wrangler d1 execute echobit ${local ? '--local' : '--remote'} --json --command "${escaped}"`;
   const out = execSync(cmd, { cwd: '../../apps/api', encoding: 'utf8' });
   const parsed = JSON.parse(out) as { results: Record<string, unknown>[] }[];
   return parsed[0]?.results ?? [];
