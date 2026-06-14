@@ -17,37 +17,38 @@ const cols = [
   ]},
 ];
 ---
-<footer class="border-t border-slate-200 bg-slate-50">
+<footer class="relative border-t border-white/10 bg-white/[0.02] backdrop-blur-sm">
+  <div class="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"></div>
   <div class="max-w-6xl mx-auto px-6 py-14">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-10">
       <div class="col-span-2 md:col-span-1">
-        <a href="/" class="flex items-center gap-2.5 font-bold text-slate-900 mb-3">
+        <a href="/" class="flex items-center gap-2.5 font-bold text-white mb-3">
           <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
           <span class="text-lg tracking-tight">Echobit</span>
         </a>
-        <p class="text-sm text-slate-500 leading-relaxed max-w-xs">
+        <p class="text-sm text-slate-400 leading-relaxed max-w-xs">
           AI meeting companion by Devmorphix. Record, transcribe, and summarise — in your language.
         </p>
-        <a href="/register" class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors">
+        <a href="/register" class="btn-primary mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
           Start for free
         </a>
       </div>
 
       {cols.map((c) => (
         <div>
-          <p class="text-sm font-semibold text-slate-900 mb-4">{c.title}</p>
-          <ul class="space-y-3 text-sm text-slate-500">
+          <p class="text-sm font-semibold text-white mb-4">{c.title}</p>
+          <ul class="space-y-3 text-sm text-slate-400">
             {c.links.map((l) => (
-              <li><a href={l.href} class="hover:text-emerald-600 transition-colors">{l.label}</a></li>
+              <li><a href={l.href} class="hover:text-emerald-400 transition-colors">{l.label}</a></li>
             ))}
           </ul>
         </div>
       ))}
     </div>
 
-    <div class="border-t border-slate-200 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-      <p class="text-sm text-slate-400">© {year} Devmorphix. All rights reserved.</p>
-      <p class="text-xs text-slate-400">Echobit — AI Meeting Companion</p>
+    <div class="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-sm text-slate-500">© {year} Devmorphix. All rights reserved.</p>
+      <p class="text-xs text-slate-500">Echobit — AI Meeting Companion</p>
     </div>
   </div>
 </footer>

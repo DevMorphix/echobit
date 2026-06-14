@@ -2,11 +2,12 @@
 import Base from '../layouts/Base.astro';
 ---
 <Base title="Page not found – Echobit" description="The page you're looking for doesn't exist." path="/404">
-  <section class="max-w-xl mx-auto px-6 py-28 text-center">
-    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">404</p>
-    <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">Page not found</h1>
-    <p class="mt-4 text-slate-600">The page you're looking for doesn't exist or has moved.</p>
-    <a href="/" class="mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-6 py-3 font-semibold text-white hover:bg-emerald-500 transition-colors">
+  <section class="relative max-w-xl mx-auto px-6 py-28 text-center">
+    <div class="pointer-events-none absolute left-1/2 top-10 -z-10 h-56 w-72 -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl animate-float-slow"></div>
+    <p class="text-7xl sm:text-8xl font-bold tracking-tight text-gradient">404</p>
+    <h1 class="mt-4 text-4xl sm:text-5xl font-bold tracking-tight text-white">Page not found</h1>
+    <p class="mt-4 text-slate-400">The page you're looking for doesn't exist or has moved.</p>
+    <a href="/" class="btn-primary mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-6 py-3 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
       <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 17l-5-5m0 0l5-5m-5 5h12" /></svg>
       Back to home
     </a>

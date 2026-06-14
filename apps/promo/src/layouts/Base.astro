@@ -68,7 +68,8 @@ const baseSchema = [
     <link rel="manifest" href="/site.webmanifest" />
     <meta name="application-name" content="Echobit" />
     <meta name="apple-mobile-web-app-title" content="Echobit" />
-    <meta name="theme-color" content="#ffffff" />
+    <meta name="theme-color" content="#05080a" />
+    <meta name="color-scheme" content="dark" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -99,7 +100,7 @@ const baseSchema = [
     <script is:inline>document.documentElement.classList.add('js');</script>
     <slot name="head" />
   </head>
-  <body class="bg-white text-slate-900 antialiased">
+  <body class="bg-transparent text-slate-200 antialiased selection:bg-emerald-400/30 selection:text-white">
     {chrome && <Nav />}
     <main>
       <slot />
@@ -107,12 +108,18 @@ const baseSchema = [
     {chrome && <Footer />}
 
     <script>
-      // Subtle scroll-reveal (progressive enhancement).
+      // Subtle scroll-reveal (progressive enhancement). Children marked with
+      // [data-stagger] cascade in with an incremental delay.
       const els = document.querySelectorAll('.reveal');
+      const stagger = (root: Element) => {
+        root.querySelectorAll<HTMLElement>('[data-stagger]').forEach((child, i) => {
+          child.style.animationDelay = `${i * 80}ms`;
+        });
+      };
       if ('IntersectionObserver' in window && els.length) {
         const io = new IntersectionObserver((entries) => {
           for (const e of entries) {
-            if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+            if (e.isIntersecting) { stagger(e.target); e.target.classList.add('in'); io.unobserve(e.target); }
           }
         }, { threshold: 0.12 });
         els.forEach((el) => io.observe(el));

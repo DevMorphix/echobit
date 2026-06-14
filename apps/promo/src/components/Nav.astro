@@ -1,5 +1,5 @@
 ---
-// Shared light top nav. App links (Sign in / Get started) deep-link to the Vue
+// Shared dark top nav. App links (Sign in / Get started) deep-link to the Vue
 // app, served on the same origin by the Worker.
 const links = [
   { href: '/features', label: 'Features' },
@@ -8,22 +8,25 @@ const links = [
   { href: '/contact', label: 'Contact' },
 ];
 ---
-<header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
+<header class="sticky top-0 z-50 border-b border-white/10 bg-[#05080a]/70 backdrop-blur-xl">
   <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between" aria-label="Primary">
-    <a href="/" class="flex items-center gap-2.5 font-bold text-slate-900">
-      <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
+    <a href="/" class="group flex items-center gap-2.5 font-bold text-white">
+      <span class="relative inline-flex">
+        <span class="absolute -inset-1 rounded-xl bg-emerald-500/40 blur-md opacity-60 group-hover:opacity-100 transition-opacity"></span>
+        <img src="/favicon.png" alt="Echobit" width="32" height="32" class="relative w-8 h-8 rounded-lg object-contain" />
+      </span>
       <span class="text-lg tracking-tight">Echobit</span>
     </a>
 
-    <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+    <div class="hidden md:flex items-center gap-8 text-sm font-medium text-slate-300">
       {links.map((l) => (
-        <a href={l.href} class="hover:text-slate-900 transition-colors">{l.label}</a>
+        <a href={l.href} class="relative transition-colors hover:text-white after:absolute after:-bottom-1.5 after:left-0 after:h-px after:w-0 after:bg-emerald-400 after:transition-all hover:after:w-full">{l.label}</a>
       ))}
     </div>
 
     <div class="flex items-center gap-2 sm:gap-3">
-      <a href="/login" class="text-sm font-medium text-slate-600 hover:text-slate-900 px-3 py-2 transition-colors">Sign in</a>
-      <a href="/register" class="text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white px-4 py-2 rounded-full shadow-sm shadow-emerald-600/20 transition-colors">
+      <a href="/login" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors">Sign in</a>
+      <a href="/register" class="btn-primary text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-[#05080a] px-4 py-2 rounded-full transition-colors">
         Get started
       </a>
     </div>

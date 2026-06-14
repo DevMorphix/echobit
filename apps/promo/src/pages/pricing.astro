@@ -44,32 +44,32 @@ const pageSchema = [
   jsonLd={pageSchema}
 >
   <section class="relative overflow-hidden max-w-6xl mx-auto px-6 pt-20 pb-24">
-    <div class="pointer-events-none absolute left-1/2 top-[-6rem] -z-10 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-emerald-200/30 blur-3xl animate-float-slow"></div>
+    <div class="pointer-events-none absolute left-1/2 top-[-6rem] -z-10 h-72 w-[40rem] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl animate-float-slow"></div>
     <div class="text-center max-w-2xl mx-auto mb-14">
-      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Pricing</p>
-      <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-900">Start free. Upgrade when you grow.</h1>
-      <p class="mt-4 text-lg text-slate-600">No credit card to start. Cancel anytime. Save with annual billing.</p>
+      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Pricing</p>
+      <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-white">Start free. Upgrade when you grow.</h1>
+      <p class="mt-4 text-lg text-slate-300">No credit card to start. Cancel anytime. Save with annual billing.</p>
     </div>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start reveal">
       {tiers.map((tier) => (
-        <div class={`relative rounded-2xl p-7 flex flex-col bg-white ${tier.highlighted ? 'border-2 border-emerald-500 shadow-lg shadow-emerald-600/10' : 'border border-slate-200'}`}>
+        <div data-stagger class={`relative rounded-2xl p-7 flex flex-col ${tier.highlighted ? 'card-featured' : 'card'}`}>
           {tier.highlighted && (
-            <span class="absolute -top-3 left-7 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">Most popular</span>
+            <span class="absolute -top-3 left-7 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a]">Most popular</span>
           )}
-          <h2 class="text-lg font-semibold text-slate-900">{tier.name}</h2>
-          <p class="mt-1 text-sm text-slate-500">{tier.tagline}</p>
-          <p class="mt-4 text-4xl font-bold text-slate-900">
+          <h2 class="text-lg font-semibold text-white">{tier.name}</h2>
+          <p class="mt-1 text-sm text-slate-400">{tier.tagline}</p>
+          <p class="mt-4 text-4xl font-bold text-white">
             {DEFAULT_PRICES[tier.key].monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span>
           </p>
-          <p class="mt-1 text-xs text-emerald-600 font-medium">{DEFAULT_PRICES[tier.key].annualMonthly}/mo billed annually</p>
+          <p class="mt-1 text-xs text-emerald-400 font-medium">{DEFAULT_PRICES[tier.key].annualMonthly}/mo billed annually</p>
           <ul class="mt-6 space-y-2.5 flex-1">
             {DEFAULT_FEATURES[tier.key].map((f) => (
-              <li class={`flex items-start gap-2.5 text-sm ${f.included ? 'text-slate-600' : 'text-slate-300'}`}>
+              <li class={`flex items-start gap-2.5 text-sm ${f.included ? 'text-slate-300' : 'text-slate-600'}`}>
                 {f.included ? (
-                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
                 ) : (
-                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-slate-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
                 )}
                 {f.text}
               </li>
@@ -77,7 +77,7 @@ const pageSchema = [
           </ul>
           <a
             href="/register"
-            class={`mt-7 block rounded-xl py-3 text-center text-sm font-semibold transition-colors ${tier.highlighted ? 'bg-emerald-600 text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500' : 'border border-slate-300 text-slate-700 hover:bg-slate-50'}`}
+            class={`mt-7 block rounded-xl py-3 text-center text-sm font-semibold transition-colors ${tier.highlighted ? 'btn-primary bg-emerald-500 text-[#05080a] hover:bg-emerald-400' : 'border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'}`}
           >
             {tier.cta}
           </a>
@@ -85,9 +85,9 @@ const pageSchema = [
       ))}
     </div>
 
-    <p class="mt-10 text-center text-sm text-slate-500">
+    <p class="mt-10 text-center text-sm text-slate-400">
       All plans include AI transcription &amp; summaries. Paid plans unlock more recordings, languages, and exports.
-      Questions? <a href="/contact" class="font-medium text-emerald-600 underline hover:text-emerald-700">Talk to us</a>.
+      Questions? <a href="/contact" class="font-medium text-emerald-400 underline hover:text-emerald-300">Talk to us</a>.
     </p>
   </section>
 </Base>

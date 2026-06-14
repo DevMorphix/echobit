@@ -87,60 +87,67 @@ const pageSchema = [
   <section class="relative overflow-hidden">
     <div class="pointer-events-none absolute inset-0 -z-10">
       <div class="absolute inset-0 bg-dots"></div>
-      <div class="absolute left-1/2 top-[-8rem] h-[26rem] w-[42rem] -translate-x-1/2 rounded-full bg-emerald-300/30 blur-3xl animate-float-slow"></div>
-      <div class="absolute right-[-6rem] top-24 h-72 w-72 rounded-full bg-teal-300/25 blur-3xl animate-float"></div>
-      <div class="absolute left-[-6rem] top-44 h-72 w-72 rounded-full bg-emerald-200/30 blur-3xl animate-float-slow"></div>
+      <div class="absolute left-1/2 top-[-8rem] h-[26rem] w-[42rem] -translate-x-1/2 rounded-full bg-emerald-500/20 blur-3xl animate-float-slow"></div>
+      <div class="absolute right-[-6rem] top-24 h-72 w-72 rounded-full bg-teal-500/20 blur-3xl animate-float"></div>
+      <div class="absolute left-[-6rem] top-44 h-72 w-72 rounded-full bg-cyan-500/15 blur-3xl animate-float-slow"></div>
     </div>
     <div class="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
-      <a href="/#features" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm">
-        <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
+      <a href="/#features" class="group inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3.5 py-1.5 text-xs font-medium text-slate-300 backdrop-blur-sm transition-colors hover:border-emerald-400/40 hover:text-white">
+        <span class="relative flex h-1.5 w-1.5">
+          <span class="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75"></span>
+          <span class="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+        </span>
         AI meeting companion · now in 20+ Indian languages
       </a>
-      <h1 class="mt-7 text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 leading-[1.05]">
+      <h1 class="mt-7 text-4xl sm:text-6xl font-bold tracking-tight text-white leading-[1.05]">
         Every meeting, captured and summarised
         <span class="text-gradient"> in your language.</span>
       </h1>
-      <p class="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
+      <p class="mt-6 text-lg text-slate-300 max-w-2xl mx-auto leading-relaxed">
         Stop scrambling for notes. Echobit records your meetings and lectures, transcribes them in
         English and 20+ Indian languages, and hands you a clean summary, action items, and
         ready-to-share minutes — in seconds, automatically.
       </p>
       <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
-        <a href="/register" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-3.5 font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors">
+        <a href="/register" class="btn-primary w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
           Start for free
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
         </a>
-        <a href="/pricing" class="w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-slate-300 px-7 py-3.5 font-semibold text-slate-700 hover:border-slate-400 hover:bg-slate-50 transition-colors">
+        <a href="/pricing" class="w-full sm:w-auto inline-flex items-center justify-center rounded-full border border-white/15 bg-white/5 px-7 py-3.5 font-semibold text-slate-200 backdrop-blur-sm hover:border-white/30 hover:bg-white/10 transition-colors">
           See pricing
         </a>
       </div>
-      <p class="mt-5 text-sm text-slate-400">Free forever plan · No credit card · Android &amp; Web</p>
+      <p class="mt-5 text-sm text-slate-500">Free forever plan · No credit card · Android &amp; Web</p>
     </div>
 
     <!-- Product mock -->
     <div class="max-w-3xl mx-auto px-6 pb-20 reveal">
-      <div class="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 overflow-hidden animate-float-slow">
-        <div class="flex items-center gap-1.5 border-b border-slate-100 px-4 py-3">
-          <span class="h-2.5 w-2.5 rounded-full bg-slate-200"></span>
-          <span class="h-2.5 w-2.5 rounded-full bg-slate-200"></span>
-          <span class="h-2.5 w-2.5 rounded-full bg-slate-200"></span>
-          <span class="ml-3 text-xs text-slate-400">Weekly sync · 24 min · Hindi</span>
+      <div class="card rounded-2xl overflow-hidden animate-float-slow">
+        <div class="flex items-center gap-1.5 border-b border-white/10 px-4 py-3">
+          <span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+          <span class="h-2.5 w-2.5 rounded-full bg-white/15"></span>
+          <span class="ml-2 inline-flex items-center gap-1.5 rounded-full bg-rose-500/15 px-2 py-0.5 text-[11px] font-semibold text-rose-300">
+            <span class="rec-dot"></span> REC
+          </span>
+          <span class="eq ml-1" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
+          <span class="ml-auto text-xs text-slate-400">Weekly sync · 24 min · Hindi</span>
         </div>
-        <div class="grid sm:grid-cols-2 gap-px bg-slate-100">
-          <div class="bg-white p-5">
+        <div class="grid sm:grid-cols-2 gap-px bg-white/5">
+          <div class="bg-white/[0.02] p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Transcript</p>
-            <p class="text-sm text-slate-600 leading-relaxed">“आज की मीटिंग में हमने Q3 टारगेट्स पर चर्चा की। मार्केटिंग टीम अगले हफ्ते नई कैंपेन लॉन्च करेगी।”</p>
-            <p class="mt-3 inline-flex items-center gap-1.5 text-xs text-emerald-600 font-medium">
+            <p class="text-sm text-slate-300 leading-relaxed">“आज की मीटिंग में हमने Q3 टारगेट्स पर चर्चा की। मार्केटिंग टीम अगले हफ्ते नई कैंपेन लॉन्च करेगी।”</p>
+            <p class="mt-3 inline-flex items-center gap-1.5 text-xs text-emerald-400 font-medium">
               <svg class="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
               98% confidence
             </p>
           </div>
-          <div class="bg-white p-5">
+          <div class="bg-white/[0.02] p-5">
             <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-3">Summary &amp; actions</p>
-            <p class="text-sm text-slate-600 leading-relaxed">Q3 targets reviewed. Marketing to launch the new campaign next week.</p>
-            <ul class="mt-3 space-y-2 text-sm text-slate-700">
-              <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Finalise campaign brief — Marketing</li>
-              <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Share Q3 dashboard — Priya</li>
+            <p class="text-sm text-slate-300 leading-relaxed">Q3 targets reviewed. Marketing to launch the new campaign next week.</p>
+            <ul class="mt-3 space-y-2 text-sm text-slate-200">
+              <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Finalise campaign brief — Marketing</li>
+              <li class="flex items-start gap-2"><span class="mt-1 h-1.5 w-1.5 rounded-full bg-emerald-400"></span> Share Q3 dashboard — Priya</li>
             </ul>
           </div>
         </div>
@@ -149,16 +156,16 @@ const pageSchema = [
   </section>
 
   <!-- Stats -->
-  <section class="border-y border-slate-200 bg-slate-50">
-    <div class="max-w-5xl mx-auto px-6 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+  <section class="section-alt">
+    <div class="max-w-5xl mx-auto px-6 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center reveal">
       {stats.map((s) => (
-        <div>
-          <p class="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums">
+        <div data-stagger>
+          <p class="text-3xl sm:text-4xl font-bold text-white tabular-nums">
             {s.count !== undefined ? (
-              <><span class="stat" data-count={s.count}>0</span>{s.suffix}</>
-            ) : s.text}
+              <><span class="stat text-gradient" data-count={s.count}>0</span>{s.suffix}</>
+            ) : <span class="text-gradient">{s.text}</span>}
           </p>
-          <p class="mt-1 text-sm text-slate-500">{s.label}</p>
+          <p class="mt-1 text-sm text-slate-400">{s.label}</p>
         </div>
       ))}
     </div>
@@ -167,35 +174,35 @@ const pageSchema = [
   <!-- How it works -->
   <section class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
     <div class="max-w-2xl mb-14">
-      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">How it works</p>
-      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">From conversation to clarity in four steps</h2>
+      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">How it works</p>
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">From conversation to clarity in four steps</h2>
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {steps.map((s) => (
-        <div class="rounded-2xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
-          <p class="text-sm font-bold text-emerald-600">{s.n}</p>
-          <h3 class="mt-3 text-lg font-semibold text-slate-900">{s.title}</h3>
-          <p class="mt-2 text-sm text-slate-600 leading-relaxed">{s.desc}</p>
+        <div data-stagger class="card rounded-2xl p-6 hover:-translate-y-1">
+          <p class="text-sm font-bold text-emerald-400">{s.n}</p>
+          <h3 class="mt-3 text-lg font-semibold text-white">{s.title}</h3>
+          <p class="mt-2 text-sm text-slate-400 leading-relaxed">{s.desc}</p>
         </div>
       ))}
     </div>
   </section>
 
   <!-- Features -->
-  <section id="features" class="bg-slate-50 border-y border-slate-200">
+  <section id="features" class="section-alt">
     <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
       <div class="max-w-2xl mb-14">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Features</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Everything you need after the meeting ends</h2>
+        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Features</p>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Everything you need after the meeting ends</h2>
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {features.map((f) => (
-          <div class="rounded-2xl border border-slate-200 bg-white p-6 hover:shadow-md hover:shadow-slate-900/5 transition-shadow">
-            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600">
+          <div data-stagger class="card group rounded-2xl p-6">
+            <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-400/20 transition-transform duration-300 group-hover:scale-110">
               <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d={f.d} /></svg>
             </div>
-            <h3 class="mt-4 text-lg font-semibold text-slate-900">{f.title}</h3>
-            <p class="mt-2 text-sm text-slate-600 leading-relaxed">{f.desc}</p>
+            <h3 class="mt-4 text-lg font-semibold text-white">{f.title}</h3>
+            <p class="mt-2 text-sm text-slate-400 leading-relaxed">{f.desc}</p>
           </div>
         ))}
       </div>
@@ -206,33 +213,34 @@ const pageSchema = [
   <section id="languages" class="py-20 sm:py-28">
     <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
       <div class="reveal">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Built for India</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Transcribe in your mother tongue</h2>
-        <p class="mt-4 text-slate-600 leading-relaxed">
+        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Built for India</p>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Transcribe in your mother tongue</h2>
+        <p class="mt-4 text-slate-300 leading-relaxed">
           Most tools stop at English. Echobit understands 20+ Indian languages with native-level
           accuracy — so your team can speak naturally and still get clean, English-ready summaries.
         </p>
-        <a href="/features" class="mt-6 inline-flex items-center gap-2 font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+        <a href="/features" class="group mt-6 inline-flex items-center gap-2 font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
           Explore language support
-          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+          <svg class="h-4 w-4 transition-transform group-hover:translate-x-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
         </a>
       </div>
-      <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5">
+      <div class="reveal card rounded-2xl p-6">
         <div class="flex items-center gap-3 mb-4">
-          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-50 text-emerald-600">
+          <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-emerald-500/10 text-emerald-400 ring-1 ring-inset ring-emerald-400/20">
             <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5h10M11 9h7M3 5l2 2 3-3" /></svg>
           </div>
-          <div>
-            <p class="text-sm font-semibold text-slate-900">Live transcript</p>
+          <div class="flex-1">
+            <p class="text-sm font-semibold text-white">Live transcript</p>
             <p class="text-xs text-slate-400">Tamil · just now</p>
           </div>
+          <span class="eq" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span></span>
         </div>
-        <div class="rounded-xl bg-slate-50 border border-slate-100 p-4 text-sm text-slate-700 leading-relaxed">
+        <div class="rounded-xl bg-white/[0.03] border border-white/10 p-4 text-sm text-slate-200 leading-relaxed">
           “இந்த காலாண்டில் நமது விற்பனை 20% அதிகரித்துள்ளது. அடுத்த வாரம் புதிய திட்டத்தை தொடங்குவோம்.”
         </div>
-        <div class="mt-4 border-t border-slate-100 pt-4">
+        <div class="mt-4 border-t border-white/10 pt-4">
           <p class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1">English summary</p>
-          <p class="text-sm text-slate-600">Sales grew 20% this quarter; the new initiative launches next week.</p>
+          <p class="text-sm text-slate-300">Sales grew 20% this quarter; the new initiative launches next week.</p>
         </div>
       </div>
     </div>
@@ -241,30 +249,30 @@ const pageSchema = [
     <div class="mt-16 overflow-hidden marquee-mask reveal">
       <div class="flex w-max gap-3 animate-marquee">
         {[...languages, ...languages].map((l) => (
-          <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm whitespace-nowrap">{l}</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm whitespace-nowrap">{l}</span>
         ))}
       </div>
       <div class="mt-3 flex w-max gap-3 animate-marquee-rev">
         {[...langRow2, ...langRow2].map((l) => (
-          <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm whitespace-nowrap">{l}</span>
+          <span class="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-slate-300 backdrop-blur-sm whitespace-nowrap">{l}</span>
         ))}
       </div>
     </div>
   </section>
 
   <!-- Use cases -->
-  <section class="bg-slate-50 border-y border-slate-200">
+  <section class="section-alt">
     <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
       <div class="max-w-2xl mb-14">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Who it's for</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Built for every kind of conversation</h2>
+        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Who it's for</p>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Built for every kind of conversation</h2>
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {useCases.map((u) => (
-          <div class="rounded-2xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
+          <div data-stagger class="card rounded-2xl p-6 hover:-translate-y-1">
             <div class="text-3xl">{u.emoji}</div>
-            <h3 class="mt-4 text-lg font-semibold text-slate-900">{u.title}</h3>
-            <p class="mt-2 text-sm text-slate-600 leading-relaxed">{u.desc}</p>
+            <h3 class="mt-4 text-lg font-semibold text-white">{u.title}</h3>
+            <p class="mt-2 text-sm text-slate-400 leading-relaxed">{u.desc}</p>
           </div>
         ))}
       </div>
@@ -274,62 +282,62 @@ const pageSchema = [
   <!-- Pricing teaser -->
   <section class="max-w-5xl mx-auto px-6 py-20 sm:py-28 reveal">
     <div class="text-center max-w-2xl mx-auto mb-12">
-      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Pricing</p>
-      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Start free. Upgrade when you grow.</h2>
+      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Pricing</p>
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Start free. Upgrade when you grow.</h2>
     </div>
     <div class="grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto">
-      <div class="rounded-2xl border border-slate-200 bg-white p-7 flex flex-col">
-        <h3 class="text-lg font-semibold text-slate-900">Free</h3>
-        <p class="mt-1 text-sm text-slate-500">For getting started</p>
-        <p class="mt-4 text-4xl font-bold text-slate-900">₹0<span class="text-base font-normal text-slate-400">/mo</span></p>
+      <div class="card rounded-2xl p-7 flex flex-col">
+        <h3 class="text-lg font-semibold text-white">Free</h3>
+        <p class="mt-1 text-sm text-slate-400">For getting started</p>
+        <p class="mt-4 text-4xl font-bold text-white">₹0<span class="text-base font-normal text-slate-400">/mo</span></p>
         <ul class="mt-6 space-y-2.5 flex-1">
           {freeFeatures.map((f) => (
-            <li class="flex items-center gap-2.5 text-sm text-slate-600">
-              <svg class="h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+            <li class="flex items-center gap-2.5 text-sm text-slate-300">
+              <svg class="h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
               {f}
             </li>
           ))}
         </ul>
-        <a href="/register" class="mt-7 block rounded-xl border border-slate-300 py-3 text-center text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Get started</a>
+        <a href="/register" class="mt-7 block rounded-xl border border-white/15 bg-white/5 py-3 text-center text-sm font-semibold text-slate-200 hover:bg-white/10 transition-colors">Get started</a>
       </div>
-      <div class="rounded-2xl border-2 border-emerald-500 bg-white p-7 flex flex-col relative">
-        <span class="absolute -top-3 left-7 rounded-full bg-emerald-600 px-3 py-1 text-xs font-bold text-white">Most popular</span>
-        <h3 class="text-lg font-semibold text-slate-900">Pro</h3>
-        <p class="mt-1 text-sm text-slate-500">For power users</p>
-        <p class="mt-4 text-4xl font-bold text-slate-900">₹499<span class="text-base font-normal text-slate-400">/mo</span></p>
+      <div class="card-featured rounded-2xl p-7 flex flex-col relative">
+        <span class="absolute -top-3 left-7 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a]">Most popular</span>
+        <h3 class="text-lg font-semibold text-white">Pro</h3>
+        <p class="mt-1 text-sm text-slate-400">For power users</p>
+        <p class="mt-4 text-4xl font-bold text-white">₹499<span class="text-base font-normal text-slate-400">/mo</span></p>
         <ul class="mt-6 space-y-2.5 flex-1">
           {proFeatures.map((f) => (
-            <li class="flex items-center gap-2.5 text-sm text-slate-700">
-              <svg class="h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+            <li class="flex items-center gap-2.5 text-sm text-slate-200">
+              <svg class="h-4 w-4 flex-shrink-0 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
               {f}
             </li>
           ))}
         </ul>
-        <a href="/pricing" class="mt-7 block rounded-xl bg-emerald-600 py-3 text-center text-sm font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors">See all plans</a>
+        <a href="/pricing" class="btn-primary mt-7 block rounded-xl bg-emerald-500 py-3 text-center text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">See all plans</a>
       </div>
     </div>
   </section>
 
   <!-- Testimonials -->
-  <section class="bg-slate-50 border-y border-slate-200">
+  <section class="section-alt">
     <div class="max-w-6xl mx-auto px-6 py-20 sm:py-28 reveal">
       <div class="max-w-2xl mb-14">
-        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Loved by busy people</p>
-        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">What our users say</h2>
+        <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Loved by busy people</p>
+        <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">What our users say</h2>
       </div>
       <div class="grid sm:grid-cols-3 gap-6">
         {testimonials.map((t) => (
-          <figure class="rounded-2xl border border-slate-200 bg-white p-6 flex flex-col">
+          <figure data-stagger class="card rounded-2xl p-6 flex flex-col">
             <div class="flex gap-0.5 text-amber-400 mb-3">
               {[1,2,3,4,5].map(() => (
                 <svg class="h-4 w-4 fill-current" viewBox="0 0 20 20"><path d="M9.05 2.93c.3-.92 1.6-.92 1.9 0l1.07 3.29a1 1 0 00.95.69h3.46c.97 0 1.37 1.24.59 1.81l-2.8 2.03a1 1 0 00-.36 1.12l1.07 3.29c.3.92-.76 1.69-1.54 1.12l-2.8-2.03a1 1 0 00-1.18 0l-2.8 2.03c-.78.57-1.83-.2-1.54-1.12l1.07-3.29a1 1 0 00-.36-1.12L2.07 8.72c-.78-.57-.38-1.81.59-1.81h3.46a1 1 0 00.95-.69L9.05 2.93z"/></svg>
               ))}
             </div>
-            <blockquote class="text-sm text-slate-600 leading-relaxed flex-1">“{t.quote}”</blockquote>
-            <figcaption class="mt-5 flex items-center gap-3 border-t border-slate-100 pt-4">
+            <blockquote class="text-sm text-slate-300 leading-relaxed flex-1">“{t.quote}”</blockquote>
+            <figcaption class="mt-5 flex items-center gap-3 border-t border-white/10 pt-4">
               <span class={`flex h-9 w-9 items-center justify-center rounded-full text-sm font-bold text-white ${t.bg}`}>{t.name[0]}</span>
               <span>
-                <span class="block text-sm font-medium text-slate-900">{t.name}</span>
+                <span class="block text-sm font-medium text-white">{t.name}</span>
                 <span class="block text-xs text-slate-400">{t.role}</span>
               </span>
             </figcaption>
@@ -342,36 +350,36 @@ const pageSchema = [
   <!-- FAQ -->
   <section id="faq" class="max-w-3xl mx-auto px-6 py-20 sm:py-28 reveal">
     <div class="text-center mb-12">
-      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">FAQ</p>
-      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Frequently asked questions</h2>
+      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">FAQ</p>
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-white">Frequently asked questions</h2>
     </div>
-    <div class="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+    <div class="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/[0.03] backdrop-blur-sm">
       {faqs.map((f) => (
         <details class="group px-6">
-          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left font-medium text-white transition-colors hover:text-emerald-300 [&::-webkit-details-marker]:hidden">
             {f.q}
-            <svg class="h-5 w-5 flex-shrink-0 text-slate-400 transition-transform group-open:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+            <svg class="h-5 w-5 flex-shrink-0 text-emerald-400 transition-transform group-open:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
           </summary>
-          <p class="pb-5 -mt-1 text-[15px] leading-relaxed text-slate-600">{f.a}</p>
+          <p class="pb-5 -mt-1 text-[15px] leading-relaxed text-slate-400">{f.a}</p>
         </details>
       ))}
     </div>
-    <p class="mt-8 text-center text-sm text-slate-500">
-      Still have a question? <a href="/contact" class="font-medium text-emerald-600 underline hover:text-emerald-700">Get in touch →</a>
+    <p class="mt-8 text-center text-sm text-slate-400">
+      Still have a question? <a href="/contact" class="font-medium text-emerald-400 underline hover:text-emerald-300">Get in touch →</a>
     </p>
   </section>
 
   <!-- Final CTA -->
   <section class="max-w-6xl mx-auto px-6 py-20 sm:py-28">
-    <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-16 text-center">
-      <div class="pointer-events-none absolute inset-0 -z-0 opacity-40">
-        <div class="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/40 blur-3xl"></div>
-        <div class="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-emerald-400/30 blur-3xl"></div>
+    <div class="relative overflow-hidden rounded-3xl border border-emerald-400/20 bg-gradient-to-br from-emerald-500/10 via-white/[0.02] to-cyan-500/10 px-8 py-16 text-center">
+      <div class="pointer-events-none absolute inset-0 -z-0">
+        <div class="absolute -right-24 -top-24 h-64 w-64 rounded-full bg-emerald-500/30 blur-3xl animate-float"></div>
+        <div class="absolute -bottom-24 -left-24 h-64 w-64 rounded-full bg-cyan-500/25 blur-3xl animate-float-slow"></div>
       </div>
       <div class="relative">
         <h2 class="text-3xl sm:text-4xl font-bold tracking-tight text-white">Start your first recording today</h2>
         <p class="mt-4 text-slate-300 max-w-md mx-auto">No setup, no credit card. Record, and let Echobit handle the notes.</p>
-        <a href="/register" class="mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 font-semibold text-white hover:bg-emerald-400 transition-colors">
+        <a href="/register" class="btn-primary mt-8 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-7 py-3.5 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
           Create your free account
           <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
         </a>
