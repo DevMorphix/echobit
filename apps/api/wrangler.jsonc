@@ -75,7 +75,10 @@
   // Daily sweep: recordings stuck in "transcribing" → failed (see scheduled()).
   "triggers": { "crons": ["17 3 * * *"] },
 
-  "observability": { "enabled": true },
+  "observability": {
+    "logs": { "enabled": true, "invocation_logs": true },
+    "traces": { "enabled": false }
+  },
 
   "vars": {
     // Non-secret config. Secrets (JWT_SECRET, SARVAM_API_KEY, GEMINI_API_KEY,
