@@ -1,4 +1,6 @@
 ---
+import '@fontsource-variable/inter';
+import '@fontsource-variable/sora';
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
@@ -9,6 +11,7 @@ interface Props {
   path?: string;        // route path for canonical/og:url, e.g. '/pricing'
   ogImage?: string;
   chrome?: boolean;     // render the shared Nav + Footer (default true)
+  jsonLd?: object[];    // page-specific structured data (FAQ, Breadcrumb, …)
 }
 
 const {
@@ -17,11 +20,33 @@ const {
   path = '/',
   ogImage = '/og-image.png',
   chrome = true,
+  jsonLd = [],
 } = Astro.props;
 
 const canonical = new URL(path, Astro.site).href;
 const ogImageUrl = new URL(ogImage, Astro.site).href;
 const siteUrl = Astro.site!.href.replace(/\/$/, '');
+
+// Site-wide structured data (every page).
+const baseSchema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'Organization',
+    name: 'Devmorphix',
+    url: siteUrl,
+    logo: `${siteUrl}/favicon.png`,
+    brand: { '@type': 'Brand', name: 'Echobit' },
+    sameAs: [],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'WebSite',
+    name: 'Echobit',
+    url: siteUrl,
+    description: 'AI-powered meeting recorder and transcriber supporting 20+ Indian languages.',
+    publisher: { '@type': 'Organization', name: 'Devmorphix' },
+  },
+];
 ---
 <!doctype html>
 <html lang="en">
@@ -31,14 +56,18 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
 
     <title>{title}</title>
     <meta name="description" content={description} />
-    <meta name="keywords" content="AI meeting recorder, meeting transcription, voice to text, meeting notes, AI summary, meeting minutes, audio transcription, Hindi transcription, Malayalam transcription, Indian language AI" />
+    <meta name="keywords" content="AI meeting recorder, meeting transcription, voice to text, meeting notes, AI summary, meeting minutes, audio transcription, Hindi transcription, Malayalam transcription, Tamil transcription, Indian language AI, lecture transcription" />
     <meta name="author" content="Devmorphix" />
-    <meta name="robots" content="index, follow" />
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1" />
+    <meta name="generator" content={Astro.generator} />
     <link rel="canonical" href={canonical} />
+    <link rel="sitemap" type="application/xml" href="/sitemap-index.xml" />
 
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
     <meta name="application-name" content="Echobit" />
+    <meta name="apple-mobile-web-app-title" content="Echobit" />
     <meta name="theme-color" content="#ffffff" />
 
     <!-- Open Graph -->
@@ -48,6 +77,9 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
     <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:image:width" content="1731" />
+    <meta property="og:image:height" content="909" />
+    <meta property="og:image:alt" content="Echobit — AI meeting recorder & transcriber" />
     <meta property="og:locale" content="en_IN" />
 
     <!-- Twitter Card -->
@@ -56,24 +88,14 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
-    <script type="application/ld+json" set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'Organization',
-      name: 'Devmorphix',
-      url: siteUrl,
-      logo: `${siteUrl}/favicon.png`,
-      sameAs: [],
-    })} />
-    <script type="application/ld+json" set:html={JSON.stringify({
-      '@context': 'https://schema.org',
-      '@type': 'WebSite',
-      name: 'Echobit',
-      url: siteUrl,
-      description: 'AI-powered meeting recorder and transcriber supporting 20+ Indian languages.',
-      publisher: { '@type': 'Organization', name: 'Devmorphix' },
-    })} />
+    {baseSchema.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
+    {jsonLd.map((schema) => (
+      <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+    ))}
 
-    <!-- Mark JS-capable before paint so the reveal styles only hide for JS users -->
+    <!-- Mark JS-capable before paint so reveal styles only hide for JS users -->
     <script is:inline>document.documentElement.classList.add('js');</script>
     <slot name="head" />
   </head>

@@ -13,6 +13,18 @@ dist-ssr
 *.local
 .claude
 
+# Astro (generated types/build)
+.astro/
+**/.astro/
+
+# Build caches / TS
+.cache/
+.output/
+*.tsbuildinfo
+
+# Misc OS
+Thumbs.db
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json

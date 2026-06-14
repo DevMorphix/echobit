@@ -1,0 +1,68 @@
+---
+import Base from '../layouts/Base.astro';
+
+const values = [
+  { title: 'Language-first', body: 'India speaks hundreds of languages. We build for them — not just English — so everyone gets accurate notes in their own tongue.' },
+  { title: 'Privacy by default', body: 'Your conversations are yours. We never sell your data, and deletion is always one request away.' },
+  { title: 'Effortless by design', body: 'Hit record and get on with your day. Echobit handles the transcript, summary, and minutes for you.' },
+];
+
+const breadcrumb = {
+  '@context': 'https://schema.org',
+  '@type': 'BreadcrumbList',
+  itemListElement: [
+    { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://echobits.xyz/' },
+    { '@type': 'ListItem', position: 2, name: 'About', item: 'https://echobits.xyz/about' },
+  ],
+};
+---
+<Base
+  title="About Echobit – AI Meeting Companion by Devmorphix"
+  description="Echobit is an AI meeting recorder and transcriber built for India by Devmorphix. Learn about our mission to make every conversation accessible in your language."
+  path="/about"
+  jsonLd={[breadcrumb]}
+>
+  <section class="relative overflow-hidden max-w-3xl mx-auto px-6 pt-20 pb-12">
+    <div class="pointer-events-none absolute left-1/2 top-[-6rem] -z-10 h-72 w-[36rem] -translate-x-1/2 rounded-full bg-emerald-200/30 blur-3xl animate-float-slow"></div>
+    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">About</p>
+    <h1 class="mt-3 text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 leading-tight">Meetings, in every language.</h1>
+    <p class="mt-6 text-lg text-slate-600 leading-relaxed">
+      Echobit is an AI meeting companion built for India. We record meetings and lectures, transcribe
+      them in English and 20+ Indian languages, and turn them into clear summaries, action items, and
+      shareable minutes — automatically.
+    </p>
+    <p class="mt-4 text-slate-600 leading-relaxed">
+      We started Echobit because the best note-taking tools ignored the languages most of the country
+      actually speaks. People shouldn't have to switch to English just to get usable notes. So we built
+      transcription that understands Hindi, Tamil, Telugu, Malayalam, and many more — with summaries you
+      can read in your own language or in English.
+    </p>
+  </section>
+
+  <section class="bg-slate-50 border-y border-slate-200">
+    <div class="max-w-5xl mx-auto px-6 py-16 reveal">
+      <h2 class="text-2xl font-bold tracking-tight text-slate-900 mb-8">What we believe</h2>
+      <div class="grid sm:grid-cols-3 gap-6">
+        {values.map((v) => (
+          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+            <h3 class="font-semibold text-slate-900">{v.title}</h3>
+            <p class="mt-2 text-sm text-slate-600 leading-relaxed">{v.body}</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  </section>
+
+  <section class="max-w-3xl mx-auto px-6 py-16">
+    <h2 class="text-2xl font-bold tracking-tight text-slate-900">Built by Devmorphix</h2>
+    <p class="mt-3 text-slate-600 leading-relaxed">
+      Echobit is built and maintained by <strong class="text-slate-900">Devmorphix</strong>, a small team
+      passionate about AI-powered productivity tools that work for real, multilingual workplaces. Have
+      feedback or a partnership idea? <a href="/contact" class="font-medium text-emerald-600 underline hover:text-emerald-700">We'd love to hear from you</a>.
+    </p>
+    <div class="mt-8 flex flex-col sm:flex-row gap-3">
+      <a href="/register" class="rounded-full bg-emerald-600 px-7 py-3.5 text-center font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors">Start for free</a>
+      <a href="/features" class="rounded-full border border-slate-300 px-7 py-3.5 text-center font-semibold text-slate-700 hover:bg-slate-50 transition-colors">Explore features</a>
+    </div>
+  </section>
+</Base>

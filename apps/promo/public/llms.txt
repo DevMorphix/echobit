@@ -1,0 +1,25 @@
+# Echobit
+
+> Echobit is an AI meeting recorder and transcriber built for India. It records meetings and lectures, transcribes them in English and 20+ Indian languages, and automatically generates summaries, action items, and shareable meeting minutes. There is a free plan; an Android app and a web app are available.
+
+Echobit is built and operated by Devmorphix.
+
+Key facts:
+- Transcription in 20+ Indian languages including Hindi, Tamil, Telugu, Malayalam, Bengali, Kannada, Marathi, Gujarati, Punjabi, Odia, and English.
+- AI summaries, professional meeting minutes (PDF export), and automatic action-item extraction.
+- Records up to 3 hours per session; background recording on Android.
+- Free forever plan; paid plans start at ₹149/month, Pro at ₹499/month.
+- Privacy-first: personal data is never sold; users can request full account and data deletion.
+- Common uses: business teams, students, healthcare, and journalists.
+
+## Pages
+- [Home](https://echobits.xyz/): product overview and how it works.
+- [Features](https://echobits.xyz/features): detailed capabilities (recording, transcription, summaries, minutes, action items, export).
+- [Pricing](https://echobits.xyz/pricing): plans and pricing (Free, Starter, Pro, Growth).
+- [About](https://echobits.xyz/about): about Echobit and Devmorphix.
+- [Contact](https://echobits.xyz/contact): support and contact details.
+- [Privacy Policy](https://echobits.xyz/privacy-policy): how data is collected, used, and deleted.
+
+## Get started
+- Create a free account at https://echobits.xyz/register
+- Sign in at https://echobits.xyz/login

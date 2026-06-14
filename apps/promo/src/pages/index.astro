@@ -18,6 +18,7 @@ const features = [
 ];
 
 const languages = ['Hindi', 'Tamil', 'Telugu', 'Bengali', 'Kannada', 'Malayalam', 'Marathi', 'Gujarati', 'Punjabi', 'Odia', 'English'];
+const langRow2 = languages.slice().reverse();
 
 const useCases = [
   { emoji: '🏢', title: 'Teams', desc: 'Never lose a decision or follow-up from standups, client calls, and reviews.' },
@@ -34,26 +35,75 @@ const testimonials = [
 
 const freeFeatures = ['3 recordings / month', 'English + Malayalam', 'AI transcription & summary', '1 GB storage'];
 const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes + action items', 'PDF export & templates'];
+
+const stats: { count?: number; suffix?: string; text?: string; label: string }[] = [
+  { count: 20, suffix: '+', label: 'Indian languages' },
+  { count: 3, suffix: ' hrs', label: 'Max recording' },
+  { text: 'Seconds', label: 'To a summary' },
+  { text: 'Free', label: 'Forever plan' },
+];
+
+const faqs = [
+  { q: 'Which languages does Echobit support?', a: 'English plus 20+ Indian languages, including Hindi, Tamil, Telugu, Malayalam, Bengali, Kannada, Marathi, Gujarati, Punjabi, and Odia. Summaries can be produced in English or your chosen language.' },
+  { q: 'Is there a free plan?', a: 'Yes — Echobit has a free forever plan with 3 recordings per month, AI transcription, and summaries. No credit card required to start.' },
+  { q: 'Can I record on my phone?', a: 'Yes. Echobit has an Android app that keeps recording in the background, plus a web app. Recordings sync to your account when Cloud Sync is on.' },
+  { q: 'How accurate is the transcription?', a: 'Echobit uses state-of-the-art speech-to-text models and stays accurate even with accents, crosstalk, and background noise. Clear audio gives the best results.' },
+  { q: 'How long can a recording be?', a: 'Up to 3 hours per recording, depending on your plan. Long recordings are processed automatically.' },
+  { q: 'Can I export meeting minutes?', a: 'Yes — generate professional meeting minutes with attendees, decisions, and action items, and export them as PDF using built-in or custom templates.' },
+  { q: 'Is my data private and secure?', a: 'Yes. Your data is encrypted in transit, never sold, and you can request full account and data deletion at any time from the app or our deletion page.' },
+];
+
+const pageSchema = [
+  {
+    '@context': 'https://schema.org',
+    '@type': 'SoftwareApplication',
+    name: 'Echobit',
+    applicationCategory: 'BusinessApplication',
+    operatingSystem: 'Android, Web',
+    description: 'AI meeting recorder and transcriber. Records meetings and lectures, transcribes in English and 20+ Indian languages, and generates summaries, action items, and meeting minutes.',
+    offers: { '@type': 'Offer', price: '0', priceCurrency: 'INR' },
+    publisher: { '@type': 'Organization', name: 'Devmorphix' },
+    featureList: [
+      'AI transcription in 20+ Indian languages',
+      'Automatic AI summaries',
+      'Meeting minutes (PDF export)',
+      'Action-item extraction',
+      'Background recording on Android',
+    ],
+  },
+  {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: faqs.map((f) => ({
+      '@type': 'Question',
+      name: f.q,
+      acceptedAnswer: { '@type': 'Answer', text: f.a },
+    })),
+  },
+];
 ---
-<Base path="/">
+<Base path="/" jsonLd={pageSchema}>
   <!-- Hero -->
   <section class="relative overflow-hidden">
     <div class="pointer-events-none absolute inset-0 -z-10">
-      <div class="absolute left-1/2 top-[-10rem] h-[28rem] w-[44rem] -translate-x-1/2 rounded-full bg-emerald-200/40 blur-3xl"></div>
+      <div class="absolute inset-0 bg-dots"></div>
+      <div class="absolute left-1/2 top-[-8rem] h-[26rem] w-[42rem] -translate-x-1/2 rounded-full bg-emerald-300/30 blur-3xl animate-float-slow"></div>
+      <div class="absolute right-[-6rem] top-24 h-72 w-72 rounded-full bg-teal-300/25 blur-3xl animate-float"></div>
+      <div class="absolute left-[-6rem] top-44 h-72 w-72 rounded-full bg-emerald-200/30 blur-3xl animate-float-slow"></div>
     </div>
     <div class="max-w-4xl mx-auto px-6 pt-20 pb-12 text-center">
       <a href="/#features" class="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 text-xs font-medium text-slate-600 shadow-sm">
         <span class="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
         AI meeting companion · now in 20+ Indian languages
       </a>
-      <h1 class="mt-7 text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 leading-[1.08]">
+      <h1 class="mt-7 text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 leading-[1.05]">
         Every meeting, captured and summarised
-        <span class="text-emerald-600"> in your language.</span>
+        <span class="text-gradient"> in your language.</span>
       </h1>
       <p class="mt-6 text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-        Echobit records your meetings and lectures, transcribes them in English and 20+ Indian
-        languages, and hands you a clean summary, action items, and ready-to-share minutes —
-        automatically.
+        Stop scrambling for notes. Echobit records your meetings and lectures, transcribes them in
+        English and 20+ Indian languages, and hands you a clean summary, action items, and
+        ready-to-share minutes — in seconds, automatically.
       </p>
       <div class="mt-9 flex flex-col sm:flex-row items-center justify-center gap-3">
         <a href="/register" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-full bg-emerald-600 px-7 py-3.5 font-semibold text-white shadow-sm shadow-emerald-600/20 hover:bg-emerald-500 transition-colors">
@@ -69,7 +119,7 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
 
     <!-- Product mock -->
     <div class="max-w-3xl mx-auto px-6 pb-20 reveal">
-      <div class="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 overflow-hidden">
+      <div class="rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/5 overflow-hidden animate-float-slow">
         <div class="flex items-center gap-1.5 border-b border-slate-100 px-4 py-3">
           <span class="h-2.5 w-2.5 rounded-full bg-slate-200"></span>
           <span class="h-2.5 w-2.5 rounded-full bg-slate-200"></span>
@@ -100,11 +150,15 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
 
   <!-- Stats -->
   <section class="border-y border-slate-200 bg-slate-50">
-    <div class="max-w-5xl mx-auto px-6 py-10 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
-      {[['20+','Indian languages'],['3 hrs','Max recording'],['Seconds','To a summary'],['Free','Forever plan']].map(([big, small]) => (
+    <div class="max-w-5xl mx-auto px-6 py-12 grid grid-cols-2 sm:grid-cols-4 gap-8 text-center">
+      {stats.map((s) => (
         <div>
-          <p class="text-2xl sm:text-3xl font-bold text-slate-900">{big}</p>
-          <p class="mt-1 text-sm text-slate-500">{small}</p>
+          <p class="text-3xl sm:text-4xl font-bold text-slate-900 tabular-nums">
+            {s.count !== undefined ? (
+              <><span class="stat" data-count={s.count}>0</span>{s.suffix}</>
+            ) : s.text}
+          </p>
+          <p class="mt-1 text-sm text-slate-500">{s.label}</p>
         </div>
       ))}
     </div>
@@ -118,7 +172,7 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
     </div>
     <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
       {steps.map((s) => (
-        <div class="rounded-2xl border border-slate-200 bg-white p-6">
+        <div class="rounded-2xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
           <p class="text-sm font-bold text-emerald-600">{s.n}</p>
           <h3 class="mt-3 text-lg font-semibold text-slate-900">{s.title}</h3>
           <p class="mt-2 text-sm text-slate-600 leading-relaxed">{s.desc}</p>
@@ -149,8 +203,8 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
   </section>
 
   <!-- Languages -->
-  <section id="languages" class="max-w-6xl mx-auto px-6 py-20 sm:py-28">
-    <div class="grid lg:grid-cols-2 gap-12 items-center">
+  <section id="languages" class="py-20 sm:py-28">
+    <div class="max-w-6xl mx-auto px-6 grid lg:grid-cols-2 gap-12 items-center">
       <div class="reveal">
         <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Built for India</p>
         <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Transcribe in your mother tongue</h2>
@@ -158,11 +212,10 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
           Most tools stop at English. Echobit understands 20+ Indian languages with native-level
           accuracy — so your team can speak naturally and still get clean, English-ready summaries.
         </p>
-        <div class="mt-6 flex flex-wrap gap-2">
-          {languages.map((l) => (
-            <span class="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm text-slate-600">{l}</span>
-          ))}
-        </div>
+        <a href="/features" class="mt-6 inline-flex items-center gap-2 font-semibold text-emerald-600 hover:text-emerald-700 transition-colors">
+          Explore language support
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+        </a>
       </div>
       <div class="reveal rounded-2xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-900/5">
         <div class="flex items-center gap-3 mb-4">
@@ -183,6 +236,20 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
         </div>
       </div>
     </div>
+
+    <!-- Language marquee -->
+    <div class="mt-16 overflow-hidden marquee-mask reveal">
+      <div class="flex w-max gap-3 animate-marquee">
+        {[...languages, ...languages].map((l) => (
+          <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm whitespace-nowrap">{l}</span>
+        ))}
+      </div>
+      <div class="mt-3 flex w-max gap-3 animate-marquee-rev">
+        {[...langRow2, ...langRow2].map((l) => (
+          <span class="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-600 shadow-sm whitespace-nowrap">{l}</span>
+        ))}
+      </div>
+    </div>
   </section>
 
   <!-- Use cases -->
@@ -194,7 +261,7 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
       </div>
       <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {useCases.map((u) => (
-          <div class="rounded-2xl border border-slate-200 bg-white p-6">
+          <div class="rounded-2xl border border-slate-200 bg-white p-6 transition duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-slate-900/5">
             <div class="text-3xl">{u.emoji}</div>
             <h3 class="mt-4 text-lg font-semibold text-slate-900">{u.title}</h3>
             <p class="mt-2 text-sm text-slate-600 leading-relaxed">{u.desc}</p>
@@ -272,6 +339,28 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
     </div>
   </section>
 
+  <!-- FAQ -->
+  <section id="faq" class="max-w-3xl mx-auto px-6 py-20 sm:py-28 reveal">
+    <div class="text-center mb-12">
+      <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">FAQ</p>
+      <h2 class="mt-3 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Frequently asked questions</h2>
+    </div>
+    <div class="divide-y divide-slate-200 rounded-2xl border border-slate-200 bg-white">
+      {faqs.map((f) => (
+        <details class="group px-6">
+          <summary class="flex cursor-pointer list-none items-center justify-between gap-4 py-5 text-left font-medium text-slate-900 [&::-webkit-details-marker]:hidden">
+            {f.q}
+            <svg class="h-5 w-5 flex-shrink-0 text-slate-400 transition-transform group-open:rotate-45" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" /></svg>
+          </summary>
+          <p class="pb-5 -mt-1 text-[15px] leading-relaxed text-slate-600">{f.a}</p>
+        </details>
+      ))}
+    </div>
+    <p class="mt-8 text-center text-sm text-slate-500">
+      Still have a question? <a href="/contact" class="font-medium text-emerald-600 underline hover:text-emerald-700">Get in touch →</a>
+    </p>
+  </section>
+
   <!-- Final CTA -->
   <section class="max-w-6xl mx-auto px-6 py-20 sm:py-28">
     <div class="relative overflow-hidden rounded-3xl bg-slate-900 px-8 py-16 text-center">
@@ -289,4 +378,31 @@ const proFeatures = ['40 recordings / month', '20+ languages', 'Meeting minutes 
       </div>
     </div>
   </section>
+
+  <script>
+    // Count-up animation for the stats (runs once when scrolled into view).
+    const nums = document.querySelectorAll<HTMLElement>('.stat');
+    const run = (el: HTMLElement) => {
+      const target = Number(el.dataset.count || '0');
+      const dur = 1200;
+      const start = performance.now();
+      const tick = (now: number) => {
+        const p = Math.min((now - start) / dur, 1);
+        const eased = 1 - Math.pow(1 - p, 3);
+        el.textContent = String(Math.round(target * eased));
+        if (p < 1) requestAnimationFrame(tick);
+      };
+      requestAnimationFrame(tick);
+    };
+    if ('IntersectionObserver' in window && nums.length) {
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          if (e.isIntersecting) { run(e.target as HTMLElement); io.unobserve(e.target); }
+        }
+      }, { threshold: 0.6 });
+      nums.forEach((n) => io.observe(n));
+    } else {
+      nums.forEach((n) => (n.textContent = n.dataset.count || '0'));
+    }
+  </script>
 </Base>

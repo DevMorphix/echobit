@@ -3,9 +3,26 @@
 /* Tailwind v4 scans these sources for class usage. */
 @source "../**/*.{astro,js,ts}";
 
-*, *::before, *::after {
-  box-sizing: border-box;
+/* Design tokens — fonts + animation utilities (Tailwind v4 generates
+   font-display / animate-* utilities from these). */
+@theme {
+  --font-sans: "Inter Variable", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-display: "Sora Variable", "Inter Variable", ui-sans-serif, system-ui, sans-serif;
+
+  --animate-marquee: marquee 36s linear infinite;
+  --animate-marquee-rev: marquee-rev 36s linear infinite;
+  --animate-float: float 7s ease-in-out infinite;
+  --animate-float-slow: float 11s ease-in-out infinite;
 }
+
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes marquee-rev { from { transform: translateX(-50%); } to { transform: translateX(0); } }
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-16px); } }
+@keyframes shimmer { to { background-position: 200% center; } }
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: smooth; }
 
 html, body {
   margin: 0;
@@ -14,19 +31,45 @@ html, body {
   min-height: 100vh;
   background: #ffffff;
   color: #0f172a; /* slate-900 */
-  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-html { scroll-behavior: smooth; }
+h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
-/* Progressive-enhancement scroll reveal: elements are hidden only once JS marks
-   the document (html.js), so no-JS visitors and crawlers always see content. */
-.reveal { transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
-html.js .reveal { opacity: 0; transform: translateY(20px); }
+/* Animated gradient text (hero accent). */
+.text-gradient {
+  background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: shimmer 6s linear infinite;
+}
+
+/* Subtle dot grid, faded toward the edges. */
+.bg-dots {
+  background-image: radial-gradient(circle, rgba(15, 23, 42, 0.07) 1px, transparent 1px);
+  background-size: 22px 22px;
+  -webkit-mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 40%, transparent 78%);
+  mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 40%, transparent 78%);
+}
+
+/* Fade the marquee edges. */
+.marquee-mask {
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent);
+}
+
+/* Scroll reveal (progressive enhancement — hidden only when JS is active). */
+.reveal { transition: opacity .7s cubic-bezier(.22,1,.36,1), transform .7s cubic-bezier(.22,1,.36,1); }
+html.js .reveal { opacity: 0; transform: translateY(22px); }
 html.js .reveal.in { opacity: 1; transform: none; }
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   html.js .reveal { opacity: 1; transform: none; }
+  .text-gradient { animation: none; }
+  [class*="animate-"] { animation: none !important; }
 }

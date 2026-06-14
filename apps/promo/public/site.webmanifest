@@ -1,0 +1,12 @@
+{
+  "name": "Echobit — AI Meeting Recorder & Transcriber",
+  "short_name": "Echobit",
+  "description": "Record, transcribe and summarise meetings in 20+ Indian languages.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#10b981",
+  "icons": [
+    { "src": "/favicon.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

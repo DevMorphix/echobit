@@ -1,17 +1,17 @@
 ---
 // Shared light top nav. App links (Sign in / Get started) deep-link to the Vue
-// app, which is served on the same origin by the Worker.
+// app, served on the same origin by the Worker.
 const links = [
-  { href: '/#features', label: 'Features' },
-  { href: '/#languages', label: 'Languages' },
+  { href: '/features', label: 'Features' },
   { href: '/pricing', label: 'Pricing' },
+  { href: '/#faq', label: 'FAQ' },
   { href: '/contact', label: 'Contact' },
 ];
 ---
 <header class="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
-  <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between">
+  <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between" aria-label="Primary">
     <a href="/" class="flex items-center gap-2.5 font-bold text-slate-900">
-      <img src="/favicon.png" alt="Echobit" class="w-8 h-8 rounded-lg object-contain" />
+      <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
       <span class="text-lg tracking-tight">Echobit</span>
     </a>
 

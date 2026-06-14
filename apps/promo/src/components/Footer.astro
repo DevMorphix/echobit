@@ -1,44 +1,48 @@
 ---
 const year = new Date().getFullYear();
+const cols = [
+  { title: 'Product', links: [
+    { href: '/features', label: 'Features' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/#languages', label: 'Languages' },
+    { href: '/#faq', label: 'FAQ' },
+  ]},
+  { title: 'Company', links: [
+    { href: '/about', label: 'About' },
+    { href: '/contact', label: 'Contact' },
+  ]},
+  { title: 'Legal', links: [
+    { href: '/privacy-policy', label: 'Privacy Policy' },
+    { href: '/request-deletion', label: 'Data Deletion' },
+  ]},
+];
 ---
 <footer class="border-t border-slate-200 bg-slate-50">
   <div class="max-w-6xl mx-auto px-6 py-14">
     <div class="grid grid-cols-2 md:grid-cols-4 gap-10">
       <div class="col-span-2 md:col-span-1">
         <a href="/" class="flex items-center gap-2.5 font-bold text-slate-900 mb-3">
-          <img src="/favicon.png" alt="Echobit" class="w-8 h-8 rounded-lg object-contain" />
+          <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
           <span class="text-lg tracking-tight">Echobit</span>
         </a>
         <p class="text-sm text-slate-500 leading-relaxed max-w-xs">
           AI meeting companion by Devmorphix. Record, transcribe, and summarise — in your language.
         </p>
+        <a href="/register" class="mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-500 transition-colors">
+          Start for free
+        </a>
       </div>
 
-      <div>
-        <p class="text-sm font-semibold text-slate-900 mb-4">Product</p>
-        <ul class="space-y-3 text-sm text-slate-500">
-          <li><a href="/#features" class="hover:text-emerald-600 transition-colors">Features</a></li>
-          <li><a href="/pricing" class="hover:text-emerald-600 transition-colors">Pricing</a></li>
-          <li><a href="/#languages" class="hover:text-emerald-600 transition-colors">Languages</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <p class="text-sm font-semibold text-slate-900 mb-4">Account</p>
-        <ul class="space-y-3 text-sm text-slate-500">
-          <li><a href="/login" class="hover:text-emerald-600 transition-colors">Sign in</a></li>
-          <li><a href="/register" class="hover:text-emerald-600 transition-colors">Create account</a></li>
-        </ul>
-      </div>
-
-      <div>
-        <p class="text-sm font-semibold text-slate-900 mb-4">Company</p>
-        <ul class="space-y-3 text-sm text-slate-500">
-          <li><a href="/contact" class="hover:text-emerald-600 transition-colors">Contact</a></li>
-          <li><a href="/privacy-policy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a></li>
-          <li><a href="/request-deletion" class="hover:text-emerald-600 transition-colors">Data Deletion</a></li>
-        </ul>
-      </div>
+      {cols.map((c) => (
+        <div>
+          <p class="text-sm font-semibold text-slate-900 mb-4">{c.title}</p>
+          <ul class="space-y-3 text-sm text-slate-500">
+            {c.links.map((l) => (
+              <li><a href={l.href} class="hover:text-emerald-600 transition-colors">{l.label}</a></li>
+            ))}
+          </ul>
+        </div>
+      ))}
     </div>
 
     <div class="border-t border-slate-200 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
