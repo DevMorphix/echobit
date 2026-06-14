@@ -169,14 +169,13 @@
 
 <script setup>
 import { ref, reactive } from 'vue';
+import { API_URL as API_BASE } from '../services/http.js';
 
 const form = reactive({ name: '', email: '', reason: '', additionalInfo: '' });
 const confirmed = ref(false);
 const loading = ref(false);
 const submitted = ref(false);
 const errorMsg = ref('');
-
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api';
 
 async function handleSubmit() {
   if (!confirmed.value) return;

@@ -2,7 +2,7 @@ import { reactive } from 'vue';
 
 // Same-origin by default — the Worker serves both the SPA and /api.
 // VITE_API_URL overrides for local dev against a remote backend.
-export const API_URL = import.meta.env.VITE_API_URL || '/api';
+export const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
 // Fallback expiry used only when the server doesn't return expiresAt.
 // Backend issues 7-day tokens; this constant is just the safety fallback.

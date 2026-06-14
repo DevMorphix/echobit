@@ -13,10 +13,18 @@ interface Env {
   UPSTREAM: string;
 }
 
+// /api/foo    → /api/v1/foo  (unversioned → v1 default)
+// /api/v2/foo → unchanged     (explicit version passes through)
+// /api/health → unchanged     (unversioned operational endpoint)
+function versionedPath(pathname: string): string {
+  return pathname.replace(/^\/api\/(?!v\d+\/|health$)/, '/api/v1/');
+}
+
 export default {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
-    const target = new URL(url.pathname + url.search, env.UPSTREAM);
+    const path = versionedPath(url.pathname);
+    const target = new URL(path + url.search, env.UPSTREAM);
     // redirect: 'manual' keeps the proxy transparent — any Location header
     // from upstream reaches the client instead of being followed here.
     return fetch(new Request(target, request), { redirect: 'manual' });

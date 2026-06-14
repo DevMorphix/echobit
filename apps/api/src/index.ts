@@ -50,16 +50,18 @@ app.use('*', async (c, next) => {
 });
 
 // Public routes
-app.route('/api/auth', authRoutes);
-app.route('/api/plans', plansRoutes);
+app.route('/api/v1/auth', authRoutes);
+app.route('/api/v1/plans', plansRoutes);
 
 // Protected routes (recordings router mounted behind auth — server.js parity)
-app.use('/api/recordings/*', authenticateToken);
-app.route('/api/recordings', recordingsRoutes);
-app.route('/api/payments', paymentsRoutes);
-app.route('/api/admin', adminRoutes);
+app.use('/api/v1/recordings/*', authenticateToken);
+app.route('/api/v1/recordings', recordingsRoutes);
+app.route('/api/v1/payments', paymentsRoutes);
+app.route('/api/v1/admin', adminRoutes);
 
-// Health check
+// Health check — unversioned on purpose. Liveness is an operational concern,
+// independent of the API contract version, so monitors keep working across
+// version bumps (parity with the old backend's /api/health).
 app.get('/api/health', async (c) => {
   let db = 'disconnected';
   try {

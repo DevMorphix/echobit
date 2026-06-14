@@ -83,6 +83,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue';
+import { API_URL as API_BASE } from '../services/http.js';
 
 const email = ref('');
 const password = ref('');
@@ -90,8 +91,6 @@ const confirmed = ref(false);
 const loading = ref(false);
 const errorMsg = ref('');
 const deleted = ref(false);
-
-const API_BASE = import.meta.env.VITE_API_URL ;
 
 async function handleDelete() {
   if (!confirmed.value) return;
