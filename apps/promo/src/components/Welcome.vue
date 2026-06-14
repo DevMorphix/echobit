@@ -10,19 +10,19 @@
         </div>
         <div class="flex items-center space-x-1 sm:space-x-4">
           <a href="#features" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">Features</a>
-          <router-link to="/pricing" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">Pricing</router-link>
-          <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">Contact</router-link>
+          <a href="/pricing" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">Pricing</a>
+          <a href="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">Contact</a>
           <template v-if="isLoggedIn">
-            <router-link to="/dashboard" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base flex items-center gap-2">
+            <a href="/dashboard" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base flex items-center gap-2">
               Dashboard
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </router-link>
+            </a>
           </template>
           <template v-else>
-            <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">Sign In</router-link>
-            <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
+            <a href="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">Sign In</a>
+            <a href="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
               Get Started
-            </router-link>
+            </a>
           </template>
         </div>
       </div>
@@ -53,15 +53,15 @@
         </p>
 
         <div class="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-12">
-          <router-link :to="isLoggedIn ? '/dashboard' : '/register'" class="w-full sm:w-auto group bg-emerald-500 text-white px-8 py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 flex items-center justify-center space-x-2">
+          <a :href="isLoggedIn ? '/dashboard' : '/register'" class="w-full sm:w-auto group bg-emerald-500 text-white px-8 py-4 rounded-full font-semibold text-base sm:text-lg hover:bg-emerald-400 hover:shadow-2xl hover:shadow-emerald-500/30 transition-all duration-300 flex items-center justify-center space-x-2">
             <span>{{ isLoggedIn ? 'Go to Dashboard' : 'Start for Free' }}</span>
             <svg class="w-5 h-5 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
             </svg>
-          </router-link>
-          <router-link to="/pricing" class="w-full sm:w-auto text-white/80 hover:text-white px-8 py-4 rounded-full font-semibold text-base sm:text-lg border border-white/20 hover:border-white/50 transition flex items-center justify-center">
+          </a>
+          <a href="/pricing" class="w-full sm:w-auto text-white/80 hover:text-white px-8 py-4 rounded-full font-semibold text-base sm:text-lg border border-white/20 hover:border-white/50 transition flex items-center justify-center">
             View Pricing
-          </router-link>
+          </a>
         </div>
 
         <!-- Trust badges -->
@@ -182,10 +182,10 @@
                 {{ lang }}
               </span>
             </div>
-            <router-link to="/pricing" class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-3 rounded-full font-semibold transition shadow-lg shadow-emerald-500/20">
+            <a href="/pricing" class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-6 py-3 rounded-full font-semibold transition shadow-lg shadow-emerald-500/20">
               Get language support
               <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </router-link>
+            </a>
           </div>
 
           <div class="bg-white/5 border border-white/10 rounded-3xl p-8">
@@ -295,9 +295,9 @@
                 {{ f }}
               </li>
             </ul>
-            <router-link :to="isLoggedIn ? '/dashboard' : '/register'" class="block text-center py-3 rounded-xl border border-white/20 text-white/80 font-semibold hover:bg-white/10 transition">
+            <a :href="isLoggedIn ? '/dashboard' : '/register'" class="block text-center py-3 rounded-xl border border-white/20 text-white/80 font-semibold hover:bg-white/10 transition">
               {{ isLoggedIn ? 'Go to Dashboard' : 'Get Started' }}
-            </router-link>
+            </a>
           </div>
 
           <div class="bg-gradient-to-b from-emerald-500/20 to-emerald-600/10 border border-emerald-500/40 rounded-2xl p-7 flex flex-col relative overflow-hidden">
@@ -311,9 +311,9 @@
                 {{ f }}
               </li>
             </ul>
-            <router-link to="/pricing" class="block text-center py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition shadow-lg shadow-emerald-500/30">
+            <a href="/pricing" class="block text-center py-3 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-white font-semibold transition shadow-lg shadow-emerald-500/30">
               See Full Pricing
-            </router-link>
+            </a>
           </div>
         </div>
       </div>
@@ -331,11 +331,11 @@
             <img src="/favicon.png" alt="Echobit" class="w-14 h-14 rounded-2xl mx-auto mb-6 shadow-xl object-contain" />
             <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">Start your first recording today</h2>
             <p class="text-white/60 mb-8 max-w-md mx-auto">No credit card. No setup. Just record and let Echobit do the rest.</p>
-            <router-link :to="isLoggedIn ? '/dashboard' : '/register'"
+            <a :href="isLoggedIn ? '/dashboard' : '/register'"
               class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full font-semibold text-lg transition shadow-xl shadow-emerald-500/30">
               {{ isLoggedIn ? 'Go to Dashboard' : 'Create Free Account' }}
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
-            </router-link>
+            </a>
           </div>
         </div>
       </div>
@@ -357,22 +357,22 @@
           <div>
             <p class="text-white/70 font-semibold text-sm mb-4">Product</p>
             <div class="flex flex-col gap-3 text-white/40 text-sm">
-              <router-link to="/pricing" class="hover:text-white/70 transition">Pricing</router-link>
+              <a href="/pricing" class="hover:text-white/70 transition">Pricing</a>
               <template v-if="isLoggedIn">
-                <router-link to="/dashboard" class="hover:text-white/70 transition">Dashboard</router-link>
+                <a href="/dashboard" class="hover:text-white/70 transition">Dashboard</a>
               </template>
               <template v-else>
-                <router-link to="/login" class="hover:text-white/70 transition">Sign In</router-link>
-                <router-link to="/register" class="hover:text-white/70 transition">Create Account</router-link>
+                <a href="/login" class="hover:text-white/70 transition">Sign In</a>
+                <a href="/register" class="hover:text-white/70 transition">Create Account</a>
               </template>
             </div>
           </div>
           <div>
             <p class="text-white/70 font-semibold text-sm mb-4">Legal</p>
             <div class="flex flex-col gap-3 text-white/40 text-sm">
-              <router-link to="/privacy-policy" class="hover:text-white/70 transition">Privacy Policy</router-link>
-              <router-link to="/contact" class="hover:text-white/70 transition">Contact Us</router-link>
-              <router-link to="/request-deletion" class="hover:text-white/70 transition">Data Deletion</router-link>
+              <a href="/privacy-policy" class="hover:text-white/70 transition">Privacy Policy</a>
+              <a href="/contact" class="hover:text-white/70 transition">Contact Us</a>
+              <a href="/request-deletion" class="hover:text-white/70 transition">Data Deletion</a>
             </div>
           </div>
         </div>
@@ -387,10 +387,10 @@
 </template>
 
 <script setup>
-import { onMounted, onUnmounted, computed } from 'vue';
-import { authState } from '../api';
+import { onMounted, onUnmounted } from 'vue';
 
-const isLoggedIn = computed(() => authState.isAuthenticated);
+// Marketing site has no auth context — always render the logged-out CTAs.
+const isLoggedIn = false;
 
 const howItWorks = [
   { title: 'Record', desc: 'Open Echobit on your phone or browser and hit record. Runs in the background so you stay fully present.', icon: 'M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z', bg: 'bg-gradient-to-br from-emerald-500 to-green-600' },

@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import RequestDeletion from '../components/RequestDeletion.vue';
+---
+<Base
+  title="Request Account Deletion – Echobit"
+  description="Request deletion of your Echobit account and all associated data. We process requests within 7 business days."
+  path="/request-deletion"
+>
+  <RequestDeletion client:load />
+</Base>

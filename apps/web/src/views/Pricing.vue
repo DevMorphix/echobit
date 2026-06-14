@@ -21,14 +21,14 @@
   <!-- Fixed Navigation -->
   <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 pt-9 bg-black/30 backdrop-blur-md border-b border-white/5">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <router-link to="/" class="flex items-center space-x-2">
+      <a href="/" class="flex items-center space-x-2">
         <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
         <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
-      </router-link>
+      </a>
       <div class="flex items-center space-x-2 sm:space-x-4">
-        <router-link to="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
+        <a href="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
           Contact
-        </router-link>
+        </a>
         <template v-if="authState.isAuthenticated">
           <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
             Dashboard
@@ -240,9 +240,9 @@
           <span class="text-white/70 font-semibold">Echobit</span>
         </div>
         <div class="flex items-center gap-6 text-white/40 text-sm">
-          <router-link to="/privacy-policy" class="hover:text-white/70 transition">Privacy</router-link>
-          <router-link to="/contact" class="hover:text-white/70 transition">Contact</router-link>
-          <router-link to="/request-deletion" class="hover:text-white/70 transition">Data Deletion</router-link>
+          <a href="/privacy-policy" class="hover:text-white/70 transition">Privacy</a>
+          <a href="/contact" class="hover:text-white/70 transition">Contact</a>
+          <a href="/request-deletion" class="hover:text-white/70 transition">Data Deletion</a>
         </div>
         <p class="text-white/30 text-sm">&copy; 2026 Echobit. All rights reserved.</p>
       </div>

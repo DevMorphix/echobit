@@ -11,8 +11,9 @@
     "dev": "bun run --filter '*' dev",
     "dev:web": "bun run --cwd apps/web dev",
     "dev:api": "bun run --cwd apps/api dev",
-    "build": "bun run --cwd apps/web build",
-    "deploy": "bun run --cwd apps/web build && bun run --cwd apps/api deploy",
+    "dev:promo": "bun run --cwd apps/promo dev",
+    "build": "bun run --cwd apps/promo build && bun run --cwd apps/web build && bash scripts/merge-dist.sh",
+    "deploy": "bun run build && bun run --cwd apps/api deploy",
     "test": "bun test apps scripts",
     "typecheck": "bun run --cwd apps/api typecheck"
   }

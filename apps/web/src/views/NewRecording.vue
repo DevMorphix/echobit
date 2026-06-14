@@ -25,7 +25,7 @@
           You've used {{ usageCount }}/{{ limitCount }} recordings this month on the {{ planLabel }} plan.
         </p>
       </div>
-      <router-link to="/pricing" class="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition">
+      <router-link to="/upgrade" class="shrink-0 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white rounded-lg text-sm font-medium transition">
         Upgrade
       </router-link>
     </div>

@@ -78,6 +78,15 @@ app.get('/api/health', async (c) => {
   });
 });
 
+// App SPA shell. The Worker runs first only for app routes (run_worker_first in
+// wrangler.jsonc) and /api/*; marketing pages + assets are served statically and
+// never reach here. For an app route, return the Vue shell so vue-router can take
+// over client-side. Unmatched /api/* falls through to the JSON 404.
+app.get('*', async (c) => {
+  if (c.req.path.startsWith('/api/')) return c.json({ error: 'Not found' }, 404);
+  return c.env.ASSETS.fetch(new Request(new URL('/app-shell.html', c.req.url)));
+});
+
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
 app.onError((err, c) => {
   console.error(err.stack ?? err.message);

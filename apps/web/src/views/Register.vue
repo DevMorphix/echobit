@@ -3,10 +3,10 @@
     <div class="max-w-md w-full">
       <!-- Logo -->
       <div class="text-center mb-8">
-        <router-link to="/" class="inline-flex items-center space-x-2">
+        <a href="/" class="inline-flex items-center space-x-2">
           <img src="/favicon.png" alt="Echobit" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain" />
           <span class="text-2xl sm:text-3xl font-bold text-white">Echobit</span>
-        </router-link>
+        </a>
         <p class="text-white/50 text-sm mt-2">Record. Transcribe. Understand.</p>
       </div>
 

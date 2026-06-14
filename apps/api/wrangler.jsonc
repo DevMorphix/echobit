@@ -5,11 +5,28 @@
   "compatibility_date": "2026-06-01",
   "compatibility_flags": ["nodejs_compat"],
 
-  // SPA served as static assets; /api/* always hits the Worker.
+  // Two frontends served from one merged dir (built by `bun run build` at the
+  // repo root): Astro promo (static marketing at /, /pricing, …) + the Vue app
+  // shell. The Worker runs first only for /api/* and the app routes below; it
+  // serves the Vue shell (/app-shell.html) for those (see index.ts catch-all).
+  // Marketing pages + hashed assets are served statically.
   "assets": {
-    "directory": "../web/dist",
-    "not_found_handling": "single-page-application",
-    "run_worker_first": ["/api/*"]
+    "directory": "../../dist",
+    "binding": "ASSETS",
+    "not_found_handling": "404-page",
+    "run_worker_first": [
+      "/api/*",
+      "/login",
+      "/register",
+      "/verify-email",
+      "/forgot-password",
+      "/dashboard",
+      "/dashboard/*",
+      "/admin",
+      "/admin/*",
+      "/delete-account",
+      "/upgrade"
+    ]
   },
 
   "d1_databases": [

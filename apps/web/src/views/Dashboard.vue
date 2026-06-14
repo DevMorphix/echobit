@@ -76,7 +76,7 @@
         </router-link>
 
         <router-link v-if="!isPaid"
-          to="/pricing"
+          to="/upgrade"
           @click="mobileMenuOpen = false"
           class="flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-600 hover:bg-emerald-50 transition"
           :class="{ 'bg-emerald-50': $route.path === '/pricing' }"
@@ -99,7 +99,7 @@
 
       <!-- Mobile Upgrade banner -->
       <div class="px-4 pb-3">
-        <router-link v-if="!isPaid" to="/pricing" @click="mobileMenuOpen = false"
+        <router-link v-if="!isPaid" to="/upgrade" @click="mobileMenuOpen = false"
           class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-400 hover:to-green-400 transition shadow-md shadow-emerald-500/20">
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
@@ -185,7 +185,7 @@
         </router-link>
 
         <router-link v-if="!isPaid"
-          to="/pricing"
+          to="/upgrade"
           class="flex items-center space-x-3 px-4 py-3 rounded-xl text-emerald-600 hover:bg-emerald-50 transition font-medium"
           :class="{ 'bg-emerald-50': $route.path === '/pricing' }"
         >
@@ -207,7 +207,7 @@
 
       <!-- Desktop Upgrade banner -->
       <div class="absolute bottom-20 left-0 right-0 px-4">
-        <router-link v-if="!isPaid" to="/pricing"
+        <router-link v-if="!isPaid" to="/upgrade"
           class="flex items-center gap-3 w-full px-4 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-green-500 text-white hover:from-emerald-400 hover:to-green-400 transition shadow-md shadow-emerald-500/20">
           <svg class="w-5 h-5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />

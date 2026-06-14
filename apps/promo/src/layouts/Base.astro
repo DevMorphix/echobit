@@ -1,0 +1,82 @@
+---
+import '../styles/global.css';
+
+interface Props {
+  title?: string;
+  description?: string;
+  path?: string;        // route path for canonical/og:url, e.g. '/pricing'
+  ogImage?: string;
+}
+
+const {
+  title = 'Echobit – AI Meeting Recorder & Transcriber',
+  description = 'Record, transcribe and summarize meetings with AI. Supports 15+ Indian languages including Hindi, Malayalam, Tamil & Telugu. Free plan available.',
+  path = '/',
+  ogImage = '/og-image.png',
+} = Astro.props;
+
+const canonical = new URL(path, Astro.site).href;
+const ogImageUrl = new URL(ogImage, Astro.site).href;
+const siteUrl = Astro.site!.href.replace(/\/$/, '');
+---
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <!-- Primary -->
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <meta name="keywords" content="AI meeting recorder, meeting transcription, voice to text, meeting notes, AI summary, meeting minutes, audio transcription, Hindi transcription, Malayalam transcription, Indian language AI" />
+    <meta name="author" content="Devmorphix" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href={canonical} />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <link rel="apple-touch-icon" href="/favicon.png" />
+    <meta name="application-name" content="Echobit" />
+    <meta name="theme-color" content="#10b981" />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Echobit" />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:image" content={ogImageUrl} />
+    <meta property="og:locale" content="en_IN" />
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={title} />
+    <meta name="twitter:description" content={description} />
+    <meta name="twitter:image" content={ogImageUrl} />
+
+    <!-- JSON-LD: Organization -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'Organization',
+      name: 'Devmorphix',
+      url: siteUrl,
+      logo: `${siteUrl}/favicon.png`,
+      sameAs: [],
+    })} />
+
+    <!-- JSON-LD: WebSite -->
+    <script type="application/ld+json" set:html={JSON.stringify({
+      '@context': 'https://schema.org',
+      '@type': 'WebSite',
+      name: 'Echobit',
+      url: siteUrl,
+      description: 'AI-powered meeting recorder and transcriber supporting 15+ Indian languages.',
+      publisher: { '@type': 'Organization', name: 'Devmorphix' },
+    })} />
+
+    <slot name="head" />
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

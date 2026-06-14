@@ -12,6 +12,9 @@ export interface Env {
   RL_LOGIN: RateLimitBinding;
   RL_OTP: RateLimitBinding;
   RL_RESET: RateLimitBinding;
+  // Static assets (merged Astro promo + Vue app build); used to serve the Vue
+  // SPA shell for app routes (see index.ts catch-all).
+  ASSETS: Fetcher;
 
   // Secrets (wrangler secret put / .dev.vars)
   JWT_SECRET: string;

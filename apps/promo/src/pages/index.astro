@@ -1,0 +1,11 @@
+---
+import Base from '../layouts/Base.astro';
+import Welcome from '../components/Welcome.vue';
+---
+<Base
+  title="Echobit – AI Meeting Recorder & Transcriber"
+  description="Record, transcribe and summarize your meetings automatically with AI. Supports 15+ Indian languages. Free plan available."
+  path="/"
+>
+  <Welcome client:load />
+</Base>
