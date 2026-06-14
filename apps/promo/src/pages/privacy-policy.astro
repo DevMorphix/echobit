@@ -1,11 +1,118 @@
 ---
 import Base from '../layouts/Base.astro';
-import PrivacyPolicy from '../components/PrivacyPolicy.vue';
+
+const sections = [
+  {
+    h: '1. Introduction',
+    body: [
+      'Echobit ("we", "us", or "our") operates the Echobit application and website (the "Service"). This Privacy Policy explains how we collect, use, and protect your personal information when you use Echobit. By using the Service, you agree to the terms described in this policy.',
+    ],
+  },
+  {
+    h: '2. Information We Collect',
+    list: [
+      ['Account information', 'your name and email address when you register or sign in with Google.'],
+      ['Audio recordings', 'audio files you record within the Service. When Cloud Sync is enabled, audio is uploaded to and stored securely in the cloud. When Cloud Sync is disabled, audio is stored privately on your device only; it is sent temporarily for AI processing and immediately discarded from our systems.'],
+      ['Transcriptions and notes', 'text generated from your recordings, including AI summaries, meeting minutes, and your own notes.'],
+      ['Device information', 'basic device and operating system information for compatibility and debugging.'],
+    ],
+  },
+  {
+    h: '3. How We Use Your Information',
+    list: [
+      ['Core features', 'to provide recording, transcription, summaries, and minutes.'],
+      ['Authentication', 'to keep your account secure.'],
+      ['Transactional email', 'to send email verification and password-reset codes.'],
+      ['Improvement', 'to maintain and improve the Service.'],
+    ],
+    body: ['We do not sell your personal data, and we do not use it for advertising.'],
+  },
+  {
+    h: '4. Third-Party Services',
+    body: ['We rely on the following processors to operate the Service:'],
+    list: [
+      ['Google Sign-In', 'optional OAuth authentication, governed by Google\'s Privacy Policy.'],
+      ['Cloudflare', 'hosting, secure audio storage (R2), database (D1), and transactional email.'],
+      ['Cloudflare Workers AI (Whisper)', 'speech-to-text transcription of your recordings.'],
+      ['Sarvam AI', 'transcription and translation for Indian languages; audio/text is sent for processing.'],
+      ['Google Gemini', 'AI-generated summaries, minutes, and action items from your transcripts.'],
+      ['Razorpay', 'payment processing for paid plans; we do not store your card details.'],
+    ],
+  },
+  {
+    h: '5. Data Retention',
+    body: [
+      'Your data is retained for as long as your account remains active. You may delete your account at any time (see Section 7), after which all your personal data and recordings are permanently deleted from our systems. Deletion is processed promptly upon request.',
+      'Local-only recordings (Cloud Sync disabled): audio saved with Cloud Sync off is stored exclusively in the app\'s private storage on your device and is permanently deleted if the app is uninstalled. We recommend enabling Cloud Sync or exporting important recordings beforehand.',
+    ],
+  },
+  {
+    h: '6. Data Security',
+    body: [
+      'We implement industry-standard security measures including HTTPS encryption for data in transit, bcrypt password hashing, and JWT-based authentication. Audio files are stored with access controls on Cloudflare R2. While we take reasonable steps to protect your data, no method of transmission over the internet is 100% secure.',
+    ],
+  },
+  {
+    h: '7. Your Rights & Account Deletion',
+    body: ['You have the right to access the data we hold about you, correct inaccuracies, and request deletion of your account and all associated data.'],
+    deletion: true,
+  },
+  {
+    h: '8. Children\'s Privacy',
+    body: ['Echobit is not directed at children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us personal data, please contact us and we will delete it promptly.'],
+  },
+  {
+    h: '9. Changes to This Policy',
+    body: ['We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date above. Continued use of the Service after changes constitutes acceptance of the updated policy.'],
+  },
+  {
+    h: '10. Contact Us',
+    contact: true,
+  },
+];
 ---
 <Base
   title="Privacy Policy – Echobit"
   description="Read the Echobit privacy policy. Learn how we handle your meeting recordings, transcriptions, and personal data."
   path="/privacy-policy"
 >
-  <PrivacyPolicy />
+  <article class="max-w-3xl mx-auto px-6 py-16 sm:py-20">
+    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-600">Legal</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight text-slate-900">Privacy Policy</h1>
+    <p class="mt-3 text-sm text-slate-400">Last updated: 14 June 2026</p>
+
+    <div class="mt-10 space-y-10">
+      {sections.map((s) => (
+        <section>
+          <h2 class="text-lg font-semibold text-slate-900">{s.h}</h2>
+          {s.body && s.body.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-600">{p}</p>)}
+          {s.list && (
+            <ul class="mt-4 space-y-3">
+              {s.list.map(([term, def]) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-600">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-500"></span>
+                  <span><strong class="font-semibold text-slate-900">{term}</strong> — {def}</span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.deletion && (
+            <p class="mt-3 text-[15px] leading-relaxed text-slate-600">
+              To delete your account, visit our
+              <a href="/request-deletion" class="font-medium text-emerald-600 underline hover:text-emerald-700">account deletion request page</a>
+              or email
+              <a href="mailto:no.reply.echobit@gmail.com" class="font-medium text-emerald-600 underline hover:text-emerald-700">no.reply.echobit@gmail.com</a>.
+              Deleting your account permanently removes all recordings, transcriptions, and personal data.
+            </p>
+          )}
+          {s.contact && (
+            <p class="mt-3 text-[15px] leading-relaxed text-slate-600">
+              Questions about this policy? Email us at
+              <a href="mailto:no.reply.echobit@gmail.com" class="font-medium text-emerald-600 underline hover:text-emerald-700">no.reply.echobit@gmail.com</a>.
+            </p>
+          )}
+        </section>
+      ))}
+    </div>
+  </article>
 </Base>

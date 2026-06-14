@@ -1,18 +1,22 @@
 ---
 import '../styles/global.css';
+import Nav from '../components/Nav.astro';
+import Footer from '../components/Footer.astro';
 
 interface Props {
   title?: string;
   description?: string;
   path?: string;        // route path for canonical/og:url, e.g. '/pricing'
   ogImage?: string;
+  chrome?: boolean;     // render the shared Nav + Footer (default true)
 }
 
 const {
   title = 'Echobit – AI Meeting Recorder & Transcriber',
-  description = 'Record, transcribe and summarize meetings with AI. Supports 15+ Indian languages including Hindi, Malayalam, Tamil & Telugu. Free plan available.',
+  description = 'Record, transcribe and summarize meetings with AI. Supports 20+ Indian languages including Hindi, Malayalam, Tamil & Telugu. Free plan available.',
   path = '/',
   ogImage = '/og-image.png',
+  chrome = true,
 } = Astro.props;
 
 const canonical = new URL(path, Astro.site).href;
@@ -25,7 +29,6 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
 
-    <!-- Primary -->
     <title>{title}</title>
     <meta name="description" content={description} />
     <meta name="keywords" content="AI meeting recorder, meeting transcription, voice to text, meeting notes, AI summary, meeting minutes, audio transcription, Hindi transcription, Malayalam transcription, Indian language AI" />
@@ -33,11 +36,10 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
     <meta name="robots" content="index, follow" />
     <link rel="canonical" href={canonical} />
 
-    <!-- Favicon -->
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="application-name" content="Echobit" />
-    <meta name="theme-color" content="#10b981" />
+    <meta name="theme-color" content="#ffffff" />
 
     <!-- Open Graph -->
     <meta property="og:type" content="website" />
@@ -54,7 +56,6 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
     <meta name="twitter:description" content={description} />
     <meta name="twitter:image" content={ogImageUrl} />
 
-    <!-- JSON-LD: Organization -->
     <script type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'Organization',
@@ -63,20 +64,39 @@ const siteUrl = Astro.site!.href.replace(/\/$/, '');
       logo: `${siteUrl}/favicon.png`,
       sameAs: [],
     })} />
-
-    <!-- JSON-LD: WebSite -->
     <script type="application/ld+json" set:html={JSON.stringify({
       '@context': 'https://schema.org',
       '@type': 'WebSite',
       name: 'Echobit',
       url: siteUrl,
-      description: 'AI-powered meeting recorder and transcriber supporting 15+ Indian languages.',
+      description: 'AI-powered meeting recorder and transcriber supporting 20+ Indian languages.',
       publisher: { '@type': 'Organization', name: 'Devmorphix' },
     })} />
 
+    <!-- Mark JS-capable before paint so the reveal styles only hide for JS users -->
+    <script is:inline>document.documentElement.classList.add('js');</script>
     <slot name="head" />
   </head>
-  <body>
-    <slot />
+  <body class="bg-white text-slate-900 antialiased">
+    {chrome && <Nav />}
+    <main>
+      <slot />
+    </main>
+    {chrome && <Footer />}
+
+    <script>
+      // Subtle scroll-reveal (progressive enhancement).
+      const els = document.querySelectorAll('.reveal');
+      if ('IntersectionObserver' in window && els.length) {
+        const io = new IntersectionObserver((entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) { e.target.classList.add('in'); io.unobserve(e.target); }
+          }
+        }, { threshold: 0.12 });
+        els.forEach((el) => io.observe(el));
+      } else {
+        els.forEach((el) => el.classList.add('in'));
+      }
+    </script>
   </body>
 </html>

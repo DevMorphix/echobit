@@ -1,0 +1,49 @@
+---
+const year = new Date().getFullYear();
+---
+<footer class="border-t border-slate-200 bg-slate-50">
+  <div class="max-w-6xl mx-auto px-6 py-14">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-10">
+      <div class="col-span-2 md:col-span-1">
+        <a href="/" class="flex items-center gap-2.5 font-bold text-slate-900 mb-3">
+          <img src="/favicon.png" alt="Echobit" class="w-8 h-8 rounded-lg object-contain" />
+          <span class="text-lg tracking-tight">Echobit</span>
+        </a>
+        <p class="text-sm text-slate-500 leading-relaxed max-w-xs">
+          AI meeting companion by Devmorphix. Record, transcribe, and summarise — in your language.
+        </p>
+      </div>
+
+      <div>
+        <p class="text-sm font-semibold text-slate-900 mb-4">Product</p>
+        <ul class="space-y-3 text-sm text-slate-500">
+          <li><a href="/#features" class="hover:text-emerald-600 transition-colors">Features</a></li>
+          <li><a href="/pricing" class="hover:text-emerald-600 transition-colors">Pricing</a></li>
+          <li><a href="/#languages" class="hover:text-emerald-600 transition-colors">Languages</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="text-sm font-semibold text-slate-900 mb-4">Account</p>
+        <ul class="space-y-3 text-sm text-slate-500">
+          <li><a href="/login" class="hover:text-emerald-600 transition-colors">Sign in</a></li>
+          <li><a href="/register" class="hover:text-emerald-600 transition-colors">Create account</a></li>
+        </ul>
+      </div>
+
+      <div>
+        <p class="text-sm font-semibold text-slate-900 mb-4">Company</p>
+        <ul class="space-y-3 text-sm text-slate-500">
+          <li><a href="/contact" class="hover:text-emerald-600 transition-colors">Contact</a></li>
+          <li><a href="/privacy-policy" class="hover:text-emerald-600 transition-colors">Privacy Policy</a></li>
+          <li><a href="/request-deletion" class="hover:text-emerald-600 transition-colors">Data Deletion</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="border-t border-slate-200 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+      <p class="text-sm text-slate-400">© {year} Devmorphix. All rights reserved.</p>
+      <p class="text-xs text-slate-400">Echobit — AI Meeting Companion</p>
+    </div>
+  </div>
+</footer>

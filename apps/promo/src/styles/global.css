@@ -1,8 +1,7 @@
 @import "tailwindcss";
 
-/* Tailwind v4 scans these sources for class usage (Astro pages + reused Vue
-   marketing components). */
-@source "../**/*.{astro,vue,js,ts}";
+/* Tailwind v4 scans these sources for class usage. */
+@source "../**/*.{astro,js,ts}";
 
 *, *::before, *::after {
   box-sizing: border-box;
@@ -13,7 +12,21 @@ html, body {
   padding: 0;
   width: 100%;
   min-height: 100vh;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background: #ffffff;
+  color: #0f172a; /* slate-900 */
+  font-family: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+html { scroll-behavior: smooth; }
+
+/* Progressive-enhancement scroll reveal: elements are hidden only once JS marks
+   the document (html.js), so no-JS visitors and crawlers always see content. */
+.reveal { transition: opacity .6s cubic-bezier(.22,1,.36,1), transform .6s cubic-bezier(.22,1,.36,1); }
+html.js .reveal { opacity: 0; transform: translateY(20px); }
+html.js .reveal.in { opacity: 1; transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  html.js .reveal { opacity: 1; transform: none; }
 }

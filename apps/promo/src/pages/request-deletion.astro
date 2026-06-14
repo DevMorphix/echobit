@@ -1,11 +1,107 @@
 ---
 import Base from '../layouts/Base.astro';
-import RequestDeletion from '../components/RequestDeletion.vue';
+
+const reasons = ['No longer using the app', 'Privacy concerns', 'Switching to another service', 'Technical issues', 'Created account by mistake', 'Data protection / GDPR request', 'Other'];
+const inputCls = 'w-full rounded-xl border border-slate-300 bg-white px-4 py-3 text-slate-900 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500 transition';
 ---
 <Base
   title="Request Account Deletion – Echobit"
   description="Request deletion of your Echobit account and all associated data. We process requests within 7 business days."
   path="/request-deletion"
 >
-  <RequestDeletion client:load />
+  <section class="max-w-xl mx-auto px-6 py-16 sm:py-20">
+    <div class="text-center mb-8">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-50 text-red-500">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+      </div>
+      <h1 class="mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-slate-900">Request account deletion</h1>
+      <p class="mt-3 text-slate-600">Submit the form and we'll delete your Echobit account and all associated data within 7 business days.</p>
+    </div>
+
+    <div id="success" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 p-8 text-center">
+      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
+        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+      </div>
+      <h2 class="mt-4 text-lg font-semibold text-slate-900">Request submitted</h2>
+      <p class="mt-1 text-sm text-slate-600">We've received your request for <strong id="success-email" class="text-slate-900"></strong> and will process it within 7 business days. A confirmation email is on its way.</p>
+    </div>
+
+    <form id="deletion-form" class="rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm space-y-4">
+      <div class="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        This permanently deletes your account, recordings, transcripts, and notes. <strong>This cannot be undone.</strong>
+      </div>
+      <div>
+        <label for="name" class="block text-sm font-medium text-slate-700 mb-1.5">Full name</label>
+        <input id="name" name="name" type="text" required placeholder="John Doe" class={inputCls} />
+      </div>
+      <div>
+        <label for="email" class="block text-sm font-medium text-slate-700 mb-1.5">Email address (used to sign up)</label>
+        <input id="email" name="email" type="email" required placeholder="you@example.com" class={inputCls} />
+      </div>
+      <div>
+        <label for="reason" class="block text-sm font-medium text-slate-700 mb-1.5">Reason for deletion</label>
+        <select id="reason" name="reason" required class={inputCls}>
+          <option value="" disabled selected>Select a reason…</option>
+          {reasons.map((r) => <option value={r}>{r}</option>)}
+        </select>
+      </div>
+      <div>
+        <label for="additionalInfo" class="block text-sm font-medium text-slate-700 mb-1.5">Additional information <span class="text-slate-400">(optional)</span></label>
+        <textarea id="additionalInfo" name="additionalInfo" rows="3" placeholder="Anything else you'd like us to know…" class={inputCls}></textarea>
+      </div>
+      <label class="flex items-start gap-3 text-sm text-slate-600">
+        <input id="confirm" type="checkbox" required class="mt-1 h-4 w-4 accent-red-500" />
+        I understand this permanently deletes my account and data, and cannot be reversed.
+      </label>
+      <p id="error" class="hidden rounded-lg bg-red-50 border border-red-200 px-4 py-2.5 text-sm text-red-700"></p>
+      <button id="submit-btn" type="submit" class="w-full rounded-full bg-red-600 py-3 font-semibold text-white hover:bg-red-500 disabled:opacity-50 transition-colors">
+        Submit deletion request
+      </button>
+      <p class="text-center text-xs text-slate-400">
+        Prefer to delete instantly? <a href="/login" class="font-medium text-emerald-600 underline">Sign in</a> and delete from settings.
+      </p>
+    </form>
+  </section>
+
+  <script>
+    const form = document.getElementById('deletion-form') as HTMLFormElement | null;
+    const btn = document.getElementById('submit-btn') as HTMLButtonElement | null;
+    const errEl = document.getElementById('error');
+    const success = document.getElementById('success');
+
+    form?.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (!btn || !errEl) return;
+      errEl.classList.add('hidden');
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
+      const data = new FormData(form);
+      const payload = {
+        name: String(data.get('name') ?? ''),
+        email: String(data.get('email') ?? ''),
+        reason: String(data.get('reason') ?? ''),
+        additionalInfo: String(data.get('additionalInfo') ?? ''),
+      };
+      try {
+        // Same-origin: the API is served by the Worker at /api/v1.
+        const res = await fetch('/api/v1/auth/request-deletion', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(body.error || 'Failed to submit request');
+        const emailEl = document.getElementById('success-email');
+        if (emailEl) emailEl.textContent = payload.email;
+        form.classList.add('hidden');
+        success?.classList.remove('hidden');
+        success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (err) {
+        errEl.textContent = (err as Error).message;
+        errEl.classList.remove('hidden');
+        btn.disabled = false;
+        btn.textContent = 'Submit deletion request';
+      }
+    });
+  </script>
 </Base>
