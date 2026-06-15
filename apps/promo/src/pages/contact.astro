@@ -119,7 +119,7 @@ const channels = [
               <label for="message" class="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
               <textarea id="message" name="message" required rows="5" placeholder="Tell us what’s on your mind…" class={inputCls}></textarea>
             </div>
-            {TURNSTILE_SITE_KEY && <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="flexible"></div>}
+            {TURNSTILE_SITE_KEY && <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY}></div>}
             <p id="error" class="hidden rounded-lg bg-red-500/10 border border-red-400/30 px-4 py-2.5 text-sm text-red-300"></p>
             <button type="submit" class="btn-primary w-full rounded-full bg-emerald-500 py-3.5 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
               Send message
@@ -226,7 +226,7 @@ const channels = [
       }
       const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value ?? '';
       if (document.querySelector('.cf-turnstile') && !turnstileToken) {
-        if (errEl) { errEl.textContent = 'Please complete the verification below.'; errEl.classList.remove('hidden'); }
+        if (errEl) { errEl.textContent = 'Verification couldn’t be completed. Please refresh and try again.'; errEl.classList.remove('hidden'); }
         return;
       }
       errEl?.classList.add('hidden');
