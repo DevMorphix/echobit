@@ -77,18 +77,19 @@ const formattedDuration = (duration: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
+// transcript/summary/minutes are stored in R2, not on the row (see
+// lib/derived.ts), so the list shape no longer carries them — only the detail
+// shape inlines them, fetched from R2 by the route and passed in here. audioUrl
+// is re-signed from audio_key by the route (null here as the default).
 const recordingBase = (row: RecordingRow) => ({
   _id: row.id,
   user: row.user_id,
   title: row.title,
   audioKey: row.audio_key,
-  audioUrl: row.audio_url,
+  audioUrl: null as string | null,
   audioSize: row.audio_size,
   audioMimeType: row.audio_mime_type,
   duration: row.duration,
-  transcript: row.transcript,
-  summary: row.summary,
-  minutes: row.minutes,
   actionItems: parseJson<ActionItem[]>(row.action_items, []),
   status: row.status,
   tags: parseJson<string[]>(row.tags, []),
@@ -98,14 +99,24 @@ const recordingBase = (row: RecordingRow) => ({
   __v: 0,
 });
 
-/** Mongoose .toJSON() shape (detail/create/update routes) — includes virtuals. */
-export const serializeRecording = (row: RecordingRow) => ({
+export interface DerivedText {
+  transcript?: string;
+  summary?: string;
+  minutes?: string;
+}
+
+/** Mongoose .toJSON() shape (detail/create/update routes) — includes virtuals.
+ *  transcript/summary/minutes come from R2 (default '' for a fresh recording). */
+export const serializeRecording = (row: RecordingRow, derived: DerivedText = {}) => ({
   ...recordingBase(row),
+  transcript: derived.transcript ?? '',
+  summary: derived.summary ?? '',
+  minutes: derived.minutes ?? '',
   id: row.id,
   formattedDuration: formattedDuration(row.duration),
 });
 
-/** Mongoose .lean() shape (list route) — no virtuals. */
+/** Mongoose .lean() shape (list route) — no virtuals, no transcript/summary/minutes. */
 export const serializeRecordingLean = (row: RecordingRow) => recordingBase(row);
 
 export const serializeCoupon = (row: CouponRow) => ({

@@ -5,6 +5,9 @@
 // - Dates were serialized to ISO-8601-with-ms strings by export-mongo.ts
 // - booleans → 0/1; arrays/objects → JSON TEXT
 // - Statements are split below ~90 KB (D1 caps a single statement at 100 KB)
+// - Each INSERT carries `ON CONFLICT(id) DO UPDATE` so the import is idempotent:
+//   a full backfill and any later delta run can be applied repeatedly without
+//   PK collisions (the "repeatable incremental" contract).
 //
 // Import with:
 //   wrangler d1 execute echobit --remote --file=dump/sql/users.sql   (etc.)
@@ -66,13 +69,22 @@ const writeSql = (
 ): void => {
   const lines: string[] = [];
   const header = `INSERT INTO ${table} (${columns.join(', ')}) VALUES\n`;
+  // Upsert keyed on the TEXT primary key: re-running overwrites every non-id
+  // column from the incoming row (excluded.*) instead of failing on conflict.
+  const upsert =
+    `\nON CONFLICT(id) DO UPDATE SET ` +
+    columns
+      .filter((col) => col !== 'id')
+      .map((col) => `${col}=excluded.${col}`)
+      .join(', ') +
+    ';';
   let current: string[] = [];
-  let currentLen = header.length;
+  let currentLen = header.length + upsert.length;
 
   const flush = () => {
-    if (current.length) lines.push(header + current.join(',\n') + ';');
+    if (current.length) lines.push(header + current.join(',\n') + upsert);
     current = [];
-    currentLen = header.length;
+    currentLen = header.length + upsert.length;
   };
 
   for (const row of rows) {
@@ -151,13 +163,11 @@ const writeSql = (
     oid(d.user) as string,
     str(d.title, 'Recording') as string,
     str(d.audioKey),
-    str(d.audioUrl),
     num(d.audioSize, 0),
     str(d.audioMimeType, 'audio/webm') as string,
     Math.round(num(d.duration, 0)),
-    str(d.transcript, '') as string,
-    str(d.summary, '') as string,
-    str(d.minutes, '') as string,
+    // transcript/summary/minutes text → R2 (see upload-derived.ts). audio_url
+    // dropped (re-signed from audio_key on read). D1 keeps only the char counts.
     JSON.stringify(
       ((d.actionItems as Doc[] | undefined) ?? []).map((item) => ({
         ...item,
@@ -169,13 +179,16 @@ const writeSql = (
     JSON.stringify((d.metadata as Record<string, string> | undefined) ?? {}),
     iso(d.createdAt) ?? new Date(0).toISOString(),
     iso(d.updatedAt) ?? new Date(0).toISOString(),
+    (str(d.transcript, '') as string).length, // transcript_chars
+    (str(d.summary, '') as string).length, // summary_chars
+    (str(d.minutes, '') as string).length, // minutes_chars
   ]);
   writeSql(
     'recordings',
     [
-      'id', 'user_id', 'title', 'audio_key', 'audio_url', 'audio_size', 'audio_mime_type',
-      'duration', 'transcript', 'summary', 'minutes', 'action_items', 'status', 'tags',
-      'metadata', 'created_at', 'updated_at',
+      'id', 'user_id', 'title', 'audio_key', 'audio_size', 'audio_mime_type',
+      'duration', 'action_items', 'status', 'tags',
+      'metadata', 'created_at', 'updated_at', 'transcript_chars', 'summary_chars', 'minutes_chars',
     ],
     rows,
   );

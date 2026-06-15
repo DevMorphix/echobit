@@ -22,6 +22,7 @@ import {
 } from '../lib/db.ts';
 import { getEffectiveLimits, userPlanView } from '../lib/limits.ts';
 import { deleteAudio, getAudioUrl, getUploadUrl, hasR2Credentials, uploadAudio } from '../lib/storage.ts';
+import { getDerivedText, getDerivedTexts, putDerivedText, deleteDerivedTexts } from '../lib/derived.ts';
 import { logError } from '../lib/log-error.ts';
 import { parseBody, schemas } from '../lib/validate.ts';
 import {
@@ -106,7 +107,6 @@ interface NewRecording {
   userId: string;
   title: string;
   audioKey?: string | null;
-  audioUrl?: string | null;
   audioSize?: number;
   audioMimeType?: string;
   duration?: number;
@@ -116,18 +116,19 @@ interface NewRecording {
 
 const insertRecording = async (env: Env, r: NewRecording): Promise<RecordingRow> => {
   const ts = nowIso();
+  const id = newId();
+  const transcript = r.transcript ?? '';
   const row: RecordingRow = {
-    id: newId(),
+    id,
     user_id: r.userId,
     title: r.title,
     audio_key: r.audioKey ?? null,
-    audio_url: r.audioUrl ?? null,
     audio_size: r.audioSize ?? 0,
     audio_mime_type: r.audioMimeType ?? 'audio/webm',
     duration: Math.round(r.duration ?? 0),
-    transcript: r.transcript ?? '',
-    summary: '',
-    minutes: '',
+    transcript_chars: transcript.length, // text itself goes to R2 below
+    summary_chars: 0,
+    minutes_chars: 0,
     action_items: '[]',
     status: r.status ?? 'pending',
     tags: '[]',
@@ -137,21 +138,35 @@ const insertRecording = async (env: Env, r: NewRecording): Promise<RecordingRow>
   };
   await env.DB.prepare(
     `INSERT INTO recordings (
-      id, user_id, title, audio_key, audio_url, audio_size, audio_mime_type, duration,
-      transcript, summary, minutes, action_items, status, tags, metadata, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, user_id, title, audio_key, audio_size, audio_mime_type, duration,
+      transcript_chars, action_items, status, tags, metadata, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   )
     .bind(
-      row.id, row.user_id, row.title, row.audio_key, row.audio_url, row.audio_size,
-      row.audio_mime_type, row.duration, row.transcript, row.summary, row.minutes,
+      row.id, row.user_id, row.title, row.audio_key, row.audio_size,
+      row.audio_mime_type, row.duration, row.transcript_chars,
       row.action_items, row.status, row.tags, row.metadata, row.created_at, row.updated_at,
     )
     .run();
+  if (transcript) await putDerivedText(env, 'transcript', r.userId, id, transcript);
   return row;
 };
 
 const defaultTitle = (): string =>
   `Recording ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
+
+// Detail shape for an EXISTING recording: fetch transcript/summary/minutes from
+// R2 and inline them.
+const serializeWithDerived = async (env: Env, row: RecordingRow) =>
+  serializeRecording(row, await getDerivedTexts(env, row.user_id, row.id));
+
+// Response shape for a freshly inserted recording: derived text is whatever we
+// just wrote (no R2 round-trip), audioUrl is the freshly signed URL (not stored).
+const newRecordingResponse = (row: RecordingRow, audioUrl: string | null, transcript = '') => {
+  const out = serializeRecording(row, { transcript });
+  out.audioUrl = audioUrl;
+  return out;
+};
 
 // ─── Chunked upload (mobile protocol — contract frozen) ─────────────────────
 
@@ -213,7 +228,6 @@ recordings.post('/finalize-upload', async (c) => {
       userId,
       title: title || defaultTitle(),
       audioKey: key,
-      audioUrl,
       audioSize: size,
       audioMimeType: mimeType || 'audio/wav',
       duration: duration || 0,
@@ -221,7 +235,7 @@ recordings.post('/finalize-upload', async (c) => {
       status: 'pending',
     });
 
-    return c.json({ recording: serializeRecording(recording) }, 201);
+    return c.json({ recording: newRecordingResponse(recording, audioUrl) }, 201);
   } catch (error) {
     console.error('[finalize-upload] Error:', error);
     return c.json({ error: 'Failed to finalize upload' }, 500);
@@ -304,7 +318,7 @@ recordings.get('/:id', async (c) => {
     const row = await getRecordingForUser(c.env, c.req.param('id'), c.get('user').id);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
 
-    const recording = serializeRecording(row);
+    const recording = await serializeWithDerived(c.env, row);
     if (row.audio_key && hasR2Credentials(c.env)) {
       try {
         recording.audioUrl = await getAudioUrl(c.env, row.audio_key);
@@ -404,7 +418,7 @@ recordings.post('/', async (c) => {
         status: 'transcribing',
       });
       await c.env.TRANSCRIBE_WF.create({ params: { task: 'transcribe', recordingId: recording.id, userId } });
-      return c.json({ recording: serializeRecording(recording) }, 201);
+      return c.json({ recording: newRecordingResponse(recording, audioInfo.audioUrl, transcript || '') }, 201);
     }
 
     // ── Legacy sync path (published mobile app waits in-request) ──
@@ -452,7 +466,7 @@ recordings.post('/', async (c) => {
       status: recordingStatus,
     });
 
-    return c.json({ recording: serializeRecording(recording) }, 201);
+    return c.json({ recording: newRecordingResponse(recording, audioInfo.audioUrl, finalTranscript) }, 201);
   } catch (error) {
     console.error('Error creating recording:', error);
     return c.json({ error: 'Failed to create recording' }, 500);
@@ -470,18 +484,29 @@ recordings.patch('/:id', async (c) => {
     const existing = await getRecordingForUser(c.env, c.req.param('id'), c.get('user').id);
     if (!existing) return c.json({ error: 'Recording not found' }, 404);
 
-    await updateRow(c.env, 'recordings', existing.id, {
+    // transcript/summary/minutes go to R2; only their char counts hit D1.
+    const cols: Record<string, string | number | null | undefined> = {
       title,
-      transcript,
-      summary,
-      minutes,
       status,
       tags: tags !== undefined ? JSON.stringify(tags) : undefined,
       action_items: actionItems !== undefined ? JSON.stringify(actionItems) : undefined,
-    });
+    };
+    if (transcript !== undefined) {
+      await putDerivedText(c.env, 'transcript', existing.user_id, existing.id, transcript);
+      cols.transcript_chars = transcript.length;
+    }
+    if (summary !== undefined) {
+      await putDerivedText(c.env, 'summary', existing.user_id, existing.id, summary);
+      cols.summary_chars = summary.length;
+    }
+    if (minutes !== undefined) {
+      await putDerivedText(c.env, 'minutes', existing.user_id, existing.id, minutes);
+      cols.minutes_chars = minutes.length;
+    }
+    await updateRow(c.env, 'recordings', existing.id, cols);
 
     const row = await getRecordingForUser(c.env, existing.id, c.get('user').id);
-    return c.json({ recording: serializeRecording(row as RecordingRow) });
+    return c.json({ recording: await serializeWithDerived(c.env, row as RecordingRow) });
   } catch (error) {
     console.error('Error updating recording:', error);
     return c.json({ error: 'Failed to update recording' }, 500);
@@ -500,6 +525,7 @@ recordings.delete('/:id', async (c) => {
         console.error('Failed to delete audio from R2:', e);
       }
     }
+    await deleteDerivedTexts(c.env, row.user_id, row.id);
     await c.env.DB.prepare('DELETE FROM recordings WHERE id = ?').bind(row.id).run();
 
     return c.json({ message: 'Recording deleted successfully' });
@@ -517,7 +543,7 @@ recordings.post('/:id/transcribe', async (c) => {
     const row = await getRecordingForUser(c.env, c.req.param('id'), userId);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
 
-    if (!row.audio_key && !row.audio_url) {
+    if (!row.audio_key) {
       return c.json({ error: 'No audio file found for this recording' }, 400);
     }
 
@@ -528,7 +554,7 @@ recordings.post('/:id/transcribe', async (c) => {
     if (body.async) {
       await c.env.TRANSCRIBE_WF.create({ params: { task: 'transcribe', recordingId: row.id, userId } });
       const pending = await getRecordingForUser(c.env, row.id, userId);
-      return c.json({ recording: serializeRecording(pending as RecordingRow) }, 202);
+      return c.json({ recording: await serializeWithDerived(c.env, pending as RecordingRow) }, 202);
     }
 
     try {
@@ -538,8 +564,9 @@ recordings.post('/:id/transcribe', async (c) => {
 
       const result = await transcribeAudio(c.env, source, row.audio_mime_type, userRow, row.audio_key);
 
+      await putDerivedText(c.env, 'transcript', row.user_id, row.id, result.text);
       await updateRow(c.env, 'recordings', row.id, {
-        transcript: result.text,
+        transcript_chars: result.text.length,
         duration: Math.round(result.duration || row.duration),
         status: 'transcribed',
       });
@@ -548,7 +575,7 @@ recordings.post('/:id/transcribe', async (c) => {
       return c.json({
         transcript: result.text,
         duration: result.duration,
-        recording: serializeRecording(updated as RecordingRow),
+        recording: await serializeWithDerived(c.env, updated as RecordingRow),
       });
     } catch (transcribeError) {
       await updateRow(c.env, 'recordings', row.id, { status: 'failed' });
@@ -571,7 +598,7 @@ recordings.post('/:id/summarize', async (c) => {
     if (!row) return c.json({ error: 'Recording not found' }, 404);
 
     const body = (await parseBody(c.req, schemas.summarize)) ?? {};
-    const transcript = row.transcript || body.transcript || '';
+    const transcript = (await getDerivedText(c.env, 'transcript', row.user_id, row.id)) || body.transcript || '';
     if (!transcript || transcript.length < 50) {
       return c.json({ error: 'Transcript too short to summarize' }, 400);
     }
@@ -581,10 +608,11 @@ recordings.post('/:id/summarize', async (c) => {
     let summary = await generateSummary(c.env, englishTranscript);
     summary = await toPreferredLanguage(c.env, summary, userRow);
 
-    await updateRow(c.env, 'recordings', row.id, { summary, status: 'summarized' });
+    await putDerivedText(c.env, 'summary', row.user_id, row.id, summary);
+    await updateRow(c.env, 'recordings', row.id, { summary_chars: summary.length, status: 'summarized' });
     const updated = await getRecordingForUser(c.env, row.id, userId);
 
-    return c.json({ summary, recording: serializeRecording(updated as RecordingRow) });
+    return c.json({ summary, recording: await serializeWithDerived(c.env, updated as RecordingRow) });
   } catch (error) {
     console.error('Error generating summary:', error);
     await logError(c.env, 'summary_failed', (error as Error).message, { userId: c.get('user').id });
@@ -612,7 +640,8 @@ recordings.post('/:id/minutes', async (c) => {
 
     const row = await getRecordingForUser(c.env, c.req.param('id'), userId);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
-    if (!row.transcript || row.transcript.length < 50) {
+    const transcript = await getDerivedText(c.env, 'transcript', row.user_id, row.id);
+    if (!transcript || transcript.length < 50) {
       return c.json({ error: 'Transcript too short to generate minutes' }, 400);
     }
 
@@ -626,12 +655,14 @@ recordings.post('/:id/minutes', async (c) => {
     const outputLanguage =
       prefLang && prefLang !== 'english' && prefLang !== 'en' ? (LANG_LABELS[prefLang] ?? null) : null;
 
-    const minutes = await generateMeetingMinutes(c.env, row.transcript, row.summary, row.title, outputLanguage);
+    const existingSummary = await getDerivedText(c.env, 'summary', row.user_id, row.id);
+    const minutes = await generateMeetingMinutes(c.env, transcript, existingSummary, row.title, outputLanguage);
 
-    await updateRow(c.env, 'recordings', row.id, { minutes, status: 'completed' });
+    await putDerivedText(c.env, 'minutes', row.user_id, row.id, minutes);
+    await updateRow(c.env, 'recordings', row.id, { minutes_chars: minutes.length, status: 'completed' });
     const updated = await getRecordingForUser(c.env, row.id, userId);
 
-    return c.json({ minutes, recording: serializeRecording(updated as RecordingRow) });
+    return c.json({ minutes, recording: await serializeWithDerived(c.env, updated as RecordingRow) });
   } catch (error) {
     console.error('Error generating minutes:', error);
     await logError(c.env, 'minutes_failed', (error as Error).message, { userId: c.get('user').id });
@@ -659,18 +690,19 @@ recordings.post('/:id/actions', async (c) => {
 
     const row = await getRecordingForUser(c.env, c.req.param('id'), userId);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
-    if (!row.transcript || row.transcript.length < 50) {
+    const transcript = await getDerivedText(c.env, 'transcript', row.user_id, row.id);
+    if (!transcript || transcript.length < 50) {
       return c.json({ error: 'Transcript too short to extract actions' }, 400);
     }
 
-    const actionItems = await extractActionItems(c.env, row.transcript);
+    const actionItems = await extractActionItems(c.env, transcript);
     // Subdocument _id parity with Mongoose
     const withIds = actionItems.map((item) => ({ _id: newId(), completed: false, ...item }));
 
     await updateRow(c.env, 'recordings', row.id, { action_items: JSON.stringify(withIds) });
     const updated = await getRecordingForUser(c.env, row.id, userId);
 
-    return c.json({ actionItems: withIds, recording: serializeRecording(updated as RecordingRow) });
+    return c.json({ actionItems: withIds, recording: await serializeWithDerived(c.env, updated as RecordingRow) });
   } catch (error) {
     console.error('Error extracting action items:', error);
     await logError(c.env, 'actions_failed', (error as Error).message, { userId: c.get('user').id });
@@ -683,15 +715,16 @@ recordings.post('/:id/generate-title', async (c) => {
     const userId = c.get('user').id;
     const row = await getRecordingForUser(c.env, c.req.param('id'), userId);
     if (!row) return c.json({ error: 'Recording not found' }, 404);
-    if (!row.transcript || row.transcript.length < 20) {
+    const transcript = await getDerivedText(c.env, 'transcript', row.user_id, row.id);
+    if (!transcript || transcript.length < 20) {
       return c.json({ error: 'Transcript too short to generate title' }, 400);
     }
 
-    const title = await generateTitle(c.env, row.transcript);
+    const title = await generateTitle(c.env, transcript);
     await updateRow(c.env, 'recordings', row.id, { title });
     const updated = await getRecordingForUser(c.env, row.id, userId);
 
-    return c.json({ title, recording: serializeRecording(updated as RecordingRow) });
+    return c.json({ title, recording: await serializeWithDerived(c.env, updated as RecordingRow) });
   } catch (error) {
     console.error('Error generating title:', error);
     return c.json({ error: 'Failed to generate title: ' + (error as Error).message }, 500);

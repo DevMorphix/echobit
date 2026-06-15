@@ -6,6 +6,7 @@
 import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
 import { NonRetryableError } from 'cloudflare:workflows';
 import { getUserById, updateRow } from '../lib/db.ts';
+import { putDerivedText } from '../lib/derived.ts';
 import { logError } from '../lib/log-error.ts';
 import { r2AudioSource, transcribeAudio } from '../audio/pipeline.ts';
 import { generateTitle } from '../audio/gemini.ts';
@@ -61,13 +62,13 @@ export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
       }
 
       await step.do('save', async () => {
+        await putDerivedText(this.env, 'transcript', userId, recordingId, transcribed.text);
         await updateRow(this.env, 'recordings', recordingId, {
-          transcript: transcribed.text,
+          transcript_chars: transcribed.text.length,
           duration: transcribed.duration,
           status: 'transcribed',
           title,
           audio_key: isTemp ? null : undefined,
-          audio_url: isTemp ? null : undefined,
         });
       });
     } catch (err) {

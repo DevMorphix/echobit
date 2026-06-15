@@ -407,17 +407,17 @@ admin.get('/costs', async (c) => {
       c.env.DB.prepare(
         `SELECT
           COALESCE(SUM(duration) / 60.0, 0) AS sarvam_minutes,
-          COALESCE(SUM(LENGTH(transcript)), 0) AS transcript_chars,
-          COALESCE(SUM(LENGTH(summary) + LENGTH(minutes)), 0) AS output_chars,
+          COALESCE(SUM(transcript_chars), 0) AS transcript_chars,
+          COALESCE(SUM(summary_chars + minutes_chars), 0) AS output_chars,
           (SELECT COALESCE(SUM(audio_size), 0) FROM recordings) AS storage_bytes
-         FROM recordings WHERE transcript != ''`,
+         FROM recordings WHERE transcript_chars > 0`,
       ).first<{ sarvam_minutes: number; transcript_chars: number; output_chars: number; storage_bytes: number }>(),
       c.env.DB.prepare(
         `SELECT substr(created_at, 1, 10) AS day,
                 SUM(duration) / 60.0 AS minutes,
-                SUM(LENGTH(transcript)) AS transcript_chars,
-                SUM(LENGTH(summary) + LENGTH(minutes)) AS output_chars
-         FROM recordings WHERE created_at >= ? AND transcript != ''
+                SUM(transcript_chars) AS transcript_chars,
+                SUM(summary_chars + minutes_chars) AS output_chars
+         FROM recordings WHERE created_at >= ? AND transcript_chars > 0
          GROUP BY day`,
       )
         .bind(startDate.toISOString())
@@ -425,11 +425,11 @@ admin.get('/costs', async (c) => {
       c.env.DB.prepare(
         `SELECT r.user_id AS _id, u.name, u.email,
                 SUM(r.duration) / 60.0 AS totalMinutes,
-                SUM(LENGTH(r.transcript)) AS transcriptChars,
-                SUM(LENGTH(r.summary) + LENGTH(r.minutes)) AS summaryChars,
+                SUM(r.transcript_chars) AS transcriptChars,
+                SUM(r.summary_chars + r.minutes_chars) AS summaryChars,
                 COUNT(*) AS recordingCount
          FROM recordings r LEFT JOIN users u ON u.id = r.user_id
-         WHERE r.transcript != ''
+         WHERE r.transcript_chars > 0
          GROUP BY r.user_id ORDER BY totalMinutes DESC LIMIT 10`,
       ).all<{
         _id: string; name: string | null; email: string | null;

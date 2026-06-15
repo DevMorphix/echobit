@@ -102,13 +102,14 @@ export interface RecordingRow {
   user_id: string;
   title: string;
   audio_key: string | null;
-  audio_url: string | null;
   audio_size: number;
   audio_mime_type: string;
   duration: number;
-  transcript: string;
-  summary: string;
-  minutes: string;
+  // transcript/summary/minutes text lives in R2 (lib/derived.ts); D1 keeps only
+  // their char counts for cost analytics.
+  transcript_chars: number;
+  summary_chars: number;
+  minutes_chars: number;
   action_items: string;
   status:
     | 'pending'

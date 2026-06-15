@@ -6,9 +6,13 @@
   "scripts": {
     "export": "bun run export-mongo.ts",
     "transform": "bun run transform.ts",
-    "verify": "bun run verify.ts"
+    "copy-r2": "bun run copy-r2.ts",
+    "upload-derived": "bun run upload-derived.ts",
+    "verify": "bun run verify.ts",
+    "sync": "bun run sync.ts"
   },
   "dependencies": {
+    "@aws-sdk/client-s3": "^3.703.0",
     "mongodb": "^7.3.0"
   }
 }
