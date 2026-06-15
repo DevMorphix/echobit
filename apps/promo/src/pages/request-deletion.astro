@@ -9,58 +9,97 @@ const inputCls = 'field field-danger';
   description="Request deletion of your Echobit account and all associated data. We process requests within 7 business days."
   path="/request-deletion"
 >
-  <section class="max-w-xl mx-auto px-6 py-16 sm:py-20">
-    <div class="text-center mb-8">
-      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-red-500/10 text-red-400 ring-1 ring-inset ring-red-400/20">
-        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+  <section class="lg:grid lg:grid-cols-2 lg:min-h-[calc(100vh-4rem)]">
+    <!-- Left: brand / empathy panel -->
+    <div class="relative overflow-hidden flex items-center border-b border-white/10 bg-gradient-to-br from-emerald-600/15 via-[#070d0c] to-teal-600/10 px-6 py-16 sm:py-20 lg:border-b-0 lg:border-r lg:px-14">
+      <div class="pointer-events-none absolute -top-24 -left-16 h-72 w-72 rounded-full bg-emerald-500/20 blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-24 right-0 h-72 w-72 rounded-full bg-teal-500/10 blur-3xl"></div>
+      <div class="relative max-w-md">
+        <a href="/" class="inline-flex items-center gap-2.5 font-bold text-white">
+          <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
+          <span class="text-lg tracking-tight">Echobit</span>
+        </a>
+        <h1 class="mt-12 text-4xl sm:text-5xl font-bold tracking-tight text-white leading-[1.1]">
+          Sorry to see <span class="text-gradient">you go.</span>
+        </h1>
+        <p class="mt-6 text-lg text-slate-300 leading-relaxed">
+          Deleting your account erases your recordings, transcripts, and notes for good. We’ll take
+          care of it within 7 business days and email you the moment it’s done.
+        </p>
+        <p class="mt-10 text-sm text-slate-400">
+          Changed your mind? <a href="/login" class="font-medium text-emerald-400 underline hover:text-emerald-300">Sign back in</a> — everything stays exactly where you left it.
+        </p>
       </div>
-      <h1 class="mt-5 text-3xl sm:text-4xl font-bold tracking-tight text-white">Request account deletion</h1>
-      <p class="mt-3 text-slate-400">Submit the form and we'll delete your Echobit account and all associated data within 7 business days.</p>
     </div>
 
-    <div id="success" class="hidden rounded-2xl border border-emerald-400/30 bg-emerald-500/10 p-8 text-center">
-      <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-inset ring-emerald-400/30">
-        <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
-      </div>
-      <h2 class="mt-4 text-lg font-semibold text-white">Request submitted</h2>
-      <p class="mt-1 text-sm text-slate-300">We've received your request for <strong id="success-email" class="text-white"></strong> and will process it within 7 business days. A confirmation email is on its way.</p>
-    </div>
+    <!-- Right: the form -->
+    <div class="flex items-center px-6 py-16 sm:py-20 lg:px-14">
+      <div class="w-full max-w-md mx-auto">
+        <!-- Success state -->
+        <div id="success" class="hidden rounded-3xl border border-emerald-400/30 bg-emerald-500/[0.07] p-8 text-center">
+          <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-inset ring-emerald-400/30">
+            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
+          </div>
+          <h2 class="mt-4 text-xl font-bold text-white">Request submitted</h2>
+          <p class="mt-2 text-sm text-slate-300 leading-relaxed">We’ve received your request for <strong id="success-email" class="text-white"></strong> and will process it within 7 business days. A confirmation email is on its way.</p>
+          <a href="/" class="mt-6 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-5 py-2.5 text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10">Back to home</a>
+        </div>
 
-    <form id="deletion-form" class="card rounded-2xl p-6 sm:p-8 space-y-4">
-      <div class="rounded-xl border border-red-400/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
-        This permanently deletes your account, recordings, transcripts, and notes. <strong>This cannot be undone.</strong>
+        <!-- Form -->
+        <div id="form-card">
+          <p class="inline-flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-red-400">
+            <span class="inline-block h-1.5 w-1.5 rounded-full bg-red-500"></span> Danger zone
+          </p>
+          <h2 class="mt-3 text-2xl font-bold tracking-tight text-white">Request account deletion</h2>
+          <p class="mt-2 text-sm text-slate-400">This can’t be undone. Fill in the details below to confirm.</p>
+
+          <form id="deletion-form" class="mt-7 space-y-4">
+            <div>
+              <label for="name" class="block text-sm font-medium text-slate-300 mb-1.5">Full name</label>
+              <input id="name" name="name" type="text" required placeholder="John Doe" class={inputCls} />
+            </div>
+            <div>
+              <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">Email used to sign up</label>
+              <input id="email" name="email" type="email" required placeholder="you@example.com" class={inputCls} />
+            </div>
+            <div>
+              <label for="reason-btn" class="block text-sm font-medium text-slate-300 mb-1.5">Reason for deletion</label>
+              <div class="relative">
+                <button type="button" id="reason-btn" aria-haspopup="listbox" aria-expanded="false" aria-controls="reason-menu"
+                  class="field field-danger flex w-full items-center justify-between gap-2 text-left">
+                  <span id="reason-display" class="text-slate-500">Select a reason…</span>
+                  <svg id="reason-chevron" class="h-4 w-4 flex-shrink-0 text-slate-400 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" /></svg>
+                </button>
+                <input type="hidden" id="reason" name="reason" value="" />
+                <ul id="reason-menu" role="listbox" aria-label="Reason for deletion" tabindex="-1"
+                  class="hidden absolute left-0 right-0 z-20 mt-2 max-h-60 overflow-auto rounded-xl border border-white/10 bg-[#0a1512] p-1 shadow-2xl shadow-black/50">
+                  {reasons.map((r) => (
+                    <li role="option" data-value={r}
+                      class="flex cursor-pointer items-center justify-between gap-2 rounded-lg px-3 py-2.5 text-sm text-slate-200 transition-colors hover:bg-white/5">
+                      <span>{r}</span>
+                      <svg class="check h-4 w-4 flex-shrink-0 text-emerald-400 opacity-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+            <div>
+              <label for="additionalInfo" class="block text-sm font-medium text-slate-300 mb-1.5">Additional information <span class="text-slate-500">(optional)</span></label>
+              <textarea id="additionalInfo" name="additionalInfo" rows="3" placeholder="Anything else you’d like us to know…" class={inputCls}></textarea>
+            </div>
+            <label class="flex items-start gap-3 rounded-xl border border-red-400/25 bg-red-500/[0.07] px-4 py-3 text-sm text-red-200">
+              <input id="confirm" type="checkbox" required class="mt-0.5 h-4 w-4 accent-red-500" />
+              I understand my account, recordings, transcripts, and notes will be permanently deleted.
+            </label>
+            <p id="error" class="hidden rounded-lg bg-red-500/10 border border-red-400/30 px-4 py-2.5 text-sm text-red-300"></p>
+            <button id="submit-btn" type="submit" class="w-full rounded-full bg-red-600 py-3.5 font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-50">
+              Submit deletion request
+            </button>
+            <p class="text-center text-xs text-slate-500">Need help instead? <a href="/contact" class="font-medium text-emerald-400 underline hover:text-emerald-300">Contact support</a>.</p>
+          </form>
+        </div>
       </div>
-      <div>
-        <label for="name" class="block text-sm font-medium text-slate-300 mb-1.5">Full name</label>
-        <input id="name" name="name" type="text" required placeholder="John Doe" class={inputCls} />
-      </div>
-      <div>
-        <label for="email" class="block text-sm font-medium text-slate-300 mb-1.5">Email address (used to sign up)</label>
-        <input id="email" name="email" type="email" required placeholder="you@example.com" class={inputCls} />
-      </div>
-      <div>
-        <label for="reason" class="block text-sm font-medium text-slate-300 mb-1.5">Reason for deletion</label>
-        <select id="reason" name="reason" required class={inputCls}>
-          <option value="" disabled selected>Select a reason…</option>
-          {reasons.map((r) => <option value={r}>{r}</option>)}
-        </select>
-      </div>
-      <div>
-        <label for="additionalInfo" class="block text-sm font-medium text-slate-300 mb-1.5">Additional information <span class="text-slate-500">(optional)</span></label>
-        <textarea id="additionalInfo" name="additionalInfo" rows="3" placeholder="Anything else you'd like us to know…" class={inputCls}></textarea>
-      </div>
-      <label class="flex items-start gap-3 text-sm text-slate-400">
-        <input id="confirm" type="checkbox" required class="mt-1 h-4 w-4 accent-red-500" />
-        I understand this permanently deletes my account and data, and cannot be reversed.
-      </label>
-      <p id="error" class="hidden rounded-lg bg-red-500/10 border border-red-400/30 px-4 py-2.5 text-sm text-red-300"></p>
-      <button id="submit-btn" type="submit" class="w-full rounded-full bg-red-600 py-3 font-semibold text-white hover:bg-red-500 disabled:opacity-50 transition-colors">
-        Submit deletion request
-      </button>
-      <p class="text-center text-xs text-slate-500">
-        Prefer to delete instantly? <a href="/login" class="font-medium text-emerald-400 underline">Sign in</a> and delete from settings.
-      </p>
-    </form>
+    </div>
   </section>
 
   <script>
@@ -68,13 +107,83 @@ const inputCls = 'field field-danger';
     const btn = document.getElementById('submit-btn') as HTMLButtonElement | null;
     const errEl = document.getElementById('error');
     const success = document.getElementById('success');
+    const formCard = document.getElementById('form-card');
+
+    // Custom dropdown (no native <select>) for the deletion reason.
+    const ddBtn = document.getElementById('reason-btn');
+    const ddMenu = document.getElementById('reason-menu');
+    const ddInput = document.getElementById('reason') as HTMLInputElement | null;
+    const ddDisplay = document.getElementById('reason-display');
+    const ddChevron = document.getElementById('reason-chevron');
+    const ddOptions = ddMenu ? Array.from(ddMenu.querySelectorAll<HTMLLIElement>('[role="option"]')) : [];
+    let ddActive = -1;
+
+    const ddIsOpen = () => !!ddMenu && !ddMenu.classList.contains('hidden');
+    const ddHighlight = () => {
+      ddOptions.forEach((o, i) => o.classList.toggle('bg-white/5', i === ddActive));
+      if (ddActive >= 0) ddOptions[ddActive]?.scrollIntoView({ block: 'nearest' });
+    };
+    const ddOpen = () => {
+      if (!ddMenu) return;
+      ddMenu.classList.remove('hidden');
+      ddBtn?.setAttribute('aria-expanded', 'true');
+      ddChevron?.classList.add('rotate-180');
+      ddActive = ddOptions.findIndex((o) => o.getAttribute('aria-selected') === 'true');
+      if (ddActive < 0) ddActive = 0;
+      ddHighlight();
+    };
+    const ddClose = () => {
+      if (!ddMenu) return;
+      ddMenu.classList.add('hidden');
+      ddBtn?.setAttribute('aria-expanded', 'false');
+      ddChevron?.classList.remove('rotate-180');
+      ddActive = -1;
+    };
+    const ddChoose = (opt: HTMLElement) => {
+      const val = opt.getAttribute('data-value') ?? '';
+      if (ddInput) ddInput.value = val;
+      if (ddDisplay) { ddDisplay.textContent = val; ddDisplay.classList.remove('text-slate-500'); ddDisplay.classList.add('text-white'); }
+      ddOptions.forEach((o) => {
+        const sel = o === opt;
+        o.setAttribute('aria-selected', String(sel));
+        o.querySelector('.check')?.classList.toggle('opacity-0', !sel);
+      });
+      ddClose();
+      ddBtn?.focus();
+    };
+
+    ddBtn?.addEventListener('click', () => (ddIsOpen() ? ddClose() : ddOpen()));
+    ddOptions.forEach((o) => o.addEventListener('click', () => ddChoose(o)));
+    ddBtn?.addEventListener('keydown', (e) => {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          if (!ddIsOpen()) ddOpen();
+          else { ddActive = Math.min(ddActive + 1, ddOptions.length - 1); ddHighlight(); }
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          if (ddIsOpen()) { ddActive = Math.max(ddActive - 1, 0); ddHighlight(); }
+          break;
+        case 'Enter':
+        case ' ':
+          e.preventDefault();
+          if (!ddIsOpen()) ddOpen();
+          else if (ddActive >= 0) ddChoose(ddOptions[ddActive]);
+          break;
+        case 'Escape':
+          if (ddIsOpen()) { e.preventDefault(); ddClose(); }
+          break;
+      }
+    });
+    document.addEventListener('click', (e) => {
+      if (ddIsOpen() && !ddMenu!.contains(e.target as Node) && !ddBtn!.contains(e.target as Node)) ddClose();
+    });
 
     form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       if (!btn || !errEl) return;
       errEl.classList.add('hidden');
-      btn.disabled = true;
-      btn.textContent = 'Submitting…';
       const data = new FormData(form);
       const payload = {
         name: String(data.get('name') ?? ''),
@@ -82,6 +191,15 @@ const inputCls = 'field field-danger';
         reason: String(data.get('reason') ?? ''),
         additionalInfo: String(data.get('additionalInfo') ?? ''),
       };
+      // The reason lives in a custom dropdown (hidden input), so validate it here.
+      if (!payload.reason) {
+        errEl.textContent = 'Please select a reason for deletion.';
+        errEl.classList.remove('hidden');
+        ddBtn?.focus();
+        return;
+      }
+      btn.disabled = true;
+      btn.textContent = 'Submitting…';
       try {
         // Same-origin: the API is served by the Worker at /api/v1.
         const res = await fetch('/api/v1/auth/request-deletion', {
@@ -93,7 +211,7 @@ const inputCls = 'field field-danger';
         if (!res.ok) throw new Error(body.error || 'Failed to submit request');
         const emailEl = document.getElementById('success-email');
         if (emailEl) emailEl.textContent = payload.email;
-        form.classList.add('hidden');
+        formCard?.classList.add('hidden');
         success?.classList.remove('hidden');
         success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       } catch (err) {
