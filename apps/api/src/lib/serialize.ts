@@ -77,10 +77,8 @@ const formattedDuration = (duration: number): string => {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 };
 
-// transcript/summary/minutes are stored in R2, not on the row (see
-// lib/derived.ts), so the list shape no longer carries them — only the detail
-// shape inlines them, fetched from R2 by the route and passed in here. audioUrl
-// is re-signed from audio_key by the route (null here as the default).
+// transcript/summary/minutes live in R2 (lib/derived.ts) and only the detail
+// shape inlines them; audioUrl is re-signed from audio_key by the route.
 const recordingBase = (row: RecordingRow) => ({
   _id: row.id,
   user: row.user_id,

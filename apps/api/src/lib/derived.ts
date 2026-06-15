@@ -1,12 +1,5 @@
-// Recording transcript / summary / meeting-minutes text lives in R2, not D1 —
-// large blobs that would bloat every row and the list query. Each kind has its
-// own top-level prefix (mirroring `audio/`), keyed deterministically by
-// recording, so no D1 pointer column is needed; D1 keeps only the character
-// counts (transcript_chars/summary_chars/minutes_chars) for cost analytics.
-//
-//   transcript/<userId>/<recordingId>.md
-//   summary/<userId>/<recordingId>.md
-//   minutes/<userId>/<recordingId>.md
+// transcript/summary/minutes text lives in R2 keyed by recording (D1 keeps only
+// char counts). Key scheme: <kind>/<userId>/<recordingId>.md
 
 import type { Env } from '../types.ts';
 

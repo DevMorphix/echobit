@@ -105,8 +105,7 @@ export interface RecordingRow {
   audio_size: number;
   audio_mime_type: string;
   duration: number;
-  // transcript/summary/minutes text lives in R2 (lib/derived.ts); D1 keeps only
-  // their char counts for cost analytics.
+  // char counts only — text lives in R2 (lib/derived.ts)
   transcript_chars: number;
   summary_chars: number;
   minutes_chars: number;

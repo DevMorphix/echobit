@@ -126,7 +126,7 @@ const insertRecording = async (env: Env, r: NewRecording): Promise<RecordingRow>
     audio_size: r.audioSize ?? 0,
     audio_mime_type: r.audioMimeType ?? 'audio/webm',
     duration: Math.round(r.duration ?? 0),
-    transcript_chars: transcript.length, // text itself goes to R2 below
+    transcript_chars: transcript.length,
     summary_chars: 0,
     minutes_chars: 0,
     action_items: '[]',
@@ -155,13 +155,10 @@ const insertRecording = async (env: Env, r: NewRecording): Promise<RecordingRow>
 const defaultTitle = (): string =>
   `Recording ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
 
-// Detail shape for an EXISTING recording: fetch transcript/summary/minutes from
-// R2 and inline them.
 const serializeWithDerived = async (env: Env, row: RecordingRow) =>
   serializeRecording(row, await getDerivedTexts(env, row.user_id, row.id));
 
-// Response shape for a freshly inserted recording: derived text is whatever we
-// just wrote (no R2 round-trip), audioUrl is the freshly signed URL (not stored).
+// Fresh insert: derived text is what we just wrote; audioUrl isn't stored.
 const newRecordingResponse = (row: RecordingRow, audioUrl: string | null, transcript = '') => {
   const out = serializeRecording(row, { transcript });
   out.audioUrl = audioUrl;
@@ -484,7 +481,6 @@ recordings.patch('/:id', async (c) => {
     const existing = await getRecordingForUser(c.env, c.req.param('id'), c.get('user').id);
     if (!existing) return c.json({ error: 'Recording not found' }, 404);
 
-    // transcript/summary/minutes go to R2; only their char counts hit D1.
     const cols: Record<string, string | number | null | undefined> = {
       title,
       status,
