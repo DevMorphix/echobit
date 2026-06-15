@@ -51,36 +51,38 @@ const pageSchema = [
       <p class="mt-4 text-lg text-slate-300">No credit card to start. Cancel anytime. Save with annual billing.</p>
     </div>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-start reveal">
+    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6 items-stretch reveal">
       {tiers.map((tier) => (
-        <div data-stagger class={`relative rounded-2xl p-7 flex flex-col ${tier.highlighted ? 'card-featured' : 'card'}`}>
+        <div data-stagger class="relative h-full">
           {tier.highlighted && (
-            <span class="absolute -top-3 left-7 rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a]">Most popular</span>
+            <span class="absolute -top-3 left-1/2 z-10 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-500 px-3 py-1 text-xs font-bold text-[#05080a] shadow-lg shadow-emerald-500/30">Most popular</span>
           )}
-          <h2 class="text-lg font-semibold text-white">{tier.name}</h2>
-          <p class="mt-1 text-sm text-slate-400">{tier.tagline}</p>
-          <p class="mt-4 text-4xl font-bold text-white">
-            {DEFAULT_PRICES[tier.key].monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span>
-          </p>
-          <p class="mt-1 text-xs text-emerald-400 font-medium">{DEFAULT_PRICES[tier.key].annualMonthly}/mo billed annually</p>
-          <ul class="mt-6 space-y-2.5 flex-1">
-            {DEFAULT_FEATURES[tier.key].map((f) => (
-              <li class={`flex items-start gap-2.5 text-sm ${f.included ? 'text-slate-300' : 'text-slate-600'}`}>
-                {f.included ? (
-                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
-                ) : (
-                  <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
-                )}
-                {f.text}
-              </li>
-            ))}
-          </ul>
-          <a
-            href="/register"
-            class={`mt-7 block rounded-xl py-3 text-center text-sm font-semibold transition-colors ${tier.highlighted ? 'btn-primary bg-emerald-500 text-[#05080a] hover:bg-emerald-400' : 'border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'}`}
-          >
-            {tier.cta}
-          </a>
+          <div class={`flex h-full flex-col rounded-2xl p-7 ${tier.highlighted ? 'card-featured' : 'card'}`}>
+            <h2 class="text-lg font-semibold text-white">{tier.name}</h2>
+            <p class="mt-1 text-sm text-slate-400">{tier.tagline}</p>
+            <p class="mt-4 text-4xl font-bold text-white">
+              {DEFAULT_PRICES[tier.key].monthlyPrice}<span class="text-base font-normal text-slate-400">/mo</span>
+            </p>
+            <p class="mt-1 text-xs text-emerald-400 font-medium">{DEFAULT_PRICES[tier.key].annualMonthly}/mo billed annually</p>
+            <ul class="mt-6 space-y-2.5 flex-1">
+              {DEFAULT_FEATURES[tier.key].map((f) => (
+                <li class={`flex items-start gap-2.5 text-sm ${f.included ? 'text-slate-300' : 'text-slate-600'}`}>
+                  {f.included ? (
+                    <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" /></svg>
+                  ) : (
+                    <svg class="h-4 w-4 flex-shrink-0 mt-0.5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+                  )}
+                  {f.text}
+                </li>
+              ))}
+            </ul>
+            <a
+              href="/register"
+              class={`mt-7 block rounded-xl py-3 text-center text-sm font-semibold transition-colors ${tier.highlighted ? 'btn-primary bg-emerald-500 text-[#05080a] hover:bg-emerald-400' : 'border border-white/15 bg-white/5 text-slate-200 hover:bg-white/10'}`}
+            >
+              {tier.cta}
+            </a>
+          </div>
         </div>
       ))}
     </div>
