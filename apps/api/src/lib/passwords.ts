@@ -7,7 +7,7 @@
 
 import bcrypt from 'bcryptjs';
 
-const PBKDF2_ITERATIONS = 310_000;
+const PBKDF2_ITERATIONS = 100_000;
 const KEY_BYTES = 32;
 
 const b64 = (buf: ArrayBuffer | Uint8Array): string =>
