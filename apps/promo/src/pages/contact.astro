@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 
 const subjects = ['General Inquiry', 'Technical Support', 'Account & Data', 'Privacy & Deletion', 'Feature Request', 'Bug Report', 'Other'];
 const inputCls = 'field';
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '0x4AAAAAADlDPjPGRxOUKni0';
 
 const channels = [
   {
@@ -74,8 +75,8 @@ const channels = [
           <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-emerald-500/15 text-emerald-400 ring-1 ring-inset ring-emerald-400/30">
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
           </div>
-          <h2 class="mt-4 text-xl font-bold text-white">Opening your email…</h2>
-          <p class="mt-2 text-sm text-slate-300 leading-relaxed">If nothing opened, write to us at <a href="mailto:support@echobits.xyz" class="font-medium text-emerald-400 underline hover:text-emerald-300">support@echobits.xyz</a>.</p>
+          <h2 class="mt-4 text-xl font-bold text-white">Message sent</h2>
+          <p class="mt-2 text-sm text-slate-300 leading-relaxed">Thanks for reaching out — we’ll reply by email, usually within 24 hours. You can also write to us at <a href="mailto:support@echobits.xyz" class="font-medium text-emerald-400 underline hover:text-emerald-300">support@echobits.xyz</a>.</p>
         </div>
 
         <!-- Form -->
@@ -118,6 +119,7 @@ const channels = [
               <label for="message" class="block text-sm font-medium text-slate-300 mb-1.5">Message</label>
               <textarea id="message" name="message" required rows="5" placeholder="Tell us what’s on your mind…" class={inputCls}></textarea>
             </div>
+            {TURNSTILE_SITE_KEY && <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="flexible"></div>}
             <p id="error" class="hidden rounded-lg bg-red-500/10 border border-red-400/30 px-4 py-2.5 text-sm text-red-300"></p>
             <button type="submit" class="btn-primary w-full rounded-full bg-emerald-500 py-3.5 font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
               Send message
@@ -127,6 +129,8 @@ const channels = [
       </div>
     </div>
   </section>
+
+  {TURNSTILE_SITE_KEY && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
   <script>
     const form = document.getElementById('contact-form') as HTMLFormElement | null;
@@ -205,7 +209,9 @@ const channels = [
       if (ddIsOpen() && !ddMenu!.contains(e.target as Node) && !ddBtn!.contains(e.target as Node)) ddClose();
     });
 
-    form?.addEventListener('submit', (e) => {
+    const submitBtn = form?.querySelector('button[type="submit"]') as HTMLButtonElement | null;
+
+    form?.addEventListener('submit', async (e) => {
       e.preventDefault();
       const data = new FormData(form);
       const name = String(data.get('name') ?? '');
@@ -218,12 +224,29 @@ const channels = [
         ddBtn?.focus();
         return;
       }
+      const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value ?? '';
+      if (document.querySelector('.cf-turnstile') && !turnstileToken) {
+        if (errEl) { errEl.textContent = 'Please complete the verification below.'; errEl.classList.remove('hidden'); }
+        return;
+      }
       errEl?.classList.add('hidden');
-      const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`);
-      const href = `mailto:support@echobits.xyz?subject=${encodeURIComponent('[Echobit] ' + subject)}&body=${body}`;
-      formCard?.classList.add('hidden');
-      success?.classList.remove('hidden');
-      window.location.href = href;
+      if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Sending…'; }
+      try {
+        const res = await fetch('/api/v1/auth/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, subject, message, turnstileToken }),
+        });
+        const resBody = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(resBody.error || 'Failed to send message');
+        formCard?.classList.add('hidden');
+        success?.classList.remove('hidden');
+        success?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      } catch (err) {
+        if (errEl) { errEl.textContent = (err as Error).message; errEl.classList.remove('hidden'); }
+        (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
+        if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Send message'; }
+      }
     });
   </script>
 </Base>

@@ -69,6 +69,14 @@ export const schemas = {
     email: optStr,
     reason: optStr,
     additionalInfo: optStr,
+    turnstileToken: optStr,
+  }),
+  contact: z.object({
+    name: optStr,
+    email: optStr,
+    subject: optStr,
+    message: optStr,
+    turnstileToken: optStr,
   }),
   googleAuth: z.object({ idToken: optStr }),
   profilePatch: z.object({

@@ -9,7 +9,7 @@ import { newId } from '@echobit/shared/ids';
 import { generateToken, verifyToken } from '../lib/jwt.ts';
 import { hashPassword, verifyPassword, needsRehash } from '../lib/passwords.ts';
 import { verifyGoogleIdToken } from '../lib/google.ts';
-import { sendOTPEmail, sendDeletionRequestEmail } from '../lib/email.ts';
+import { sendOTPEmail, sendDeletionRequestEmail, sendContactEmail } from '../lib/email.ts';
 import { serializeUser } from '../lib/serialize.ts';
 import { getUserByEmail, getUserById, nowIso, updateRow } from '../lib/db.ts';
 import { deleteAudio } from '../lib/storage.ts';
@@ -521,6 +521,10 @@ auth.post('/request-deletion', async (c) => {
     if (!body || !body.name || !body.email || !body.reason) {
       return c.json({ error: 'Name, email and reason are required' }, 400);
     }
+    // Web-only form: enforce Turnstile when configured (no mobile path to exempt).
+    if (c.env.TURNSTILE_SECRET && !(await verifyTurnstile(c.env, body.turnstileToken, clientIp(c)))) {
+      return c.json({ error: 'Verification failed. Please refresh and try again.' }, 403);
+    }
     const { name, email, reason, additionalInfo } = body;
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       return c.json({ error: 'Invalid email address' }, 400);
@@ -535,6 +539,32 @@ auth.post('/request-deletion', async (c) => {
   } catch (error) {
     console.error('Deletion request error:', error);
     return c.json({ error: 'Failed to send deletion request. Please email us directly.' }, 500);
+  }
+});
+
+auth.post('/contact', async (c) => {
+  try {
+    const body = await parseBody(c.req, schemas.contact);
+    if (!body || !body.name || !body.email || !body.subject || !body.message) {
+      return c.json({ error: 'All fields are required' }, 400);
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(body.email)) {
+      return c.json({ error: 'Invalid email address' }, 400);
+    }
+    // Web-only form: enforce Turnstile when configured (no mobile path to exempt).
+    if (c.env.TURNSTILE_SECRET && !(await verifyTurnstile(c.env, body.turnstileToken, clientIp(c)))) {
+      return c.json({ error: 'Verification failed. Please refresh and try again.' }, 403);
+    }
+    await sendContactEmail(c.env, {
+      name: body.name,
+      email: body.email,
+      subject: body.subject,
+      message: body.message,
+    });
+    return c.json({ message: 'Message sent successfully' });
+  } catch (error) {
+    console.error('Contact form error:', error);
+    return c.json({ error: 'Failed to send message. Please email us directly.' }, 500);
   }
 });
 

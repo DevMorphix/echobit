@@ -3,6 +3,7 @@ import Base from '../layouts/Base.astro';
 
 const reasons = ['No longer using the app', 'Privacy concerns', 'Switching to another service', 'Technical issues', 'Created account by mistake', 'Data protection / GDPR request', 'Other'];
 const inputCls = 'field field-danger';
+const TURNSTILE_SITE_KEY = import.meta.env.PUBLIC_TURNSTILE_SITE_KEY ?? '0x4AAAAAADlDPjPGRxOUKni0';
 ---
 <Base
   title="Delete Your Account – Echobit"
@@ -91,6 +92,7 @@ const inputCls = 'field field-danger';
               <input id="confirm" type="checkbox" required class="mt-0.5 h-4 w-4 accent-red-500" />
               I understand my account, recordings, transcripts, and notes will be permanently deleted.
             </label>
+            {TURNSTILE_SITE_KEY && <div class="cf-turnstile" data-sitekey={TURNSTILE_SITE_KEY} data-theme="dark" data-size="flexible"></div>}
             <p id="error" class="hidden rounded-lg bg-red-500/10 border border-red-400/30 px-4 py-2.5 text-sm text-red-300"></p>
             <button id="submit-btn" type="submit" class="w-full rounded-full bg-red-600 py-3.5 font-semibold text-white transition-colors hover:bg-red-500 disabled:opacity-50">
               Submit deletion request
@@ -101,6 +103,8 @@ const inputCls = 'field field-danger';
       </div>
     </div>
   </section>
+
+  {TURNSTILE_SITE_KEY && <script is:inline src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>}
 
   <script>
     const form = document.getElementById('deletion-form') as HTMLFormElement | null;
@@ -198,6 +202,12 @@ const inputCls = 'field field-danger';
         ddBtn?.focus();
         return;
       }
+      const turnstileToken = (document.querySelector('[name="cf-turnstile-response"]') as HTMLInputElement | null)?.value ?? '';
+      if (document.querySelector('.cf-turnstile') && !turnstileToken) {
+        errEl.textContent = 'Please complete the verification below.';
+        errEl.classList.remove('hidden');
+        return;
+      }
       btn.disabled = true;
       btn.textContent = 'Submitting…';
       try {
@@ -205,7 +215,7 @@ const inputCls = 'field field-danger';
         const res = await fetch('/api/v1/auth/request-deletion', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
+          body: JSON.stringify({ ...payload, turnstileToken }),
         });
         const body = await res.json().catch(() => ({}));
         if (!res.ok) throw new Error(body.error || 'Failed to submit request');
@@ -217,6 +227,7 @@ const inputCls = 'field field-danger';
       } catch (err) {
         errEl.textContent = (err as Error).message;
         errEl.classList.remove('hidden');
+        (window as unknown as { turnstile?: { reset(): void } }).turnstile?.reset();
         btn.disabled = false;
         btn.textContent = 'Submit deletion request';
       }

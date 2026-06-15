@@ -56,6 +56,46 @@ export async function sendOTPEmail(
   });
 }
 
+export async function sendContactEmail(
+  env: Env,
+  params: { name: string; email: string; subject: string; message: string },
+): Promise<void> {
+  const esc = (s: string) =>
+    s.replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m] as string);
+  const name = esc(params.name);
+  const email = esc(params.email);
+  const subject = esc(params.subject);
+  const message = esc(params.message);
+  const submittedAt = new Date().toUTCString();
+
+  await sendHtml(env, {
+    to: env.SUPPORT_EMAIL,
+    replyTo: params.email,
+    subject: `[Echobit] Contact — ${subject}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <h2 style="color: #059669; margin: 0 0 4px;">New Contact Message</h2>
+        <p style="color: #6b7280; margin: 0 0 24px; font-size: 14px;">Someone reached out through the Echobit contact form.</p>
+        <div style="background: white; border-radius: 12px; padding: 24px; border: 1px solid #e5e7eb; margin-bottom: 16px;">
+          <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+            <tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 10px 0; color: #6b7280; width: 120px;">Name</td><td style="padding: 10px 0; color: #111827; font-weight: 600;">${name}</td></tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 10px 0; color: #6b7280;">Email</td><td style="padding: 10px 0; color: #111827; font-weight: 600;">${email}</td></tr>
+            <tr style="border-bottom: 1px solid #f3f4f6;"><td style="padding: 10px 0; color: #6b7280;">Subject</td><td style="padding: 10px 0; color: #111827;">${subject}</td></tr>
+            <tr><td style="padding: 10px 0; color: #6b7280;">Submitted</td><td style="padding: 10px 0; color: #111827;">${submittedAt}</td></tr>
+          </table>
+        </div>
+        <div style="background: white; border-radius: 12px; padding: 20px; border: 1px solid #e5e7eb;">
+          <p style="color: #6b7280; font-size: 13px; font-weight: 600; margin: 0 0 8px;">Message</p>
+          <p style="color: #111827; font-size: 14px; margin: 0; white-space: pre-wrap;">${message}</p>
+        </div>
+        <p style="color: #9ca3af; font-size: 12px; margin: 20px 0 0; text-align: center;">
+          Echobit — AI Meeting Companion &nbsp;·&nbsp; Reply directly to respond.
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendDeletionRequestEmail(
   env: Env,
   params: { name: string; email: string; reason: string; additionalInfo?: string },
