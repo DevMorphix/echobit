@@ -1,116 +1,195 @@
 ---
 import Base from '../layouts/Base.astro';
 
+const EMAIL = 'no.reply.echobit@gmail.com';
+const mail = `<a href="mailto:${EMAIL}" class="font-medium text-emerald-400 underline hover:text-emerald-300">${EMAIL}</a>`;
+const devmorphix = '<a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">devmorphix.com</a>';
+const deletionLink = '<a href="/request-deletion" class="font-medium text-emerald-400 underline hover:text-emerald-300">account deletion page</a>';
+
 const sections = [
   {
-    h: '1. Introduction',
+    h: '1. Who We Are & Scope',
     body: [
-      'Echobit ("we", "us", or "our") operates the Echobit application and website (the "Service"). This Privacy Policy explains how we collect, use, and protect your personal information when you use Echobit. By using the Service, you agree to the terms described in this policy.',
+      `Echobit (the "Service") is an AI meeting recorder, transcriber, and summariser operated by <strong class="text-white">Devmorphix</strong> ("we", "us", "our"). You can learn more about us at ${devmorphix}.`,
+      `This Privacy Policy explains what personal data we collect, how and why we use it, who we share it with, and the choices and rights you have. It applies to the Echobit Android app and our website and web app (together, the "Service"). By creating an account or using the Service, you agree to this Policy and, where required by law, provide your consent to the processing described here.`,
+      `For the EU/UK GDPR, Devmorphix is the "data controller". For India's Digital Personal Data Protection Act, 2023 ("DPDP Act"), we are the "Data Fiduciary". The providers listed in Section 5 act as our processors.`,
     ],
   },
   {
     h: '2. Information We Collect',
     list: [
-      ['Account information', 'your name and email address when you register or sign in with Google.'],
-      ['Audio recordings', 'audio files you record within the Service. When Cloud Sync is enabled, audio is uploaded to and stored securely in the cloud. When Cloud Sync is disabled, audio is stored privately on your device only; it is sent temporarily for AI processing and immediately discarded from our systems.'],
-      ['Transcriptions and notes', 'text generated from your recordings, including AI summaries, meeting minutes, and your own notes.'],
-      ['Device information', 'basic device and operating system information for compatibility and debugging.'],
+      ['Account information', 'your name, email address, and password (stored only as a salted hash). If you sign in with Google, we receive your name, email, Google account identifier, and profile picture.'],
+      ['Profile details', 'optional information you provide, such as your country, profession, and preferred recording and summary languages, used to tailor the Service to you.'],
+      ['Audio recordings', 'the audio you record in the Service. With Cloud Sync on, recordings are uploaded and stored securely in the cloud. With Cloud Sync off, audio stays in the app\'s private storage on your device; it is sent to our processors only transiently for AI processing and is not retained on our servers afterward.'],
+      ['Transcriptions, summaries & notes', 'text we generate from your recordings — transcripts, AI summaries, meeting minutes, and action items — along with the titles, tags, and any notes you add.'],
+      ['Payment information', 'when you subscribe to a paid plan, payments are processed by Razorpay. We receive your subscription and plan status, but we never see or store your full card or banking details.'],
+      ['Usage & log data', 'limited records needed to run and secure the Service: sign-in timestamps and login counts, your plan and subscription status, app/device and operating-system information for compatibility and debugging, and your IP address (processed transiently for security, abuse-prevention, and rate-limiting — see Section 5).'],
+      ['Support communications', 'if you contact us via our contact form or by email, we receive your name, email, and the contents of your message.'],
     ],
   },
   {
-    h: '3. How We Use Your Information',
-    list: [
-      ['Core features', 'to provide recording, transcription, summaries, and minutes.'],
-      ['Authentication', 'to keep your account secure.'],
-      ['Transactional email', 'to send email verification and password-reset codes.'],
-      ['Improvement', 'to maintain and improve the Service.'],
-    ],
-    body: ['We do not sell your personal data, and we do not use it for advertising.'],
-  },
-  {
-    h: '4. Third-Party Services',
-    body: ['We rely on the following processors to operate the Service:'],
-    list: [
-      ['Google Sign-In', 'optional OAuth authentication, governed by Google\'s Privacy Policy.'],
-      ['Cloudflare', 'hosting, secure audio storage (R2), database (D1), and transactional email.'],
-      ['Cloudflare Workers AI (Whisper)', 'speech-to-text transcription of your recordings.'],
-      ['Sarvam AI', 'transcription and translation for Indian languages; audio/text is sent for processing.'],
-      ['Google Gemini', 'AI-generated summaries, minutes, and action items from your transcripts.'],
-      ['Razorpay', 'payment processing for paid plans; we do not store your card details.'],
-    ],
-  },
-  {
-    h: '5. Data Retention',
+    h: '3. Recordings & Sensitive Information',
     body: [
-      'Your data is retained for as long as your account remains active. You may delete your account at any time (see Section 7), after which all your personal data and recordings are permanently deleted from our systems. Deletion is processed promptly upon request.',
-      'Local-only recordings (Cloud Sync disabled): audio saved with Cloud Sync off is stored exclusively in the app\'s private storage on your device and is permanently deleted if the app is uninstalled. We recommend enabling Cloud Sync or exporting important recordings beforehand.',
+      `Recordings and the transcripts derived from them may contain <strong class="text-white">sensitive personal information</strong> — for example, health details dictated in a consultation, or financial, religious, or political matters discussed in a meeting. Where this is "special category" data under the GDPR or "sensitive" data under applicable law, we process it only on the basis of your explicit consent, which you give by choosing to record and process that content. You can withdraw this consent at any time by deleting the relevant recordings or your account.`,
+      `<strong class="text-white">Recording other people.</strong> When you record a meeting or conversation, you may capture the voice and personal information of other participants. You are responsible for obtaining any consent or legal right required to record and process other people's data in your jurisdiction (some regions require the consent of all parties). You agree to use Echobit lawfully and to honour requests from participants regarding their data.`,
+      `We do not use your recordings, transcripts, or notes to build advertising profiles, and we do not use them to train our own AI models.`,
     ],
   },
   {
-    h: '6. Data Security',
+    h: '4. How We Use Your Information & Legal Bases',
+    body: [`We use your information to:`],
+    bullets: [
+      `<strong class="text-white">Provide the Service</strong> — record, transcribe, summarise, and store your meetings, and manage your account and subscription. <em class="text-slate-500">(Legal basis: performance of our contract with you.)</em>`,
+      `<strong class="text-white">Process sensitive content in recordings</strong> — as described in Section 3. <em class="text-slate-500">(Legal basis: your explicit consent.)</em>`,
+      `<strong class="text-white">Secure the Service</strong> — authenticate you, verify your email, reset passwords, and prevent fraud and abuse (including rate-limiting and bot protection). <em class="text-slate-500">(Legal basis: legitimate interests; transactional email is part of providing the Service.)</em>`,
+      `<strong class="text-white">Maintain and improve the Service</strong> — debugging, reliability, and aggregate, non-identifying analysis of feature performance. <em class="text-slate-500">(Legal basis: legitimate interests.)</em>`,
+      `<strong class="text-white">Comply with the law</strong> — meet legal, tax, and regulatory obligations and respond to lawful requests. <em class="text-slate-500">(Legal basis: legal obligation.)</em>`,
+    ],
+    after: [
+      `We send transactional messages such as verification and password-reset codes. We do not send marketing emails without your consent, we do not sell your personal data, and we do not use it for third-party advertising.`,
+    ],
+  },
+  {
+    h: '5. AI Processing & Service Providers',
+    body: [`We share data with a limited set of trusted providers ("processors") strictly to operate the Service. Each processes your data only on our instructions and under data-protection terms:`],
+    list: [
+      ['Cloudflare', 'hosting and content delivery, secure audio storage (R2), database (D1), serverless compute (Workers), transactional email delivery, and bot/abuse protection (Turnstile). As our infrastructure provider it inherently processes IP and request data. (USA / global.)'],
+      ['Cloudflare Workers AI — Whisper', 'speech-to-text transcription of your recordings, processed on Cloudflare\'s network.'],
+      ['Sarvam AI', 'speech-to-text and translation for Indian languages; the relevant audio and text are sent for processing. (India.)'],
+      ['Google Gemini', 'generates summaries, meeting minutes, and action items from your transcripts; the relevant text is sent for processing. (Google LLC, USA / global.)'],
+      ['Google Sign-In', 'optional OAuth login; if used, it is governed by Google\'s Privacy Policy. (Google LLC, USA / global.)'],
+      ['Razorpay', 'payment processing for paid plans; Razorpay handles your card/banking data as a controller under its own privacy policy. (India.)'],
+    ],
+    after: [
+      `These providers are contractually limited to processing your data only to provide their services to us. We do not use your content to train AI models.`,
+    ],
+  },
+  {
+    h: '6. International Data Transfers',
     body: [
-      'We implement industry-standard security measures including HTTPS encryption for data in transit, bcrypt password hashing, and JWT-based authentication. Audio files are stored with access controls on Cloudflare R2. While we take reasonable steps to protect your data, no method of transmission over the internet is 100% secure.',
+      `Echobit is operated from India, and our providers operate in India, the United States, and other countries. As a result, your personal data may be transferred to and processed outside your country of residence, including outside the EEA and the UK.`,
+      `Where we transfer personal data internationally, we rely on appropriate safeguards — such as the European Commission's Standard Contractual Clauses (with the UK Addendum) and our providers' data-processing agreements — so that your data stays protected. Under the DPDP Act, we may transfer data outside India except to any country restricted by the Government of India.`,
     ],
   },
   {
-    h: '7. Your Rights & Account Deletion',
-    body: ['You have the right to access the data we hold about you, correct inaccuracies, and request deletion of your account and all associated data.'],
-    deletion: true,
+    h: '7. Sharing & Disclosure',
+    body: [`We do not sell or rent your personal data, and we do not share it for cross-context behavioural advertising. We disclose personal data only:`],
+    bullets: [
+      `to the processors listed in Section 5, to run the Service;`,
+      `to comply with the law, enforce our terms, or respond to valid legal requests;`,
+      `to protect the rights, safety, and security of our users, the public, or Echobit; and`,
+      `in connection with a merger, acquisition, or sale of assets — in which case we will notify you, and this Policy will continue to protect your data.`,
+    ],
   },
   {
-    h: '8. Children\'s Privacy',
-    body: ['Echobit is not directed at children under 13. We do not knowingly collect personal information from children under 13. If you believe a child has provided us personal data, please contact us and we will delete it promptly.'],
+    h: '8. Data Retention',
+    list: [
+      ['Account & content', 'kept while your account is active. When you delete your account, your recordings, transcripts, summaries, notes, and profile are permanently deleted from our live systems and purged from encrypted backups within 30 days.'],
+      ['Deletion requests', 'processed within 7 business days of a verified request.'],
+      ['Verification & reset codes (OTPs)', 'short-lived and expire within minutes.'],
+      ['Security & error logs', 'kept only for a limited period for debugging and abuse-prevention, then deleted or de-identified.'],
+      ['Local-only recordings', 'audio saved with Cloud Sync off lives only in the app\'s private storage on your device and is removed when you delete it or uninstall the app. Export or enable Cloud Sync to keep important recordings.'],
+      ['Legal records', 'we may retain limited records (such as transaction or tax records) for as long as the law requires.'],
+    ],
   },
   {
-    h: '9. Changes to This Policy',
-    body: ['We may update this Privacy Policy from time to time. When we do, we will update the "Last updated" date above. Continued use of the Service after changes constitutes acceptance of the updated policy.'],
+    h: '9. Data Security & Breach Notification',
+    body: [
+      `We use industry-standard safeguards including HTTPS/TLS encryption in transit, salted password hashing (bcrypt / PBKDF2), token-based (JWT) authentication, access controls on stored audio, and reputable infrastructure providers. No method of transmission or storage is completely secure, but we work to protect your data and to limit who can access it.`,
+      `If a personal-data breach occurs that is likely to affect your rights, we will notify the relevant supervisory authority and affected users without undue delay, as required by the GDPR, the DPDP Act, and other applicable laws.`,
+    ],
   },
   {
-    h: '10. Contact Us',
-    contact: true,
+    h: '10. Your Privacy Rights',
+    body: [`Subject to your local law, you have rights over your personal data, including to:`],
+    bullets: [
+      `<strong class="text-white">Access</strong> the data we hold about you and request a copy;`,
+      `<strong class="text-white">Correct</strong> inaccurate or incomplete data;`,
+      `<strong class="text-white">Delete</strong> your account and data (see Section 12 or our ${deletionLink});`,
+      `<strong class="text-white">Port</strong> your data to another service in a structured, machine-readable format;`,
+      `<strong class="text-white">Restrict or object</strong> to certain processing; and`,
+      `<strong class="text-white">Withdraw consent</strong> at any time, without affecting processing already carried out.`,
+    ],
+    after: [
+      `To exercise any of these rights, use the in-app controls or email us at ${mail}. We will respond within the timeframes required by law and will not discriminate against you for exercising your rights.`,
+      `<strong class="text-white">EEA & UK (GDPR):</strong> you may lodge a complaint with your local data-protection authority (for example, the UK ICO or your EU supervisory authority).`,
+      `<strong class="text-white">California (CCPA/CPRA):</strong> you have the right to know, delete, and correct your personal information and to opt out of its "sale" or "sharing". We do not sell or share your personal information, and we do not discriminate against you for exercising your rights.`,
+      `<strong class="text-white">India (DPDP Act, 2023):</strong> you may access, correct, update, and erase your data, nominate someone to exercise your rights in the event of death or incapacity, and raise grievances with our Grievance Officer (Section 14). If unresolved, you may complain to the Data Protection Board of India.`,
+    ],
+  },
+  {
+    h: '11. Children\'s Privacy',
+    body: [
+      `Echobit is not intended for children. We do not knowingly collect personal data from anyone below the age of digital consent in their jurisdiction — <strong class="text-white">18 in India</strong> (where processing a child's data requires verifiable parental or guardian consent), 16 in much of the EEA (subject to member-state law, with a minimum of 13), and 13 in the United States and several other countries.`,
+      `We do not knowingly profile children or serve them targeted advertising. If you believe a child has provided us personal data without appropriate consent, contact us and we will delete it promptly.`,
+    ],
+  },
+  {
+    h: '12. Cookies & Local Storage',
+    body: [
+      `We use only strictly necessary storage. Our web app stores a sign-in token in your browser's local storage to keep you logged in, and the mobile app stores equivalent data on your device. We do not use advertising or cross-site tracking cookies, and we do not run third-party ad networks.`,
+    ],
+  },
+  {
+    h: '13. Changes to This Policy',
+    body: [
+      `We may update this Policy from time to time. When we make material changes, we will update the "Last updated" date above and, where appropriate, notify you in the app or by email. Your continued use of the Service after an update means you accept the revised Policy.`,
+    ],
+  },
+  {
+    h: '14. Contact Us & Grievance Redressal',
+    body: [`If you have questions, requests, or complaints about this Policy or your data, contact us:`],
+    bullets: [
+      `Operated by <strong class="text-white">Devmorphix</strong> — ${devmorphix}`,
+      `Email / Grievance Officer — ${mail}`,
+      `Account deletion — ${deletionLink}`,
+    ],
+    after: [
+      `We aim to acknowledge grievances promptly and resolve them within the timeframes required by applicable law.`,
+    ],
   },
 ];
 ---
 <Base
   title="Privacy Policy – Echobit"
-  description="Read the Echobit privacy policy. Learn how we handle your meeting recordings, transcriptions, and personal data."
+  description="Read the Echobit privacy policy. Learn how we handle your meeting recordings, transcriptions, and personal data, and the privacy rights you have."
   path="/privacy-policy"
 >
   <article class="max-w-3xl mx-auto px-6 py-16 sm:py-20">
     <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Legal</p>
     <h1 class="mt-3 text-4xl font-bold tracking-tight text-white">Privacy Policy</h1>
-    <p class="mt-3 text-sm text-slate-500">Last updated: 14 June 2026</p>
+    <p class="mt-3 text-sm text-slate-500">Last updated: 15 June 2026</p>
+    <p class="mt-6 text-[15px] leading-relaxed text-slate-400">
+      This Policy explains, in plain terms, what Echobit collects, how we use it, and the choices you have.
+      Echobit is operated by <a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">Devmorphix</a>.
+    </p>
 
     <div class="mt-10 space-y-10">
       {sections.map((s) => (
         <section>
           <h2 class="text-lg font-semibold text-white">{s.h}</h2>
-          {s.body && s.body.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400">{p}</p>)}
+          {s.body && s.body.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
           {s.list && (
             <ul class="mt-4 space-y-3">
               {s.list.map(([term, def]) => (
                 <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
                   <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
-                  <span><strong class="font-semibold text-white">{term}</strong> — {def}</span>
+                  <span><strong class="font-semibold text-white">{term}</strong> — <Fragment set:html={def} /></span>
                 </li>
               ))}
             </ul>
           )}
-          {s.deletion && (
-            <p class="mt-3 text-[15px] leading-relaxed text-slate-400">
-              To delete your account, visit our
-              <a href="/request-deletion" class="font-medium text-emerald-400 underline hover:text-emerald-300">account deletion request page</a>
-              or email
-              <a href="mailto:no.reply.echobit@gmail.com" class="font-medium text-emerald-400 underline hover:text-emerald-300">no.reply.echobit@gmail.com</a>.
-              Deleting your account permanently removes all recordings, transcriptions, and personal data.
-            </p>
+          {s.bullets && (
+            <ul class="mt-4 space-y-2.5">
+              {s.bullets.map((b) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
+                  <span set:html={b}></span>
+                </li>
+              ))}
+            </ul>
           )}
-          {s.contact && (
-            <p class="mt-3 text-[15px] leading-relaxed text-slate-400">
-              Questions about this policy? Email us at
-              <a href="mailto:no.reply.echobit@gmail.com" class="font-medium text-emerald-400 underline hover:text-emerald-300">no.reply.echobit@gmail.com</a>.
-            </p>
-          )}
+          {s.after && s.after.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
         </section>
       ))}
     </div>
