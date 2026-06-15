@@ -1,0 +1,185 @@
+---
+import Base from '../layouts/Base.astro';
+
+const EMAIL = 'support@echobits.xyz';
+const mail = `<a href="mailto:${EMAIL}" class="font-medium text-emerald-400 underline hover:text-emerald-300">${EMAIL}</a>`;
+const devmorphix = '<a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">devmorphix.com</a>';
+const privacyLink = '<a href="/privacy-policy" class="font-medium text-emerald-400 underline hover:text-emerald-300">Privacy Policy</a>';
+const refundLink = '<a href="/refund-policy" class="font-medium text-emerald-400 underline hover:text-emerald-300">Refund &amp; Cancellation Policy</a>';
+const deletionLink = '<a href="/request-deletion" class="font-medium text-emerald-400 underline hover:text-emerald-300">account deletion page</a>';
+const contactLink = '<a href="/contact" class="font-medium text-emerald-400 underline hover:text-emerald-300">contact page</a>';
+
+const sections = [
+  {
+    h: '1. Agreement to These Terms',
+    body: [
+      `These Terms of Service ("Terms") govern your access to and use of Echobit — the AI meeting recorder, transcriber, and summariser operated by <strong class="text-white">Devmorphix</strong> ("we", "us", "our"; ${devmorphix}) — including our Android app, website, and web app (together, the "Service").`,
+      `By creating an account or using the Service, you agree to these Terms and to our ${privacyLink}. If you do not agree, please do not use the Service. If you use the Service on behalf of an organisation, you confirm you are authorised to bind that organisation to these Terms.`,
+    ],
+  },
+  {
+    h: '2. Eligibility',
+    body: [
+      `You must be old enough to form a binding contract in your jurisdiction to use the Service — at least <strong class="text-white">18 years old in India</strong>. The Service is not intended for children (see our ${privacyLink}). By using the Service, you confirm you meet these requirements.`,
+    ],
+  },
+  {
+    h: '3. Your Account',
+    list: [
+      ['Accurate information', 'you agree to provide accurate, current information and to keep it up to date.'],
+      ['Security', 'you are responsible for safeguarding your login credentials and for all activity under your account. Tell us promptly of any unauthorised use.'],
+      ['Your account is yours', 'accounts are for your use; do not share credentials or transfer your account without our consent.'],
+    ],
+  },
+  {
+    h: '4. Licence to Use the Service',
+    body: [
+      `Subject to these Terms, we grant you a limited, non-exclusive, non-transferable, revocable licence to use the Service for your personal or internal business purposes. We may add, change, or discontinue features at any time.`,
+    ],
+  },
+  {
+    h: '5. Your Content & Recordings',
+    body: [
+      `"Your Content" means the audio you record and the transcripts, summaries, minutes, notes, and other materials you create or upload. <strong class="text-white">You retain ownership of Your Content.</strong> You grant us a limited licence to host, process, and transmit Your Content solely to operate and provide the Service to you (including sending it to the AI processors described in our ${privacyLink}). We do not use Your Content to train our own AI models.`,
+      `<strong class="text-white">Consent to record.</strong> You are solely responsible for ensuring you have the legal right and any consent required to record, upload, and process Your Content — including the voices and personal data of other participants. Recording laws vary by jurisdiction, and some require the consent of all parties. You agree to comply with all applicable laws.`,
+      `You are responsible for Your Content and for keeping your own backups. We are not liable for any loss of Your Content, including local-only recordings stored solely on your device.`,
+    ],
+  },
+  {
+    h: '6. AI Outputs & Accuracy',
+    body: [
+      `The Service uses automated speech-to-text and AI models. Transcripts, summaries, minutes, and action items are generated automatically and <strong class="text-white">may contain errors or omissions</strong>. They are provided for convenience and are not professional, legal, medical, or financial advice. Review outputs before relying on them.`,
+    ],
+  },
+  {
+    h: '7. Acceptable Use',
+    body: [`You agree not to:`],
+    bullets: [
+      `use the Service unlawfully, or to record or process data without the consent or legal basis required in your jurisdiction;`,
+      `upload content that is illegal, infringing, harmful, or that violates others' privacy or rights;`,
+      `disrupt, overload, reverse-engineer, scrape, or attempt to gain unauthorised access to the Service;`,
+      `resell, sublicense, or commercially exploit the Service without our written permission; or`,
+      `use the Service to build a competing product or to train machine-learning models.`,
+    ],
+    after: [
+      `We may investigate suspected violations and take action, including suspending or terminating accounts.`,
+    ],
+  },
+  {
+    h: '8. Plans, Billing & Payments',
+    list: [
+      ['Subscriptions', 'paid plans are billed in advance on a monthly or annual cycle and renew automatically until cancelled.'],
+      ['Payment processor', 'payments are processed by Razorpay; by subscribing you also agree to Razorpay\'s terms. We do not store your full card or banking details.'],
+      ['Taxes', 'prices may be exclusive of applicable taxes, which will be added where required by law.'],
+      ['Price changes', 'we may change prices or plan features with reasonable notice; changes apply from your next billing cycle.'],
+      ['Cancellation & refunds', `you can cancel at any time — see our ${refundLink}.`],
+    ],
+  },
+  {
+    h: '9. Free Plan & Fair Use',
+    body: [
+      `We may offer a free plan and usage limits (such as a number of recordings per month). We may apply fair-use limits and adjust or withdraw the free plan to keep the Service reliable for everyone.`,
+    ],
+  },
+  {
+    h: '10. Intellectual Property',
+    body: [
+      `The Service — including its software, design, branding, and content (excluding Your Content) — is owned by Devmorphix and protected by intellectual-property laws. These Terms grant you no rights in our trademarks or materials except the limited licence above.`,
+    ],
+  },
+  {
+    h: '11. Third-Party Services',
+    body: [
+      `The Service relies on third parties (for example, Google Sign-In, Razorpay, and the AI providers listed in our ${privacyLink}). Your use of those services may be subject to their own terms and privacy policies, and we are not responsible for them.`,
+    ],
+  },
+  {
+    h: '12. Termination',
+    body: [
+      `You may stop using the Service and delete your account at any time via our ${deletionLink}. We may suspend or terminate your access if you breach these Terms, fail to pay, or where required by law. On termination, your right to use the Service ends; provisions that by their nature should survive (such as ownership, disclaimers, and limitation of liability) will survive.`,
+    ],
+  },
+  {
+    h: '13. Disclaimers',
+    body: [
+      `The Service is provided <strong class="text-white">"as is" and "as available"</strong>, without warranties of any kind, whether express or implied, including fitness for a particular purpose, accuracy, or non-infringement. We do not warrant that the Service will be uninterrupted, error-free, or secure, or that AI outputs will be accurate.`,
+    ],
+  },
+  {
+    h: '14. Limitation of Liability',
+    body: [
+      `To the maximum extent permitted by law, Devmorphix and its team will not be liable for any indirect, incidental, special, consequential, or punitive damages, or for any loss of data, profits, or goodwill. Our total liability for any claim relating to the Service will not exceed the amount you paid us for the Service in the 12 months before the claim (or, if you use only the free plan, ₹1,000 or its equivalent).`,
+    ],
+  },
+  {
+    h: '15. Indemnification',
+    body: [
+      `You agree to indemnify and hold harmless Devmorphix from claims, damages, and expenses arising out of Your Content, your use of the Service, or your breach of these Terms or of applicable law (including recording-consent laws).`,
+    ],
+  },
+  {
+    h: '16. Changes to These Terms',
+    body: [
+      `We may update these Terms from time to time. When we make material changes, we will update the "Last updated" date above and, where appropriate, notify you. Your continued use of the Service after changes take effect means you accept the revised Terms.`,
+    ],
+  },
+  {
+    h: '17. Governing Law & Disputes',
+    body: [
+      `These Terms are governed by the laws of India, without regard to its conflict-of-laws rules. Subject to applicable law, you agree to the exclusive jurisdiction of the courts located in India for any dispute arising out of or relating to these Terms or the Service.`,
+    ],
+  },
+  {
+    h: '18. Contact',
+    body: [
+      `Questions about these Terms? Contact us at ${mail} or via our ${contactLink}. Echobit is operated by Devmorphix — ${devmorphix}.`,
+    ],
+  },
+];
+---
+<Base
+  title="Terms of Service – Echobit"
+  description="Read the Echobit Terms of Service — the agreement governing your use of our AI meeting recorder, transcriber, and summariser."
+  path="/terms"
+>
+  <article class="max-w-3xl mx-auto px-6 py-16 sm:py-20">
+    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Legal</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight text-white">Terms of Service</h1>
+    <p class="mt-3 text-sm text-slate-500">Last updated: 15 June 2026</p>
+    <p class="mt-6 text-[15px] leading-relaxed text-slate-400">
+      These Terms are the agreement between you and <a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">Devmorphix</a> for using Echobit. Please read them alongside our
+      <a href="/privacy-policy" class="font-medium text-emerald-400 underline hover:text-emerald-300">Privacy Policy</a> and
+      <a href="/refund-policy" class="font-medium text-emerald-400 underline hover:text-emerald-300">Refund &amp; Cancellation Policy</a>.
+    </p>
+
+    <div class="mt-10 space-y-10">
+      {sections.map((s) => (
+        <section>
+          <h2 class="text-lg font-semibold text-white">{s.h}</h2>
+          {s.body && s.body.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
+          {s.list && (
+            <ul class="mt-4 space-y-3">
+              {s.list.map(([term, def]) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
+                  <span><strong class="font-semibold text-white">{term}</strong> — <Fragment set:html={def} /></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.bullets && (
+            <ul class="mt-4 space-y-2.5">
+              {s.bullets.map((b) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
+                  <span set:html={b}></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.after && s.after.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
+        </section>
+      ))}
+    </div>
+  </article>
+</Base>

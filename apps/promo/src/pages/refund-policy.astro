@@ -1,0 +1,132 @@
+---
+import Base from '../layouts/Base.astro';
+
+const EMAIL = 'support@echobits.xyz';
+const mail = `<a href="mailto:${EMAIL}" class="font-medium text-emerald-400 underline hover:text-emerald-300">${EMAIL}</a>`;
+const devmorphix = '<a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">devmorphix.com</a>';
+const termsLink = '<a href="/terms" class="font-medium text-emerald-400 underline hover:text-emerald-300">Terms of Service</a>';
+const deletionLink = '<a href="/request-deletion" class="font-medium text-emerald-400 underline hover:text-emerald-300">account deletion page</a>';
+const contactLink = '<a href="/contact" class="font-medium text-emerald-400 underline hover:text-emerald-300">contact page</a>';
+
+const sections = [
+  {
+    h: '1. Overview',
+    body: [
+      `This Refund &amp; Cancellation Policy explains how subscriptions, cancellations, and refunds work for Echobit — the digital subscription service operated by <strong class="text-white">Devmorphix</strong> (${devmorphix}). It forms part of, and should be read with, our ${termsLink}.`,
+    ],
+  },
+  {
+    h: '2. Free Plan',
+    body: [
+      `Echobit offers a free plan that requires no payment. You can use it for as long as it is available — there is nothing to pay and nothing to cancel.`,
+    ],
+  },
+  {
+    h: '3. Subscriptions & Billing',
+    list: [
+      ['Billing cycle', 'paid plans are billed in advance on a monthly or annual basis and renew automatically until you cancel.'],
+      ['Payments', 'payments are securely processed by Razorpay. We do not store your card or banking details.'],
+      ['Activation', 'access to paid features is granted immediately after a successful payment.'],
+    ],
+  },
+  {
+    h: '4. Cancellation',
+    body: [
+      `You can cancel your subscription at any time from your account settings or by emailing ${mail}. When you cancel:`,
+    ],
+    bullets: [
+      `your plan stays active until the end of the current billing period;`,
+      `you will not be charged again after that; and`,
+      `your account then moves to the free plan, subject to its limits.`,
+    ],
+    after: [
+      `To also delete your account and all associated data, use our ${deletionLink}.`,
+    ],
+  },
+  {
+    h: '5. Refunds',
+    body: [
+      `Because Echobit is a digital service with immediate access to paid features, subscription fees are generally <strong class="text-white">non-refundable</strong>, and we do not provide pro-rata refunds for partial billing periods or for unused time after cancellation.`,
+      `We will, however, provide a refund where required by law, or in cases such as:`,
+    ],
+    bullets: [
+      `a duplicate or accidental charge;`,
+      `a verified technical failure on our side that prevented you from using a paid feature and that we were unable to resolve; or`,
+      `a charge you did not authorise.`,
+    ],
+    after: [
+      `Approved refunds are returned to your original payment method via Razorpay, typically within 5–7 business days (your bank's timelines may vary).`,
+    ],
+  },
+  {
+    h: '6. How to Request a Refund',
+    body: [
+      `Email ${mail} within <strong class="text-white">7 days</strong> of the charge, including your account email and the transaction or order ID. We will review your request and respond promptly. Submitting a refund request does not pause auto-renewal, so please also cancel if you do not want to be billed again.`,
+    ],
+  },
+  {
+    h: '7. Price Changes',
+    body: [
+      `We may change plan prices or features. We will give reasonable notice, and any change applies from your next billing cycle. You can cancel before then if you do not wish to continue.`,
+    ],
+  },
+  {
+    h: '8. Digital Delivery',
+    body: [
+      `Echobit is a digital, cloud-based service. There are no physical goods and nothing is shipped. Access to paid features is delivered electronically and activated as soon as your payment is confirmed.`,
+    ],
+  },
+  {
+    h: '9. Contact',
+    body: [
+      `Questions about billing, cancellations, or refunds? Contact us at ${mail} or via our ${contactLink}.`,
+    ],
+  },
+];
+---
+<Base
+  title="Refund & Cancellation – Echobit"
+  description="Echobit's Refund & Cancellation Policy — how subscriptions, cancellations, and refunds work for our digital meeting assistant."
+  path="/refund-policy"
+>
+  <article class="max-w-3xl mx-auto px-6 py-16 sm:py-20">
+    <p class="text-sm font-semibold uppercase tracking-wider text-emerald-400">Legal</p>
+    <h1 class="mt-3 text-4xl font-bold tracking-tight text-white">Refund &amp; Cancellation Policy</h1>
+    <p class="mt-3 text-sm text-slate-500">Last updated: 15 June 2026</p>
+    <p class="mt-6 text-[15px] leading-relaxed text-slate-400">
+      How billing, cancellations, and refunds work for Echobit, operated by
+      <a href="http://devmorphix.com" target="_blank" rel="noopener" class="font-medium text-emerald-400 underline hover:text-emerald-300">Devmorphix</a>.
+      Read this together with our <a href="/terms" class="font-medium text-emerald-400 underline hover:text-emerald-300">Terms of Service</a>.
+    </p>
+
+    <div class="mt-10 space-y-10">
+      {sections.map((s) => (
+        <section>
+          <h2 class="text-lg font-semibold text-white">{s.h}</h2>
+          {s.body && s.body.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
+          {s.list && (
+            <ul class="mt-4 space-y-3">
+              {s.list.map(([term, def]) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
+                  <span><strong class="font-semibold text-white">{term}</strong> — <Fragment set:html={def} /></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.bullets && (
+            <ul class="mt-4 space-y-2.5">
+              {s.bullets.map((b) => (
+                <li class="flex gap-3 text-[15px] leading-relaxed text-slate-400">
+                  <span class="mt-2 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-emerald-400"></span>
+                  <span set:html={b}></span>
+                </li>
+              ))}
+            </ul>
+          )}
+          {s.after && s.after.map((p) => <p class="mt-3 text-[15px] leading-relaxed text-slate-400" set:html={p} />)}
+        </section>
+      ))}
+    </div>
+  </article>
+</Base>
