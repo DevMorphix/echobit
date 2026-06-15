@@ -84,7 +84,13 @@ app.get('/api/health', async (c) => {
 // over client-side. Unmatched /api/* falls through to the JSON 404.
 app.get('*', async (c) => {
   if (c.req.path.startsWith('/api/')) return c.json({ error: 'Not found' }, 404);
-  return c.env.ASSETS.fetch(new Request(new URL('/app-shell.html', c.req.url)));
+  // Fetch the extensionless shell: "/app-shell.html" 307-redirects to "/app-shell"
+  // (Assets html_handling), and returning that redirect breaks the app route.
+  const shell = await c.env.ASSETS.fetch(new Request(new URL('/app-shell', c.req.url)));
+  return new Response(shell.body, {
+    status: 200,
+    headers: { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-cache' },
+  });
 });
 
 app.notFound((c) => c.json({ error: 'Not found' }, 404));
