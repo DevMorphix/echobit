@@ -409,7 +409,7 @@ const pageSchema = [
         apply(true);
       };
       const stop = () => window.clearInterval(timer);
-      const start = () => { stop(); if (!reduce) timer = window.setInterval(next, 4500); };
+      const start = () => { stop(); if (!reduce) timer = window.setInterval(next, 3500); };
       document.getElementById('t-next')?.addEventListener('click', () => { next(); start(); });
       document.getElementById('t-prev')?.addEventListener('click', () => { prev(); start(); });
       tCarousel.addEventListener('mouseenter', stop);
