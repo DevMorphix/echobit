@@ -7,8 +7,8 @@ const inputCls = 'field';
 const channels = [
   {
     title: 'Email us directly',
-    desc: 'no.reply.echobit@gmail.com',
-    href: 'mailto:no.reply.echobit@gmail.com',
+    desc: 'support@echobits.xyz',
+    href: 'mailto:support@echobits.xyz',
     icon: 'M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z',
   },
   {
@@ -75,7 +75,7 @@ const channels = [
             <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
           </div>
           <h2 class="mt-4 text-xl font-bold text-white">Opening your email…</h2>
-          <p class="mt-2 text-sm text-slate-300 leading-relaxed">If nothing opened, write to us at <a href="mailto:no.reply.echobit@gmail.com" class="font-medium text-emerald-400 underline hover:text-emerald-300">no.reply.echobit@gmail.com</a>.</p>
+          <p class="mt-2 text-sm text-slate-300 leading-relaxed">If nothing opened, write to us at <a href="mailto:support@echobits.xyz" class="font-medium text-emerald-400 underline hover:text-emerald-300">support@echobits.xyz</a>.</p>
         </div>
 
         <!-- Form -->
@@ -220,7 +220,7 @@ const channels = [
       }
       errEl?.classList.add('hidden');
       const body = encodeURIComponent(`Name: ${name}\nEmail: ${email}\nSubject: ${subject}\n\n${message}`);
-      const href = `mailto:no.reply.echobit@gmail.com?subject=${encodeURIComponent('[Echobit] ' + subject)}&body=${body}`;
+      const href = `mailto:support@echobits.xyz?subject=${encodeURIComponent('[Echobit] ' + subject)}&body=${body}`;
       formCard?.classList.add('hidden');
       success?.classList.remove('hidden');
       window.location.href = href;
