@@ -137,6 +137,13 @@ h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
   box-shadow: 0 0 0 1px rgba(52, 211, 153, 0.10), 0 22px 60px -24px rgba(16, 185, 129, 0.45);
 }
 
+/* Hero product mock — opaque surface so the dot-field doesn't show through. */
+.mock-card {
+  background: linear-gradient(180deg, #131b1f, #0e1417);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: 0 24px 70px -36px rgba(0, 0, 0, 0.5);
+}
+
 /* Animated gradient ring for the featured/pricing-popular card. */
 .card-featured {
   position: relative;
