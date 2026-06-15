@@ -53,6 +53,14 @@ body { position: relative; overflow-x: hidden; background: #05080a; }
 
 h1, h2, h3, h4 { font-family: var(--font-display); letter-spacing: -0.02em; }
 
+/* Sticky header — solidifies and lifts off the page once scrolled. */
+#site-header { transition: background-color .3s ease, box-shadow .3s ease, border-color .3s ease; }
+#site-header.is-scrolled {
+  background-color: rgba(5, 8, 10, 0.9);
+  border-bottom-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 10px 30px -12px rgba(0, 0, 0, 0.7);
+}
+
 /* ── Hero background ────────────────────────────────────────────────────────
    The ONLY animated background on the site: ReactBits "Dot Field" (canvas 2D),
    a dot grid that bulges away from the cursor. Mounted into .dot-field by

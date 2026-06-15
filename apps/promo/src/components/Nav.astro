@@ -4,11 +4,11 @@
 const links = [
   { href: '/features', label: 'Features' },
   { href: '/pricing', label: 'Pricing' },
-  { href: '/#faq', label: 'FAQ' },
+  { href: '/about', label: 'About' },
   { href: '/contact', label: 'Contact' },
 ];
 ---
-<header class="sticky top-0 z-50 border-b border-white/10 bg-[#05080a]/70 backdrop-blur-xl">
+<header id="site-header" class="sticky top-0 z-50 border-b border-white/10 bg-[#05080a]/70 backdrop-blur-xl">
   <nav class="max-w-6xl mx-auto px-6 h-16 flex items-center justify-between" aria-label="Primary">
     <a href="/" class="group flex items-center gap-2.5 font-bold text-white">
       <span class="relative inline-flex">
@@ -25,10 +25,54 @@ const links = [
     </div>
 
     <div class="flex items-center gap-2 sm:gap-3">
-      <a href="/login" class="text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors">Sign in</a>
-      <a href="/register" class="btn-primary text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-[#05080a] px-4 py-2 rounded-full transition-colors">
+      <a href="/login" class="hidden sm:inline-block text-sm font-medium text-slate-300 hover:text-white px-3 py-2 transition-colors">Sign in</a>
+      <a href="/register" class="btn-primary hidden sm:inline-flex text-sm font-semibold bg-emerald-500 hover:bg-emerald-400 text-[#05080a] px-4 py-2 rounded-full transition-colors">
         Get started
       </a>
+      <button id="nav-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu"
+        class="md:hidden inline-flex h-10 w-10 items-center justify-center rounded-lg border border-white/10 bg-white/5 text-slate-200 transition-colors hover:border-emerald-400/40 hover:text-white">
+        <svg id="nav-open" class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7h16M4 12h16M4 17h16" /></svg>
+        <svg id="nav-close" class="hidden h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" /></svg>
+      </button>
     </div>
   </nav>
+
+  <!-- Mobile menu -->
+  <div id="mobile-menu" class="md:hidden hidden border-t border-white/10 bg-[#05080a]/95 backdrop-blur-xl">
+    <div class="max-w-6xl mx-auto px-6 py-4 flex flex-col gap-1">
+      {links.map((l) => (
+        <a href={l.href} class="rounded-lg px-3 py-3 text-base font-medium text-slate-200 transition-colors hover:bg-white/5 hover:text-white">{l.label}</a>
+      ))}
+      <div class="sm:hidden mt-2 flex flex-col gap-2 border-t border-white/10 pt-4">
+        <a href="/login" class="rounded-lg border border-white/15 bg-white/5 px-3 py-3 text-center text-sm font-semibold text-slate-200 transition-colors hover:bg-white/10">Sign in</a>
+        <a href="/register" class="btn-primary rounded-lg bg-emerald-500 px-3 py-3 text-center text-sm font-semibold text-[#05080a] transition-colors hover:bg-emerald-400">Get started free</a>
+      </div>
+    </div>
+  </div>
 </header>
+
+<script>
+  const header = document.getElementById('site-header');
+  const toggle = document.getElementById('nav-toggle');
+  const menu = document.getElementById('mobile-menu');
+  const openIcon = document.getElementById('nav-open');
+  const closeIcon = document.getElementById('nav-close');
+
+  const setOpen = (open: boolean) => {
+    if (!menu) return;
+    menu.classList.toggle('hidden', !open);
+    openIcon?.classList.toggle('hidden', open);
+    closeIcon?.classList.toggle('hidden', !open);
+    toggle?.setAttribute('aria-expanded', String(open));
+    toggle?.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+  };
+
+  toggle?.addEventListener('click', () => setOpen(menu?.classList.contains('hidden') ?? false));
+  menu?.querySelectorAll('a').forEach((a) => a.addEventListener('click', () => setOpen(false)));
+  window.addEventListener('resize', () => { if (window.innerWidth >= 768) setOpen(false); });
+
+  // Solidify the bar once the page is scrolled.
+  const onScroll = () => header?.classList.toggle('is-scrolled', window.scrollY > 8);
+  onScroll();
+  window.addEventListener('scroll', onScroll, { passive: true });
+</script>

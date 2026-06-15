@@ -5,7 +5,6 @@ const cols = [
     { href: '/features', label: 'Features' },
     { href: '/pricing', label: 'Pricing' },
     { href: '/#languages', label: 'Languages' },
-    { href: '/#faq', label: 'FAQ' },
   ]},
   { title: 'Company', links: [
     { href: '/about', label: 'About' },
@@ -20,8 +19,8 @@ const cols = [
 <footer class="relative border-t border-white/10 bg-white/[0.02] backdrop-blur-sm">
   <div class="absolute inset-x-0 -top-px h-px bg-gradient-to-r from-transparent via-emerald-400/50 to-transparent"></div>
   <div class="max-w-6xl mx-auto px-6 py-14">
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-10">
-      <div class="col-span-2 md:col-span-1">
+    <div class="grid grid-cols-2 md:grid-cols-5 gap-10">
+      <div class="col-span-2">
         <a href="/" class="flex items-center gap-2.5 font-bold text-white mb-3">
           <img src="/favicon.png" alt="Echobit" width="32" height="32" class="w-8 h-8 rounded-lg object-contain" />
           <span class="text-lg tracking-tight">Echobit</span>
@@ -29,8 +28,19 @@ const cols = [
         <p class="text-sm text-slate-400 leading-relaxed max-w-xs">
           AI meeting companion by Devmorphix. Record, transcribe, and summarise — in your language.
         </p>
-        <a href="/register" class="btn-primary mt-4 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
+        <div class="mt-4 flex flex-wrap items-center gap-2">
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300">
+            <svg class="h-3.5 w-3.5 text-emerald-400" fill="currentColor" viewBox="0 0 24 24"><path d="M17.6 9.48l1.84-3.18a.4.4 0 00-.7-.4l-1.86 3.23a11.46 11.46 0 00-9.76 0L5.26 5.9a.4.4 0 10-.7.4L6.4 9.48A11.3 11.3 0 001 18.7h22a11.3 11.3 0 00-5.4-9.22zM7 15.25a1 1 0 110-2 1 1 0 010 2zm10 0a1 1 0 110-2 1 1 0 010 2z"/></svg>
+            Android
+          </span>
+          <span class="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-slate-300">
+            <svg class="h-3.5 w-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12a9 9 0 1018 0 9 9 0 00-18 0zm0 0h18M12 3a14 14 0 010 18M12 3a14 14 0 000 18"/></svg>
+            Web
+          </span>
+        </div>
+        <a href="/register" class="btn-primary mt-5 inline-flex items-center gap-2 rounded-full bg-emerald-500 px-4 py-2 text-sm font-semibold text-[#05080a] hover:bg-emerald-400 transition-colors">
           Start for free
+          <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
         </a>
       </div>
 
@@ -39,7 +49,12 @@ const cols = [
           <p class="text-sm font-semibold text-white mb-4">{c.title}</p>
           <ul class="space-y-3 text-sm text-slate-400">
             {c.links.map((l) => (
-              <li><a href={l.href} class="hover:text-emerald-400 transition-colors">{l.label}</a></li>
+              <li>
+                <a href={l.href} class="group inline-flex items-center gap-1.5 transition-colors hover:text-emerald-400">
+                  <span class="h-px w-0 bg-emerald-400 transition-all duration-300 group-hover:w-3"></span>
+                  {l.label}
+                </a>
+              </li>
             ))}
           </ul>
         </div>
@@ -48,7 +63,10 @@ const cols = [
 
     <div class="border-t border-white/10 mt-12 pt-6 flex flex-col sm:flex-row items-center justify-between gap-3">
       <p class="text-sm text-slate-500">© {year} Devmorphix. All rights reserved.</p>
-      <p class="text-xs text-slate-500">Echobit — AI Meeting Companion</p>
+      <p class="inline-flex items-center gap-1.5 text-xs text-slate-500">
+        <span class="inline-block h-1.5 w-1.5 rounded-full bg-emerald-400"></span>
+        Built in India · for every language
+      </p>
     </div>
   </div>
 </footer>
