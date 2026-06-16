@@ -14,9 +14,9 @@
     "@fontsource-variable/sora": "^5.2.5"
   },
   "devDependencies": {
-    "@astrojs/sitemap": "^3.7.0",
+    "@astrojs/sitemap": "^3.7.3",
     "@tailwindcss/vite": "^4.1.18",
-    "astro": "^5.16.0",
+    "astro": "^6.4.7",
     "tailwindcss": "^4.1.18"
   }
 }

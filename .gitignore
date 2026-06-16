@@ -37,8 +37,11 @@ Thumbs.db
 *.sw?
 .env
 backend/.env
+
 # Cloudflare / migration
 .dev.vars*
 !.dev.vars.example
 .wrangler
 scripts/migrate/dump/
+
+.astro/
