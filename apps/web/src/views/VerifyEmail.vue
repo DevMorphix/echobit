@@ -1,30 +1,33 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-black via-gray-900 to-emerald-950 flex items-center justify-center px-4 py-8">
+  <div class="relative min-h-screen bg-canvas text-content flex items-center justify-center px-4 py-8 overflow-hidden">
+    <div class="pointer-events-none absolute inset-0 -z-10" style="background: radial-gradient(ellipse 55% 40% at 50% 25%, rgba(16,185,129,0.14), transparent 70%)"></div>
+    <div class="absolute top-4 right-4"><ThemeToggle /></div>
+
     <div class="max-w-md w-full">
       <!-- Logo -->
       <div class="text-center mb-6 sm:mb-8">
-        <a href="/" class="inline-flex items-center space-x-2">
+        <a href="/" class="inline-flex items-center gap-2">
           <img src="/favicon.png" alt="Echobit" class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl object-contain" />
-          <span class="text-2xl sm:text-3xl font-bold text-white">Echobit</span>
+          <span class="text-2xl sm:text-3xl font-bold">Echobit</span>
         </a>
       </div>
 
       <!-- Card -->
-      <div class="bg-white/10 backdrop-blur-lg rounded-2xl sm:rounded-3xl p-6 sm:p-8 border border-emerald-500/20 shadow-2xl">
+      <div class="card card-elevated p-6 sm:p-8">
         <!-- Icon -->
-        <div class="w-14 h-14 bg-emerald-500/20 rounded-2xl flex items-center justify-center mx-auto mb-5">
-          <svg class="w-7 h-7 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-5">
+          <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
           </svg>
         </div>
 
-        <h2 class="text-xl sm:text-2xl font-bold text-white mb-2 text-center">Check your email</h2>
-        <p class="text-white/60 mb-1 text-sm text-center">We sent a 6-digit code to</p>
-        <p class="text-emerald-400 font-medium text-sm text-center mb-6 sm:mb-8 truncate">{{ email }}</p>
+        <h2 class="text-xl sm:text-2xl font-bold mb-2 text-center">Check your email</h2>
+        <p class="text-muted mb-1 text-sm text-center">We sent a 6-digit code to</p>
+        <p class="text-primary font-medium text-sm text-center mb-6 sm:mb-8 truncate">{{ email }}</p>
 
         <form @submit.prevent="handleVerify" class="space-y-5">
           <div>
-            <label class="block text-white/80 text-sm font-medium mb-2">Verification Code</label>
+            <label class="block text-muted text-sm font-medium mb-2">Verification Code</label>
             <input
               v-model="otp"
               type="text"
@@ -32,24 +35,17 @@
               maxlength="6"
               required
               autofocus
-              class="w-full px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white text-center text-2xl tracking-[0.5em] placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-transparent transition font-mono"
+              class="field text-center text-2xl tracking-[0.5em] font-mono"
               placeholder="······"
             />
           </div>
 
-          <div v-if="error" class="bg-red-500/20 border border-red-500/30 text-red-200 px-4 py-3 rounded-xl text-sm">
+          <div v-if="error" class="bg-red-100 dark:bg-red-500/15 border border-red-200 dark:border-red-500/20 text-red-700 dark:text-red-300 px-4 py-3 rounded-xl text-sm">
             {{ error }}
           </div>
 
-          <button
-            type="submit"
-            :disabled="loading || otp.length < 6"
-            class="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-3 rounded-xl font-semibold hover:opacity-90 transition disabled:opacity-50 flex items-center justify-center space-x-2"
-          >
-            <svg v-if="loading" class="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
+          <button type="submit" :disabled="loading || otp.length < 6" class="btn-primary w-full py-3">
+            <Spinner v-if="loading" size="sm" />
             <span>{{ loading ? 'Verifying...' : 'Verify Email' }}</span>
           </button>
         </form>
@@ -59,12 +55,12 @@
         </div>
 
         <div class="mt-4 text-center">
-          <p class="text-white/50 text-sm">
+          <p class="text-muted text-sm">
             Didn't receive it?
             <button
               @click="resend"
               :disabled="resendCooldown > 0 || resending || (turnstileSiteKey && !turnstileToken)"
-              class="text-emerald-400 hover:text-emerald-300 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ml-1"
+              class="text-primary hover:opacity-80 font-medium transition disabled:opacity-50 disabled:cursor-not-allowed ml-1"
             >
               {{ resendCooldown > 0 ? `Resend in ${resendCooldown}s` : resending ? 'Sending…' : 'Resend code' }}
             </button>
@@ -72,9 +68,7 @@
         </div>
 
         <div class="mt-4 text-center">
-          <router-link to="/login" class="text-white/40 hover:text-white/70 text-sm transition">
-            ← Back to sign in
-          </router-link>
+          <router-link to="/login" class="text-muted hover:text-content text-sm transition">← Back to sign in</router-link>
         </div>
       </div>
     </div>
@@ -86,6 +80,8 @@ import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
 import { authApi } from '../api';
 import TurnstileWidget from '../components/TurnstileWidget.vue';
+import ThemeToggle from '../components/ui/ThemeToggle.vue';
+import Spinner from '../components/ui/Spinner.vue';
 
 const router = useRouter();
 const route = useRoute();

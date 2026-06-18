@@ -13,7 +13,9 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue';
+import { useTheme } from '../composables/useTheme';
 
+const { isDark } = useTheme();
 const siteKey = import.meta.env.VITE_TURNSTILE_SITE_KEY;
 const emit = defineEmits(['update:modelValue']);
 const container = ref(null);
@@ -44,7 +46,7 @@ const render = () => {
   window.turnstile.ready(() => {
     widgetId = window.turnstile.render(container.value, {
       sitekey: siteKey,
-      theme: 'dark',
+      theme: isDark.value ? 'dark' : 'light',
       callback: (token) => emit('update:modelValue', token),
       'expired-callback': () => emit('update:modelValue', ''),
       'error-callback': () => emit('update:modelValue', ''),

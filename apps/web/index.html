@@ -12,7 +12,24 @@
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="apple-touch-icon" href="/favicon.png" />
     <meta name="application-name" content="Echobit" />
-    <meta name="theme-color" content="#10b981" />
+    <meta name="theme-color" content="#05080a" id="theme-color-meta" />
+
+    <!-- Set the theme class before first paint to avoid a flash (FOUC).
+         Default to dark to match the brand; respect a stored choice. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('echobit-theme');
+          var dark = stored ? stored === 'dark'
+            : !window.matchMedia('(prefers-color-scheme: light)').matches;
+          document.documentElement.classList.toggle('dark', dark);
+          var meta = document.getElementById('theme-color-meta');
+          if (meta) meta.setAttribute('content', dark ? '#05080a' : '#f8fafc');
+        } catch (e) {
+          document.documentElement.classList.add('dark');
+        }
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

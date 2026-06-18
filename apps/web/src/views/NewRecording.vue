@@ -2,26 +2,26 @@
   <div class="max-w-4xl mx-auto">
     <!-- Header -->
     <div class="mb-6 sm:mb-8">
-      <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">New Recording</h1>
-      <p class="text-gray-600 mt-1 text-sm sm:text-base">Record your voice or upload an existing audio file for AI transcription.</p>
+      <h1 class="text-2xl sm:text-3xl font-bold text-content">New Recording</h1>
+      <p class="text-muted mt-1 text-sm sm:text-base">Record your voice or upload an existing audio file for AI transcription.</p>
     </div>
 
     <!-- Duration warning banner -->
-    <div v-if="isRecording && nearingLimit && !atLimit" class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="isRecording && nearingLimit && !atLimit" class="mb-6 flex items-start gap-3 bg-amber-100 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4">
+      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
-      <p class="text-amber-800 text-sm font-semibold">Less than 1 minute left on your {{ planLabel }} plan limit — recording will auto-save when time is up.</p>
+      <p class="text-amber-800 dark:text-amber-300 text-sm font-semibold">Less than 1 minute left on your {{ planLabel }} plan limit — recording will auto-save when time is up.</p>
     </div>
 
     <!-- Plan limit banner -->
-    <div v-if="limitReached" class="mb-6 flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4">
-      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <div v-if="limitReached" class="mb-6 flex items-start gap-3 bg-amber-100 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 rounded-xl p-4">
+      <svg class="w-5 h-5 text-amber-500 mt-0.5 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
       </svg>
       <div class="flex-1">
-        <p class="font-semibold text-amber-800 text-sm">Recording limit reached</p>
-        <p class="text-amber-700 text-sm mt-0.5">
+        <p class="font-semibold text-amber-800 dark:text-amber-300 text-sm">Recording limit reached</p>
+        <p class="text-amber-700 dark:text-amber-400 text-sm mt-0.5">
           You've used {{ usageCount }}/{{ limitCount }} recordings this month on the {{ planLabel }} plan.
         </p>
       </div>
@@ -31,17 +31,17 @@
     </div>
 
     <!-- Tab Selection -->
-    <div class="flex space-x-2 mb-4 sm:mb-6">
+    <div class="flex gap-2 mb-4 sm:mb-6">
       <button
         @click="mode = 'record'"
         :class="[
-          'flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 text-sm sm:text-base',
-          mode === 'record' 
-            ? 'bg-emerald-600 text-white' 
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          'flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition flex items-center justify-center gap-2 text-sm sm:text-base',
+          mode === 'record'
+            ? 'bg-primary text-primary-fg'
+            : 'bg-surface-2 text-muted hover:text-content'
         ]"
       >
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4m-4-8a3 3 0 01-3-3V5a3 3 0 116 0v6a3 3 0 01-3 3z" />
         </svg>
         <span>Record Live</span>
@@ -49,13 +49,13 @@
       <button
         @click="mode = 'upload'"
         :class="[
-          'flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition flex items-center justify-center space-x-2 text-sm sm:text-base',
-          mode === 'upload' 
-            ? 'bg-emerald-600 text-white' 
-            : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+          'flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition flex items-center justify-center gap-2 text-sm sm:text-base',
+          mode === 'upload'
+            ? 'bg-primary text-primary-fg'
+            : 'bg-surface-2 text-muted hover:text-content'
         ]"
       >
-        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
         </svg>
         <span>Upload File</span>
@@ -63,16 +63,16 @@
     </div>
 
     <!-- Recording Card -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-8">
+    <div class="card card-elevated p-4 sm:p-8">
       <!-- LIVE RECORDING MODE -->
       <div v-if="mode === 'record'" class="text-center py-4 sm:py-8">
         <!-- Waveform Visualization -->
         <div class="mb-6 sm:mb-8">
           <div class="flex items-center justify-center space-x-0.5 sm:space-x-1 h-16 sm:h-24">
-            <div 
-              v-for="i in 20" 
-              :key="i" 
-              class="w-1 sm:w-1 bg-emerald-500 rounded-full transition-all duration-150"
+            <div
+              v-for="i in 20"
+              :key="i"
+              class="w-1 sm:w-1 bg-primary rounded-full transition-all duration-150"
               :style="{ height: getBarHeight(i) + 'px' }"
             ></div>
           </div>
@@ -80,7 +80,7 @@
 
         <!-- Timer -->
         <div class="mb-4 sm:mb-6">
-          <span class="text-3xl sm:text-4xl font-mono font-bold text-gray-900">{{ formatTime(recordingTime) }}</span>
+          <span class="text-3xl sm:text-4xl font-mono font-bold text-content">{{ formatTime(recordingTime) }}</span>
         </div>
 
         <!-- Controls -->
@@ -107,18 +107,19 @@
             </svg>
           </button>
 
-          <button 
+          <button
             v-if="audioBlob && !isRecording"
             @click="resetRecording"
-            class="w-12 h-12 sm:w-16 sm:h-16 bg-gray-200 rounded-full flex items-center justify-center text-gray-600 hover:bg-gray-300 transition"
+            aria-label="Discard recording"
+            class="w-12 h-12 sm:w-16 sm:h-16 bg-surface-2 rounded-full flex items-center justify-center text-muted hover:text-content hover:bg-line transition"
           >
-            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
             </svg>
           </button>
         </div>
 
-        <p class="text-gray-500 mt-4 text-xs sm:text-sm">
+        <p class="text-muted mt-4 text-xs sm:text-sm">
           {{ isRecording ? 'Recording in progress... Click to stop' : audioBlob ? 'Recording complete' : 'Click to start recording' }}
         </p>
       </div>
@@ -134,11 +135,11 @@
           :class="[
             'border-2 border-dashed rounded-2xl p-6 sm:p-12 text-center transition',
             limitReached ? 'opacity-40 cursor-not-allowed' : 'cursor-pointer',
-            isDragging 
-              ? 'border-emerald-500 bg-emerald-50' 
-              : uploadedFile 
-                ? 'border-emerald-300 bg-emerald-50' 
-                : 'border-gray-300 hover:border-emerald-400 hover:bg-gray-50'
+            isDragging
+              ? 'border-primary bg-primary/10'
+              : uploadedFile
+                ? 'border-primary/60 bg-primary/10'
+                : 'border-line hover:border-primary/60 hover:bg-surface-2'
           ]"
         >
           <input
@@ -150,31 +151,32 @@
           />
           
           <div v-if="!uploadedFile">
-            <div class="w-12 h-12 sm:w-16 sm:h-16 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
-              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="w-12 h-12 sm:w-16 sm:h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <svg class="w-6 h-6 sm:w-8 sm:h-8 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
               </svg>
             </div>
-            <p class="text-base sm:text-lg font-medium text-gray-700">Drop your audio or video file here</p>
-            <p class="text-gray-500 mt-2 text-sm">or click to browse</p>
-            <p class="text-xs sm:text-sm text-gray-400 mt-3 sm:mt-4">Supports MP3, WAV, M4A, OGG, WebM, MP4, MOV (max 100MB)</p>
+            <p class="text-base sm:text-lg font-medium text-content">Drop your audio or video file here</p>
+            <p class="text-muted mt-2 text-sm">or click to browse</p>
+            <p class="text-xs sm:text-sm text-faint mt-3 sm:mt-4">Supports MP3, WAV, M4A, OGG, WebM, MP4, MOV (max 100MB)</p>
           </div>
-          
-          <div v-else class="flex items-center justify-center space-x-4">
-            <div class="w-12 h-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-              <svg class="w-6 h-6 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+
+          <div v-else class="flex items-center justify-center gap-4">
+            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+              <svg class="w-6 h-6 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19V6l12-3v13M9 19c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zm12-3c0 1.105-1.343 2-3 2s-3-.895-3-2 1.343-2 3-2 3 .895 3 2zM9 10l12-3" />
               </svg>
             </div>
             <div class="text-left">
-              <p class="font-medium text-gray-900">{{ uploadedFile.name }}</p>
-              <p class="text-sm text-gray-500">{{ formatFileSize(uploadedFile.size) }}</p>
+              <p class="font-medium text-content">{{ uploadedFile.name }}</p>
+              <p class="text-sm text-muted">{{ formatFileSize(uploadedFile.size) }}</p>
             </div>
             <button
               @click.stop="removeUploadedFile"
-              class="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition"
+              aria-label="Remove file"
+              class="p-2 text-faint hover:text-red-600 hover:bg-red-500/10 rounded-lg transition"
             >
-              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
               </svg>
             </button>
@@ -183,52 +185,49 @@
       </div>
 
       <!-- Audio Playback -->
-      <div v-if="audioUrl" class="mt-6 p-4 bg-gray-50 rounded-xl">
-        <p class="text-sm font-medium text-gray-700 mb-2">Preview Recording</p>
+      <div v-if="audioUrl" class="mt-6 p-4 bg-surface-2 rounded-xl">
+        <p class="text-sm font-medium text-content mb-2">Preview Recording</p>
         <audio :src="audioUrl" controls class="w-full"></audio>
       </div>
 
       <!-- Info Message -->
-      <div v-if="audioBlob || uploadedFile" class="mt-6 p-4 bg-emerald-50 border border-emerald-200 rounded-xl">
-        <div class="flex items-center space-x-3">
-          <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <div v-if="audioBlob || uploadedFile" class="mt-6 p-4 bg-primary/10 border border-primary/20 rounded-xl">
+        <div class="flex items-center gap-3">
+          <svg class="w-5 h-5 text-primary shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
-          <p class="text-sm text-emerald-700">Click save to upload and transcribe with AI. You'll see the transcript immediately.</p>
+          <p class="text-sm text-primary">Click save to upload and transcribe with AI. You'll see the transcript immediately.</p>
         </div>
       </div>
 
       <!-- Upload Progress Bar -->
       <div v-if="saving && uploadProgress > 0 && uploadProgress < 100" class="mt-6">
         <div class="flex items-center justify-between mb-2">
-          <span class="text-sm font-medium text-gray-700">{{ savingStatus }}</span>
-          <span class="text-sm text-gray-500">{{ uploadProgress }}%</span>
+          <span class="text-sm font-medium text-content">{{ savingStatus }}</span>
+          <span class="text-sm text-muted">{{ uploadProgress }}%</span>
         </div>
-        <div class="w-full bg-gray-200 rounded-full h-2.5">
-          <div 
-            class="bg-emerald-600 h-2.5 rounded-full transition-all duration-300"
+        <div class="w-full bg-surface-2 rounded-full h-2.5">
+          <div
+            class="bg-primary h-2.5 rounded-full transition-all duration-300"
             :style="{ width: uploadProgress + '%' }"
           ></div>
         </div>
       </div>
 
       <!-- Action Buttons -->
-      <div class="mt-8 flex items-center justify-end space-x-4">
-        <button 
+      <div class="mt-8 flex items-center justify-end gap-4">
+        <button
           @click="$router.push('/dashboard')"
-          class="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition"
+          class="px-6 py-3 text-muted hover:text-content font-medium transition"
         >
           Cancel
         </button>
         <button
           @click="saveRecording"
           :disabled="saving || (!audioBlob && !uploadedFile) || limitReached"
-          class="px-6 py-3 bg-emerald-600 text-white rounded-xl font-medium hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+          class="btn-primary px-6 py-3"
         >
-          <svg v-if="saving" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-          </svg>
+          <Spinner v-if="saving" size="sm" />
           <span>{{ saving ? (savingStatus || 'Saving...') : 'Save & Transcribe' }}</span>
         </button>
       </div>
@@ -240,6 +239,7 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import { recordingsApi } from '../api';
+import Spinner from '../components/ui/Spinner.vue';
 
 const router = useRouter();
 

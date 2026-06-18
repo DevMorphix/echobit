@@ -13,62 +13,57 @@
     <!-- Back Button -->
     <button
       @click="$router.push('/dashboard/recordings')"
-      class="flex items-center text-gray-600 hover:text-gray-900 mb-4 sm:mb-6 mt-6 transition text-sm sm:text-base"
+      class="flex items-center text-muted hover:text-content mb-4 sm:mb-6 mt-6 transition text-sm sm:text-base"
     >
-      <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <svg class="w-4 h-4 sm:w-5 sm:h-5 mr-1 sm:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>
       Back to Recordings
     </button>
 
-    <div v-if="loading" class="bg-white rounded-2xl p-8 sm:p-12 text-center">
-      <div class="animate-spin w-8 h-8 border-4 border-emerald-600 border-t-transparent rounded-full mx-auto"></div>
-      <p class="text-gray-500 mt-2">Loading recording...</p>
+    <div v-if="loading" class="card p-8 sm:p-12 text-center">
+      <Spinner size="lg" class="text-primary mx-auto" />
+      <p class="text-muted mt-2">Loading recording...</p>
     </div>
 
-    <div v-else-if="!recording" class="bg-white rounded-2xl p-8 sm:p-12 text-center">
-      <p class="text-gray-500">Recording not found.</p>
+    <div v-else-if="!recording" class="card p-8 sm:p-12 text-center">
+      <p class="text-muted">Recording not found.</p>
     </div>
 
     <template v-else>
       <!-- Header -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
+      <div class="card card-elevated p-4 sm:p-6 mb-4 sm:mb-6">
         <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
           <div class="min-w-0 flex-1">
             <div class="flex items-center gap-2 flex-wrap">
-              <h1 class="text-xl sm:text-2xl font-bold text-gray-900 break-words">{{ recording.title }}</h1>
+              <h1 class="text-xl sm:text-2xl font-bold text-content break-words">{{ recording.title }}</h1>
               <button
                 v-if="recording.transcript && recording.transcript.length > 20"
                 @click="regenerateTitle"
                 :disabled="generatingTitle"
-                class="text-emerald-600 hover:text-emerald-700 p-1 rounded-lg hover:bg-emerald-50 transition"
+                aria-label="Generate AI title"
+                class="text-primary hover:opacity-80 p-1 rounded-lg hover:bg-primary/10 transition"
                 title="Generate AI Title"
               >
-                <svg v-if="generatingTitle" class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-                </svg>
-                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <Spinner v-if="generatingTitle" size="sm" />
+                <svg v-else class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                 </svg>
               </button>
             </div>
-            <p class="text-gray-500 mt-1 text-sm sm:text-base">{{ formatDate(recording.createdAt) }}</p>
+            <p class="text-muted mt-1 text-sm sm:text-base">{{ formatDate(recording.createdAt) }}</p>
           </div>
-          <span
-            class="self-start px-3 py-1 text-sm font-medium rounded-full whitespace-nowrap"
-            :class="statusClass(recording.status)"
-          >
+          <span class="badge self-start text-sm whitespace-nowrap" :class="statusClass(recording.status)">
             {{ recording.status }}
           </span>
         </div>
       </div>
 
       <!-- Audio Player -->
-      <div v-if="recording.audioUrl || recording.audioData" class="bg-white rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6 mb-4 sm:mb-6">
-        <h2 class="font-semibold text-gray-900 mb-3 sm:mb-4 text-sm sm:text-base">Audio Recording</h2>
+      <div v-if="recording.audioUrl || recording.audioData" class="card card-elevated p-4 sm:p-6 mb-4 sm:mb-6">
+        <h2 class="font-semibold text-content mb-3 sm:mb-4 text-sm sm:text-base">Audio Recording</h2>
         <audio :src="recording.audioUrl || recording.audioData" controls class="w-full"></audio>
-        <p v-if="recording.duration" class="text-xs sm:text-sm text-gray-500 mt-2">Duration: {{ formatDuration(recording.duration) }}</p>
+        <p v-if="recording.duration" class="text-xs sm:text-sm text-muted mt-2">Duration: {{ formatDuration(recording.duration) }}</p>
       </div>
 
       <TranscriptPanel
@@ -79,20 +74,20 @@
       />
 
       <!-- AI Features -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 mb-4 sm:mb-6">
+      <div class="card mb-4 sm:mb-6">
         <!-- Tab Navigation -->
-        <div class="flex border-b border-gray-100">
+        <div class="flex border-b border-line">
           <button
             v-for="tab in tabs"
             :key="tab.key"
             @click="activeAITab = tab.key"
             :class="[
               'flex-1 py-3 sm:py-4 px-4 text-sm sm:text-base font-medium transition-colors relative',
-              activeAITab === tab.key ? tab.activeClass : 'text-gray-500 hover:text-gray-700',
+              activeAITab === tab.key ? tab.activeClass : 'text-muted hover:text-content',
             ]"
           >
-            <div class="flex items-center justify-center space-x-2">
-              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <div class="flex items-center justify-center gap-2">
+              <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" :d="tab.icon" />
               </svg>
               <span>{{ tab.label }}</span>
@@ -148,6 +143,7 @@ import TranscriptPanel from '../components/recording/TranscriptPanel.vue';
 import SummaryPanel from '../components/recording/SummaryPanel.vue';
 import MinutesPanel from '../components/recording/MinutesPanel.vue';
 import ActionItemsList from '../components/recording/ActionItemsList.vue';
+import Spinner from '../components/ui/Spinner.vue';
 
 const route = useRoute();
 const recording = ref(null);
@@ -173,27 +169,27 @@ const tabs = [
     key: 'summary',
     label: 'Summary',
     icon: 'M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z',
-    activeClass: 'text-emerald-600',
+    activeClass: 'text-emerald-600 dark:text-emerald-400',
     dotClass: 'bg-emerald-500',
-    barClass: 'bg-emerald-600',
+    barClass: 'bg-emerald-600 dark:bg-emerald-400',
     hasContent: () => !!recording.value?.summary,
   },
   {
     key: 'minutes',
     label: 'Minutes',
     icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z',
-    activeClass: 'text-green-600',
+    activeClass: 'text-green-600 dark:text-green-400',
     dotClass: 'bg-green-500',
-    barClass: 'bg-green-600',
+    barClass: 'bg-green-600 dark:bg-green-400',
     hasContent: () => !!recording.value?.minutes,
   },
   {
     key: 'actions',
     label: 'Actions',
     icon: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4',
-    activeClass: 'text-purple-600',
+    activeClass: 'text-purple-600 dark:text-purple-400',
     dotClass: 'bg-purple-500',
-    barClass: 'bg-purple-600',
+    barClass: 'bg-purple-600 dark:bg-purple-400',
     hasContent: () => !!recording.value?.actionItems?.length,
   },
 ];

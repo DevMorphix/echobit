@@ -19,32 +19,33 @@
   </transition>
 
   <!-- Fixed Navigation -->
-  <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 pt-9 bg-black/30 backdrop-blur-md border-b border-white/5">
+  <nav class="fixed top-0 left-0 right-0 z-50 px-4 sm:px-6 py-4 pt-9 bg-canvas/70 backdrop-blur-md border-b border-line">
     <div class="max-w-7xl mx-auto flex justify-between items-center">
-      <a href="/" class="flex items-center space-x-2">
+      <a href="/" class="flex items-center gap-2">
         <img src="/favicon.png" alt="Echobit" class="w-8 h-8 sm:w-10 sm:h-10 rounded-xl object-contain" />
-        <span class="text-xl sm:text-2xl font-bold text-white">Echobit</span>
+        <span class="text-xl sm:text-2xl font-bold text-content">Echobit</span>
       </a>
-      <div class="flex items-center space-x-2 sm:space-x-4">
-        <a href="/contact" class="text-white/70 hover:text-white transition px-3 py-2 text-sm hidden sm:block">
+      <div class="flex items-center gap-2 sm:gap-4">
+        <ThemeToggle />
+        <a href="/contact" class="text-muted hover:text-content transition px-3 py-2 text-sm hidden sm:block">
           Contact
         </a>
         <template v-if="authState.isAuthenticated">
-          <router-link to="/dashboard" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
+          <router-link to="/dashboard" class="text-muted hover:text-content transition px-3 sm:px-4 py-2 text-sm sm:text-base hidden sm:block">
             Dashboard
           </router-link>
-          <router-link to="/dashboard" class="flex items-center gap-2 bg-white/10 hover:bg-white/20 border border-white/20 text-white px-3 py-2 rounded-full transition text-sm font-medium">
-            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center text-xs font-bold leading-none">
+          <router-link to="/dashboard" class="flex items-center gap-2 bg-surface-2 hover:bg-surface border border-line text-content px-3 py-2 rounded-full transition text-sm font-medium">
+            <div class="w-6 h-6 bg-primary rounded-full flex items-center justify-center text-primary-fg text-xs font-bold leading-none">
               {{ (authState.user?.name || 'U').split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) }}
             </div>
             <span class="hidden sm:inline">{{ authState.user?.name?.split(' ')[0] }}</span>
           </router-link>
         </template>
         <template v-else>
-          <router-link to="/login" class="text-white/80 hover:text-white transition px-3 sm:px-4 py-2 text-sm sm:text-base">
+          <router-link to="/login" class="text-muted hover:text-content transition px-3 sm:px-4 py-2 text-sm sm:text-base">
             Sign In
           </router-link>
-          <router-link to="/register" class="bg-emerald-500 text-white px-4 sm:px-6 py-2 rounded-full font-semibold hover:bg-emerald-400 transition shadow-lg text-sm sm:text-base">
+          <router-link to="/register" class="btn-primary rounded-full px-4 sm:px-6 py-2 text-sm sm:text-base">
             Get Started
           </router-link>
         </template>
@@ -52,85 +53,83 @@
     </div>
   </nav>
 
-  <div class="bg-gradient-to-br from-black via-gray-900 to-emerald-950 min-h-screen overflow-x-hidden">
+  <div class="bg-canvas text-content min-h-screen overflow-x-hidden">
 
     <!-- Hero -->
     <section class="pt-40 pb-16 px-4 sm:px-6 text-center relative overflow-hidden">
       <div class="absolute inset-0 pointer-events-none overflow-hidden">
-        <div class="absolute -top-40 -right-40 w-96 h-96 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
-        <div class="absolute -bottom-20 -left-40 w-80 h-80 bg-green-600 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
+        <div class="absolute -top-40 -right-40 w-96 h-96 bg-primary rounded-full filter blur-3xl opacity-10"></div>
+        <div class="absolute -bottom-20 -left-40 w-80 h-80 bg-emerald-600 rounded-full filter blur-3xl opacity-10"></div>
       </div>
       <div class="relative z-10 max-w-3xl mx-auto">
-        <div class="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-sm rounded-full text-white/80 text-sm mb-6">
-          <span class="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+        <div class="inline-flex items-center px-4 py-2 bg-surface-2 border border-line rounded-full text-muted text-sm mb-6">
+          <span class="w-2 h-2 bg-primary rounded-full mr-2"></span>
           Simple, transparent pricing
         </div>
-        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+        <h1 class="text-4xl sm:text-5xl md:text-6xl font-bold text-content mb-6 leading-tight">
           Plans for every
-          <span class="bg-gradient-to-r from-emerald-400 to-green-300 bg-clip-text text-transparent"> need</span>
+          <span class="bg-gradient-to-r from-emerald-400 to-green-500 bg-clip-text text-transparent"> need</span>
         </h1>
-        <p class="text-lg sm:text-xl text-white/70 max-w-xl mx-auto">
+        <p class="text-lg sm:text-xl text-muted max-w-xl mx-auto">
           Start free and upgrade when you're ready. No credit card required.
         </p>
 
         <!-- Billing toggle -->
         <div class="flex items-center justify-center mt-8">
-          <div class="flex bg-white/10 backdrop-blur-sm rounded-full p-1 border border-white/10">
+          <div class="flex bg-surface-2 rounded-full p-1 border border-line">
             <button
               @click="annual = false"
               class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200"
-              :class="!annual ? 'bg-white text-gray-900 shadow-md' : 'text-white/60 hover:text-white'"
+              :class="!annual ? 'bg-surface text-content shadow-sm' : 'text-muted hover:text-content'"
             >
               Monthly
             </button>
             <button
               @click="annual = true"
               class="px-5 py-2 rounded-full text-sm font-semibold transition-all duration-200 flex items-center gap-2"
-              :class="annual ? 'bg-white text-gray-900 shadow-md' : 'text-white/60 hover:text-white'"
+              :class="annual ? 'bg-surface text-content shadow-sm' : 'text-muted hover:text-content'"
             >
               Annual
-              <span
-                class="text-xs px-2 py-0.5 rounded-full border transition-all duration-200"
-                :class="annual ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-emerald-500/20 text-emerald-400 border-emerald-500/30'"
-              >Save up to 33%</span>
+              <span class="text-xs px-2 py-0.5 rounded-full bg-primary/15 text-primary border border-primary/30">Save up to 33%</span>
             </button>
           </div>
         </div>
 
         <!-- Coupon input -->
         <div class="flex items-center justify-center mt-6">
-          <div class="flex items-center gap-2 bg-white/10 backdrop-blur-sm border border-white/15 rounded-2xl px-4 py-2.5 w-full max-w-sm">
-            <svg class="w-4 h-4 text-white/50 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div class="flex items-center gap-2 bg-surface border border-line rounded-2xl px-4 py-2.5 w-full max-w-sm">
+            <svg class="w-4 h-4 text-faint shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A2 2 0 013 12V7a2 2 0 012-2z" />
             </svg>
             <input
               v-model="couponInput"
               @keyup.enter="applyCoupon"
               placeholder="Coupon code"
+              aria-label="Coupon code"
               :disabled="couponApplied"
-              class="flex-1 bg-transparent text-white placeholder-white/40 text-sm outline-none uppercase tracking-widest"
+              class="flex-1 bg-transparent text-content placeholder:text-faint text-sm outline-none uppercase tracking-widest"
             />
             <button
               v-if="!couponApplied"
               @click="applyCoupon"
               :disabled="!couponInput.trim() || couponValidating"
-              class="text-xs font-bold text-emerald-400 hover:text-emerald-300 disabled:opacity-40 transition shrink-0"
+              class="text-xs font-bold text-primary hover:opacity-80 disabled:opacity-40 transition shrink-0"
             >
               {{ couponValidating ? '…' : 'Apply' }}
             </button>
             <button
               v-else
               @click="removeCoupon"
-              class="text-xs font-bold text-red-400 hover:text-red-300 transition shrink-0"
+              class="text-xs font-bold text-red-500 hover:text-red-400 transition shrink-0"
             >
               Remove
             </button>
           </div>
         </div>
-        <div v-if="couponError" class="text-red-400 text-xs text-center mt-2">{{ couponError }}</div>
+        <div v-if="couponError" class="text-red-500 text-xs text-center mt-2">{{ couponError }}</div>
         <div v-if="couponApplied" class="flex items-center justify-center gap-1.5 mt-2">
-          <span class="inline-flex items-center gap-1 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 text-xs font-semibold px-3 py-1 rounded-full">
-            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
+          <span class="inline-flex items-center gap-1 bg-primary/15 border border-primary/40 text-primary text-xs font-semibold px-3 py-1 rounded-full">
+            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"/></svg>
             {{ couponApplied.discountType === 'percent' ? couponApplied.discountValue + '% off' : '₹' + (couponApplied.discountValue / 100) + ' off' }} applied
           </span>
         </div>
@@ -154,33 +153,33 @@
     <!-- Feature Comparison -->
     <section class="pb-24 px-4 sm:px-6">
       <div class="max-w-5xl mx-auto">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white text-center mb-12">Full feature comparison</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-content text-center mb-12">Full feature comparison</h2>
 
-        <div class="bg-white/5 backdrop-blur-sm border border-white/10 rounded-3xl overflow-hidden overflow-x-auto">
-          <div class="grid grid-cols-5 min-w-[600px] px-6 py-4 border-b border-white/10 text-sm font-semibold">
-            <div class="text-white/50">Feature</div>
-            <div class="text-center text-white/70">Free</div>
-            <div class="text-center text-blue-400">Starter</div>
-            <div class="text-center text-emerald-400">Pro</div>
-            <div class="text-center text-purple-400">Growth</div>
+        <div class="card overflow-hidden overflow-x-auto">
+          <div class="grid grid-cols-5 min-w-[600px] px-6 py-4 border-b border-line text-sm font-semibold">
+            <div class="text-muted">Feature</div>
+            <div class="text-center text-muted">Free</div>
+            <div class="text-center text-blue-600 dark:text-blue-400">Starter</div>
+            <div class="text-center text-primary">Pro</div>
+            <div class="text-center text-purple-600 dark:text-purple-400">Growth</div>
           </div>
 
           <div v-for="(row, i) in comparison" :key="i"
                class="grid grid-cols-5 min-w-[600px] px-6 py-4 text-sm"
-               :class="i % 2 === 0 ? '' : 'bg-white/[0.02]'">
-            <div class="text-white/60">{{ row.feature }}</div>
+               :class="i % 2 === 0 ? '' : 'bg-surface-2/60'">
+            <div class="text-muted">{{ row.feature }}</div>
             <div v-for="col in ['free', 'starter', 'pro', 'growth']" :key="col" class="text-center">
               <span v-if="row[col] === true">
-                <svg class="w-5 h-5 text-emerald-400 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-primary mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
                 </svg>
               </span>
               <span v-else-if="row[col] === false">
-                <svg class="w-5 h-5 text-white/20 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <svg class="w-5 h-5 text-faint mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </span>
-              <span v-else :class="col === 'pro' ? 'text-emerald-400 font-medium' : col === 'growth' ? 'text-purple-400 font-medium' : col === 'starter' ? 'text-blue-400 font-medium' : 'text-white/60'">{{ row[col] }}</span>
+              <span v-else :class="col === 'pro' ? 'text-primary font-medium' : col === 'growth' ? 'text-purple-600 dark:text-purple-400 font-medium' : col === 'starter' ? 'text-blue-600 dark:text-blue-400 font-medium' : 'text-muted'">{{ row[col] }}</span>
             </div>
           </div>
         </div>
@@ -190,22 +189,21 @@
     <!-- FAQ -->
     <section class="pb-24 px-4 sm:px-6">
       <div class="max-w-2xl mx-auto">
-        <h2 class="text-2xl sm:text-3xl font-bold text-white text-center mb-12">Frequently asked questions</h2>
+        <h2 class="text-2xl sm:text-3xl font-bold text-content text-center mb-12">Frequently asked questions</h2>
         <div class="space-y-4">
-          <div v-for="(faq, i) in faqs" :key="i"
-               class="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+          <div v-for="(faq, i) in faqs" :key="i" class="card overflow-hidden">
             <button
               class="w-full flex items-center justify-between px-6 py-5 text-left"
               @click="openFaq = openFaq === i ? -1 : i"
             >
-              <span class="text-white font-medium">{{ faq.q }}</span>
-              <svg class="w-5 h-5 text-white/50 flex-shrink-0 transition-transform duration-200"
+              <span class="text-content font-medium">{{ faq.q }}</span>
+              <svg class="w-5 h-5 text-faint shrink-0 transition-transform duration-200"
                    :class="openFaq === i ? 'rotate-180' : ''"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
               </svg>
             </button>
-            <div v-if="openFaq === i" class="px-6 pb-5 text-white/60 text-sm leading-relaxed">
+            <div v-if="openFaq === i" class="px-6 pb-5 text-muted text-sm leading-relaxed">
               {{ faq.a }}
             </div>
           </div>
@@ -215,17 +213,17 @@
 
     <!-- CTA -->
     <section class="pb-32 px-4 sm:px-6 text-center">
-      <div class="max-w-2xl mx-auto bg-gradient-to-br from-emerald-500/10 to-green-600/5 border border-emerald-500/20 rounded-3xl p-12">
-        <h2 class="text-3xl sm:text-4xl font-bold text-white mb-4">
+      <div class="max-w-2xl mx-auto bg-primary/10 border border-primary/20 rounded-3xl p-12">
+        <h2 class="text-3xl sm:text-4xl font-bold text-content mb-4">
           {{ authState.isAuthenticated ? 'Ready to do more?' : 'Start for free today' }}
         </h2>
-        <p class="text-white/60 mb-8">
+        <p class="text-muted mb-8">
           {{ authState.isAuthenticated ? 'Upgrade your plan anytime from your dashboard.' : 'No credit card required. Upgrade anytime.' }}
         </p>
         <router-link :to="authState.isAuthenticated ? '/dashboard' : '/register'"
-          class="inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white px-8 py-4 rounded-full font-semibold text-lg transition shadow-xl shadow-emerald-500/30">
+          class="btn-primary rounded-full px-8 py-4 text-lg shadow-xl shadow-primary/30">
           {{ authState.isAuthenticated ? 'Go to Dashboard' : 'Create Free Account' }}
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
           </svg>
         </router-link>
@@ -233,18 +231,18 @@
     </section>
 
     <!-- Footer -->
-    <footer class="border-t border-white/5 px-4 sm:px-6 py-8">
+    <footer class="border-t border-line px-4 sm:px-6 py-8">
       <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
-        <div class="flex items-center space-x-2">
+        <div class="flex items-center gap-2">
           <img src="/favicon.png" alt="Echobit" class="w-7 h-7 rounded-lg object-contain" />
-          <span class="text-white/70 font-semibold">Echobit</span>
+          <span class="text-content font-semibold">Echobit</span>
         </div>
-        <div class="flex items-center gap-6 text-white/40 text-sm">
-          <a href="/privacy-policy" class="hover:text-white/70 transition">Privacy</a>
-          <a href="/contact" class="hover:text-white/70 transition">Contact</a>
-          <a href="/request-deletion" class="hover:text-white/70 transition">Data Deletion</a>
+        <div class="flex items-center gap-6 text-muted text-sm">
+          <a href="/privacy-policy" class="hover:text-content transition">Privacy</a>
+          <a href="/contact" class="hover:text-content transition">Contact</a>
+          <a href="/request-deletion" class="hover:text-content transition">Data Deletion</a>
         </div>
-        <p class="text-white/30 text-sm">&copy; 2026 Echobit. All rights reserved.</p>
+        <p class="text-faint text-sm">&copy; 2026 Echobit. All rights reserved.</p>
       </div>
     </footer>
   </div>
@@ -256,6 +254,7 @@ import { paymentsApi, authApi, authState, plansApi } from '@/api';
 import { checkout } from '../services/razorpay.js';
 import { useRouter } from 'vue-router';
 import PlanCard from '../components/pricing/PlanCard.vue';
+import ThemeToggle from '../components/ui/ThemeToggle.vue';
 
 const annual = ref(false);
 const openFaq = ref(-1);
@@ -395,54 +394,55 @@ const planData = ref({});
 const pd = (key) => planData.value[key] ?? { features: [], monthlyPrice: '', annualMonthly: '', annualTotal: '' };
 const price = (key, field, fallback) => pd(key)[field] || fallback;
 
+// Theme-aware per-plan styling (works in both light and dark).
 const THEMES = {
   free: {
-    card: 'bg-white/5',
-    cardIdle: 'border-white/10 hover:border-white/20',
-    cardCurrent: 'border-white/30 hover:border-white/40',
-    badge: 'bg-white/20 backdrop-blur',
-    iconBg: 'bg-white/10',
-    iconColor: 'text-white/80',
-    accentText: 'text-white/50',
-    currentBox: 'bg-white/5 border border-white/20',
-    currentText: 'text-white/70',
-    button: 'border border-white/20 text-white/80 hover:bg-white/10',
+    card: 'bg-surface',
+    cardIdle: 'border-line hover:border-faint',
+    cardCurrent: 'border-content/30',
+    badge: 'bg-slate-500',
+    iconBg: 'bg-surface-2',
+    iconColor: 'text-muted',
+    accentText: 'text-muted',
+    currentBox: 'bg-surface-2 border border-line',
+    currentText: 'text-muted',
+    button: 'border border-line text-content hover:bg-surface-2',
   },
   starter: {
-    card: 'bg-white/5',
-    cardIdle: 'border-white/10 hover:border-white/20',
-    cardCurrent: 'border-blue-400/50 hover:border-blue-400/70',
+    card: 'bg-surface',
+    cardIdle: 'border-line hover:border-blue-400/60',
+    cardCurrent: 'border-blue-400/60',
     badge: 'bg-blue-500',
-    iconBg: 'bg-blue-500/15',
-    iconColor: 'text-blue-400',
-    accentText: 'text-blue-400',
-    currentBox: 'bg-blue-500/10 border border-blue-500/30',
-    currentText: 'text-blue-300',
-    button: 'bg-blue-500/20 hover:bg-blue-500/30 border border-blue-500/40 text-blue-300',
+    iconBg: 'bg-blue-100 dark:bg-blue-500/15',
+    iconColor: 'text-blue-600 dark:text-blue-400',
+    accentText: 'text-blue-600 dark:text-blue-400',
+    currentBox: 'bg-blue-100 dark:bg-blue-500/10 border border-blue-300 dark:border-blue-500/30',
+    currentText: 'text-blue-700 dark:text-blue-300',
+    button: 'bg-blue-600 hover:bg-blue-500 text-white',
   },
   pro: {
-    card: 'bg-gradient-to-b from-emerald-500/20 to-emerald-600/10 shadow-2xl shadow-emerald-500/10',
-    cardIdle: 'border-emerald-500/40',
-    cardCurrent: 'border-emerald-500/40',
-    badge: 'bg-emerald-400',
-    iconBg: 'bg-emerald-500/20',
-    iconColor: 'text-emerald-400',
-    accentText: 'text-emerald-400',
-    currentBox: 'bg-emerald-500/10 border border-emerald-500/30',
-    currentText: 'text-emerald-300',
-    button: 'bg-emerald-500 hover:bg-emerald-400 text-white shadow-lg shadow-emerald-500/30',
+    card: 'bg-primary/5 dark:bg-primary/10 shadow-lg shadow-primary/10',
+    cardIdle: 'border-primary/40',
+    cardCurrent: 'border-primary/50',
+    badge: 'bg-primary',
+    iconBg: 'bg-primary/15',
+    iconColor: 'text-primary',
+    accentText: 'text-primary',
+    currentBox: 'bg-primary/10 border border-primary/30',
+    currentText: 'text-emerald-700 dark:text-emerald-300',
+    button: 'bg-primary hover:bg-primary-hover text-primary-fg shadow-lg shadow-primary/30',
   },
   growth: {
-    card: 'bg-gradient-to-b from-purple-500/15 to-purple-600/5',
-    cardIdle: 'border-purple-500/20 hover:border-purple-500/40',
+    card: 'bg-surface',
+    cardIdle: 'border-line hover:border-purple-400/60',
     cardCurrent: 'border-purple-400/60',
     badge: 'bg-purple-500',
-    iconBg: 'bg-purple-500/20',
-    iconColor: 'text-purple-400',
-    accentText: 'text-purple-400',
-    currentBox: 'bg-purple-500/10 border border-purple-500/30',
-    currentText: 'text-purple-300',
-    button: 'bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/40 text-purple-300',
+    iconBg: 'bg-purple-100 dark:bg-purple-500/15',
+    iconColor: 'text-purple-600 dark:text-purple-400',
+    accentText: 'text-purple-600 dark:text-purple-400',
+    currentBox: 'bg-purple-100 dark:bg-purple-500/10 border border-purple-300 dark:border-purple-500/30',
+    currentText: 'text-purple-700 dark:text-purple-300',
+    button: 'bg-purple-600 hover:bg-purple-500 text-white',
   },
 };
 
