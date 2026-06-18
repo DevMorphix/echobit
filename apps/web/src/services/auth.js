@@ -1,15 +1,26 @@
-import { API_URL, apiRequest, authState, clearSession, storeSession, TOKEN_EXPIRY_MS } from './http.js';
+import { authClient } from './authClient.js';
+import { API_URL, authState, refreshSession, clearSession, setSession, setLegacyToken } from './http.js';
+
+const unwrap = (res) => {
+  if (res?.error) {
+    const err = new Error(res.error.message || 'Request failed');
+    err.status = res.error.status;
+    err.code = res.error.code;
+    throw err;
+  }
+  return res?.data;
+};
+
+const captchaOpts = (token) => (token ? { headers: { 'x-captcha-response': token } } : undefined);
 
 export const authApi = {
   async login(email, password) {
     authState.loading = true;
     try {
-      const data = await apiRequest('/auth/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
-      });
-      storeSession(data);
-      return data;
+      const res = await authClient.signIn.email({ email, password });
+      unwrap(res);
+      await refreshSession();
+      return res.data;
     } finally {
       authState.loading = false;
     }
@@ -18,68 +29,70 @@ export const authApi = {
   async register(name, email, password, profile = {}, turnstileToken) {
     authState.loading = true;
     try {
-      return await apiRequest('/auth/register', {
-        method: 'POST',
-        body: JSON.stringify({ name, email, password, ...profile, turnstileToken }),
+      const res = await authClient.signUp.email({
+        email,
+        password,
+        name,
+        ...(profile.country ? { country: profile.country } : {}),
+        ...(profile.profession ? { profession: profile.profession } : {}),
+        ...(profile.preferredLanguage ? { preferredLanguage: profile.preferredLanguage } : {}),
+        fetchOptions: captchaOpts(turnstileToken),
       });
+      unwrap(res);
+      await authClient.emailOtp.sendVerificationOtp({ email, type: 'email-verification' });
+      return res.data;
     } finally {
       authState.loading = false;
     }
   },
 
   async sendVerification(email, turnstileToken) {
-    return apiRequest('/auth/send-verification', {
-      method: 'POST',
-      body: JSON.stringify({ email, turnstileToken }),
-    });
+    return unwrap(await authClient.emailOtp.sendVerificationOtp({
+      email,
+      type: 'email-verification',
+      fetchOptions: captchaOpts(turnstileToken),
+    }));
   },
 
   async verifyEmail(email, otp) {
-    const data = await apiRequest('/auth/verify-email', {
-      method: 'POST',
-      body: JSON.stringify({ email, otp }),
-    });
-    storeSession(data);
-    return data;
+    const res = await authClient.emailOtp.verifyEmail({ email, otp });
+    unwrap(res);
+    await refreshSession();
+    return res.data;
   },
 
   async forgotPassword(email, turnstileToken) {
-    return apiRequest('/auth/forgot-password', {
-      method: 'POST',
-      body: JSON.stringify({ email, turnstileToken }),
-    });
+    return unwrap(await authClient.emailOtp.requestPasswordReset({
+      email,
+      fetchOptions: captchaOpts(turnstileToken),
+    }));
   },
 
   async resetPassword(email, otp, newPassword) {
-    return apiRequest('/auth/reset-password', {
-      method: 'POST',
-      body: JSON.stringify({ email, otp, newPassword }),
-    });
+    return unwrap(await authClient.emailOtp.resetPassword({ email, otp, password: newPassword }));
   },
 
   async googleLogin(idToken) {
     authState.loading = true;
     try {
-      const data = await apiRequest('/auth/google', {
-        method: 'POST',
-        body: JSON.stringify({ idToken }),
-      });
-      storeSession(data);
-      return data;
+      const res = await authClient.signIn.social({ provider: 'google', idToken: { token: idToken } });
+      unwrap(res);
+      await refreshSession();
+      return res.data;
     } finally {
       authState.loading = false;
     }
   },
 
-  // Auto-login using a JWT passed from the mobile app via URL param (?token=...)
+  // Mobile ?token= handoff: verify the legacy JWT, attach it to /api/v1 calls,
+  // and populate authState so the checkout flow works during the transition.
   async loginWithToken(token) {
     try {
-      const response = await fetch(`${API_URL}/auth/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const response = await fetch(`${API_URL}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
       if (!response.ok) return false;
       const data = await response.json();
-      storeSession({ token, user: data.user, expiresAt: Date.now() + TOKEN_EXPIRY_MS });
+      setLegacyToken(token);
+      setSession({ user: data.user });
       return true;
     } catch {
       return false;
@@ -87,6 +100,6 @@ export const authApi = {
   },
 
   logout() {
-    clearSession();
+    return clearSession();
   },
 };

@@ -24,7 +24,10 @@ export interface Env {
   RAZORPAY_KEY_SECRET?: string;
   RAZORPAY_MOCK?: string;
   GOOGLE_CLIENT_ID?: string;
+  GOOGLE_CLIENT_SECRET?: string;
   TURNSTILE_SECRET?: string;
+  BETTER_AUTH_SECRET?: string;
+  BETTER_AUTH_URL?: string;
   // R2 S3 credentials only for presigned upload URLs (contract parity)
   R2_ACCOUNT_ID?: string;
   R2_ACCESS_KEY_ID?: string;

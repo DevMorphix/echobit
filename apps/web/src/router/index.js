@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { authState, initAuth } from '../api'
+import { authState } from '../api'
 
 // Product app only. The marketing pages (/, /pricing, /contact, /privacy-policy,
 // /request-deletion) live in the Astro promo site (apps/promo) and are served
@@ -73,9 +73,6 @@ const router = createRouter({
   history: createWebHistory(),
   routes,
 })
-
-// Initialize auth state
-initAuth()
 
 // Navigation guards
 router.beforeEach((to, from, next) => {

@@ -7,6 +7,10 @@ RAZORPAY_KEY_ID=
 RAZORPAY_KEY_SECRET=
 RAZORPAY_MOCK=true
 GOOGLE_CLIENT_ID=1004219063159-uhcjuruvg9fp6c0ti5rad22gi64am8k4.apps.googleusercontent.com
+GOOGLE_CLIENT_SECRET=                  # only needed for Better Auth Google sign-in
+# Better Auth (web). Secret: openssl rand -base64 32. URL: localhost in dev.
+BETTER_AUTH_SECRET=dev-better-auth-secret-change-me
+BETTER_AUTH_URL=http://localhost:5173
 TURNSTILE_SECRET=                     # Turnstile secret; unset = bot check skipped (web-origin only when set)
 # R2 S3 credentials — ONLY needed for presigned upload URLs + signed audio URLs
 R2_ACCOUNT_ID=

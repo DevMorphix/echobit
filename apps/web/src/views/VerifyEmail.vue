@@ -78,7 +78,7 @@
 <script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter, useRoute } from 'vue-router';
-import { authApi } from '../api';
+import { authApi, authState } from '../api';
 import TurnstileWidget from '../components/TurnstileWidget.vue';
 import ThemeToggle from '../components/ui/ThemeToggle.vue';
 import Spinner from '../components/ui/Spinner.vue';
@@ -114,7 +114,7 @@ async function handleVerify() {
   loading.value = true;
   try {
     await authApi.verifyEmail(email.value, otp.value.trim());
-    router.push('/dashboard');
+    router.push(authState.isAuthenticated ? '/dashboard' : '/login');
   } catch (err) {
     error.value = err.message || 'Invalid or expired code. Please try again.';
   } finally {

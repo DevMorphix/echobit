@@ -8,7 +8,8 @@ import recordingsRoutes from './routes/recordings.ts';
 import paymentsRoutes from './routes/payments.ts';
 import adminRoutes from './routes/admin.ts';
 import plansRoutes from './routes/plans.ts';
-import { authenticateToken } from './middleware/auth.ts';
+import { requireUser } from './middleware/requireUser.ts';
+import { createAuth } from './auth/betterAuth.ts';
 import { updateRow } from './lib/db.ts';
 import { logError } from './lib/log-error.ts';
 import type { Env, HonoEnv } from './types.ts';
@@ -30,13 +31,14 @@ app.use('*', async (c, next) => {
   const setHeaders = (res: Response) => {
     if (origin && allowed.includes(origin)) {
       res.headers.set('Access-Control-Allow-Origin', origin);
+      res.headers.set('Access-Control-Allow-Credentials', 'true');
     } else if (!origin) {
       res.headers.set('Access-Control-Allow-Origin', '*');
     }
     res.headers.set('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
     res.headers.set(
       'Access-Control-Allow-Headers',
-      'Origin, X-Requested-With, Content-Type, Accept, Authorization',
+      'Origin, X-Requested-With, Content-Type, Accept, Authorization, x-captcha-response',
     );
   };
 
@@ -49,12 +51,15 @@ app.use('*', async (c, next) => {
   setHeaders(c.res);
 });
 
+// Better Auth (web) — coexists with the legacy /api/v1/auth routes (mobile).
+app.on(['GET', 'POST'], '/api/auth/*', (c) => createAuth(c.env).handler(c.req.raw));
+
 // Public routes
 app.route('/api/v1/auth', authRoutes);
 app.route('/api/v1/plans', plansRoutes);
 
-// Protected routes (recordings router mounted behind auth — server.js parity)
-app.use('/api/v1/recordings/*', authenticateToken);
+// Protected routes — requireUser accepts a Better Auth session or a legacy JWT.
+app.use('/api/v1/recordings/*', requireUser);
 app.route('/api/v1/recordings', recordingsRoutes);
 app.route('/api/v1/payments', paymentsRoutes);
 app.route('/api/v1/admin', adminRoutes);

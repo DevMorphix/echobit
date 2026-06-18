@@ -1,75 +1,51 @@
 import { reactive } from 'vue';
+import { authClient } from './authClient.js';
 
-// Same-origin by default — the Worker serves both the SPA and /api.
-// VITE_API_URL overrides for local dev against a remote backend.
+// Recordings/payments live under /api/v1; Better Auth is at /api/auth.
 export const API_URL = import.meta.env.VITE_API_URL || '/api/v1';
 
-// Fallback expiry used only when the server doesn't return expiresAt.
-// Backend issues 7-day tokens; this constant is just the safety fallback.
-export const TOKEN_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
-
-const isTokenExpired = () => {
-  const expiresAt = localStorage.getItem('tokenExpiresAt');
-  if (!expiresAt) return true;
-  return Date.now() >= parseInt(expiresAt, 10);
-};
-
-// Auth state — single reactive source of truth for the whole app
 export const authState = reactive({
   user: null,
-  token: localStorage.getItem('token'),
-  isAuthenticated: !!localStorage.getItem('token') && !isTokenExpired(),
-  loading: false,
+  isAuthenticated: false,
+  loading: true,
 });
 
-export const initAuth = () => {
-  const token = localStorage.getItem('token');
-  const user = localStorage.getItem('user');
+// Legacy bearer from the mobile ?token= handoff (Pricing). When set it's attached
+// to /api/v1 calls; the API's requireUser accepts it alongside Better Auth cookies.
+let legacyToken = null;
+export const setLegacyToken = (t) => { legacyToken = t || null; };
 
-  if (token && user && !isTokenExpired()) {
-    authState.token = token;
-    authState.user = JSON.parse(user);
-    authState.isAuthenticated = true;
-  } else if (token) {
-    clearSession();
+export const setSession = (data) => {
+  authState.user = data?.user ?? null;
+  authState.isAuthenticated = !!data?.user;
+};
+
+export const refreshSession = async () => {
+  try {
+    const { data } = await authClient.getSession();
+    setSession(data);
+  } catch {
+    setSession(null);
   }
 };
 
-export const storeSession = (data) => {
-  authState.token = data.token;
-  authState.user = data.user;
-  authState.isAuthenticated = true;
-  localStorage.setItem('token', data.token);
-  localStorage.setItem('user', JSON.stringify(data.user));
-  const expiresAt = data.expiresAt || Date.now() + TOKEN_EXPIRY_MS;
-  localStorage.setItem('tokenExpiresAt', expiresAt.toString());
+export const initAuth = async () => {
+  await refreshSession();
+  authState.loading = false;
 };
 
-export const clearSession = () => {
-  authState.token = null;
-  authState.user = null;
-  authState.isAuthenticated = false;
-  localStorage.removeItem('token');
-  localStorage.removeItem('user');
-  localStorage.removeItem('tokenExpiresAt');
+export const clearSession = async () => {
+  try { await authClient.signOut(); } catch { /* ignore */ }
+  setSession(null);
+  legacyToken = null;
 };
 
 export const apiRequest = async (endpoint, options = {}) => {
-  const headers = {
-    'Content-Type': 'application/json',
-    ...options.headers,
-  };
+  const headers = { 'Content-Type': 'application/json', ...options.headers };
+  if (legacyToken) headers['Authorization'] = `Bearer ${legacyToken}`;
 
-  if (authState.token) {
-    headers['Authorization'] = `Bearer ${authState.token}`;
-  }
-
-  const response = await fetch(`${API_URL}${endpoint}`, {
-    ...options,
-    headers,
-  });
-
-  const data = await response.json();
+  const response = await fetch(`${API_URL}${endpoint}`, { ...options, headers, credentials: 'include' });
+  const data = await response.json().catch(() => ({}));
 
   if (!response.ok) {
     const err = new Error(data.error || 'Request failed');
@@ -77,6 +53,5 @@ export const apiRequest = async (endpoint, options = {}) => {
     err.code = data.code;
     throw err;
   }
-
   return data;
 };

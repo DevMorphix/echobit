@@ -107,6 +107,7 @@
     "R2_PUBLIC_URL": "https://cdn.echobits.xyz",
     "ALLOWED_ORIGINS": "https://echobits.xyz,https://echobits.devmorphix.com,http://localhost:5173",
     "ENVIRONMENT": "production",
+    "BETTER_AUTH_URL": "https://echobits.xyz",
 
     // Cloudflare Access (Zero Trust) for the admin surface. After creating the
     // self-hosted Access application, paste your team domain + the application's

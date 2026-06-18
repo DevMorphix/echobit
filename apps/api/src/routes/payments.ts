@@ -7,11 +7,11 @@ import { createRazorpayOrder, verifyRazorpaySignature } from '../lib/razorpay.ts
 import { serializeCoupon } from '../lib/serialize.ts';
 import { getUserById, nowIso, updateRow } from '../lib/db.ts';
 import { parseBody, schemas } from '../lib/validate.ts';
-import { authenticateToken } from '../middleware/auth.ts';
+import { requireUser } from '../middleware/requireUser.ts';
 import type { CouponRow, Env, HonoEnv } from '../types.ts';
 
 const payments = new Hono<HonoEnv>();
-payments.use('*', authenticateToken);
+payments.use('*', requireUser);
 
 interface CouponResult {
   coupon: CouponRow | null;
