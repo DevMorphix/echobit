@@ -1,6 +1,9 @@
 import { apiRequest } from './http.js';
 
 export const adminApi = {
+  async getMe() {
+    return apiRequest('/admin/me');
+  },
   async getStats() {
     return apiRequest('/admin/stats');
   },

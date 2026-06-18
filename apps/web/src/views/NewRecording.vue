@@ -1,7 +1,7 @@
 <template>
-  <div class="max-w-4xl mx-auto">
+  <div>
     <!-- Header -->
-    <div class="mb-6 sm:mb-8">
+    <div class="mb-6 sm:mb-8 mt-6">
       <h1 class="text-2xl sm:text-3xl font-bold text-content">New Recording</h1>
       <p class="text-muted mt-1 text-sm sm:text-base">Record your voice or upload an existing audio file for AI transcription.</p>
     </div>

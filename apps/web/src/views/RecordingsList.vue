@@ -107,7 +107,7 @@ import { statusClass } from '../services/format';
 import Spinner from '../components/ui/Spinner.vue';
 import CustomSelect from '../components/ui/CustomSelect.vue';
 
-const LIMIT = 12;
+const LIMIT = 8;
 const recordings = ref([]);
 const loading = ref(true);
 const searchQuery = ref('');

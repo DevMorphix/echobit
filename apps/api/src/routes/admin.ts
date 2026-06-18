@@ -46,6 +46,10 @@ const fillDays = (raw: { day: string; count: number }[], startDate: Date, days: 
   });
 };
 
+// Identity of the Access-authenticated admin (gateway for the panel to confirm
+// it's behind Cloudflare Access before rendering).
+admin.get('/me', (c) => c.json({ email: c.get('adminEmail') ?? '' }));
+
 // ── Stats overview ───────────────────────────────────────────────────────────
 admin.get('/stats', async (c) => {
   try {
