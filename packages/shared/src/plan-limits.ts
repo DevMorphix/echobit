@@ -68,7 +68,7 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     pdfExport: true,
     priorityProcessing: true,
     meetingBot: true,
-    botMinutesPerMonth: 1800, // ~30 hrs of meetings
+    botMinutesPerMonth: 1500, // ~25 hrs of meetings (margin-tuned vs Container cost)
   },
   // kept for existing users; no longer sold
   team: {
@@ -82,7 +82,7 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     pdfExport: true,
     priorityProcessing: true,
     meetingBot: true,
-    botMinutesPerMonth: 1800,
+    botMinutesPerMonth: 1500,
   },
 };
 
