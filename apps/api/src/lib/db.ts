@@ -22,7 +22,7 @@ export const getRecordingForUser = (env: Env, id: string, userId: string) =>
  */
 export const updateRow = async (
   env: Env,
-  table: 'users' | 'recordings' | 'coupons' | 'plan_configs',
+  table: 'users' | 'recordings' | 'coupons' | 'plan_configs' | 'meeting_bots',
   id: string,
   cols: Record<string, string | number | null | undefined>,
 ): Promise<void> => {
@@ -59,4 +59,15 @@ export const sumStorageUsed = async (env: Env, userId: string): Promise<number> 
     .bind(userId)
     .first<{ total: number }>();
   return row?.total ?? 0;
+};
+
+/** Bot recording minutes used this calendar month (for the per-plan bot cap). */
+export const sumBotMinutesThisMonth = async (env: Env, userId: string): Promise<number> => {
+  const row = await env.DB.prepare(
+    `SELECT COALESCE(SUM(duration_secs), 0) AS total FROM meeting_bots
+     WHERE user_id = ? AND created_at >= ? AND status NOT IN ('failed', 'cancelled')`,
+  )
+    .bind(userId, startOfCurrentMonth())
+    .first<{ total: number }>();
+  return Math.round((row?.total ?? 0) / 60);
 };

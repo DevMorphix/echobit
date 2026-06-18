@@ -132,6 +132,13 @@ export const schemas = {
   asyncFlag: z.object({ async: optBool }),
   summarize: z.object({ transcript: optStr }),
 
+  // ── meetings (Google Meet bot) ──────────────────────────────────────────────
+  createMeeting: z.object({
+    meetingUrl: z.string().min(1),
+    title: optStr,
+    scheduledAt: nullishStr, // ISO timestamp; omitted/null = join now
+  }),
+
   // ── payments ──────────────────────────────────────────────────────────────
   validateCoupon: z.object({ code: optStr, plan: optStr }),
   createOrder: z.object({ plan: optStr, couponCode: optStr }),

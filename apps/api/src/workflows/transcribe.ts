@@ -2,21 +2,52 @@
 // recording transcription. Each step checkpoints independently, so a failure
 // in title generation or the final save retries from that step instead of
 // re-running (and re-billing) Sarvam/Whisper transcription.
+//
+// With `autoProcess` (the Meet bot path) the workflow continues past the
+// transcript and also generates summary/minutes/action items (gated by plan)
+// and emails the user — so a meeting comes back fully processed without the
+// user clicking anything.
 
-import { WorkflowEntrypoint, type WorkflowEvent, type WorkflowStep } from 'cloudflare:workers';
+import {
+  WorkflowEntrypoint,
+  type WorkflowEvent,
+  type WorkflowStep,
+  type WorkflowStepConfig,
+} from 'cloudflare:workers';
 import { NonRetryableError } from 'cloudflare:workflows';
+import { newId } from '@echobit/shared/ids';
 import { getUserById, updateRow } from '../lib/db.ts';
+import { getEffectiveLimits, userPlanView } from '../lib/limits.ts';
 import { putDerivedText } from '../lib/derived.ts';
+import { sendRecordingReadyEmail } from '../lib/email.ts';
 import { logError } from '../lib/log-error.ts';
-import { r2AudioSource, transcribeAudio } from '../audio/pipeline.ts';
-import { generateTitle } from '../audio/gemini.ts';
+import { r2AudioSource, transcribeAudio, toEnglishTranscript, toPreferredLanguage } from '../audio/pipeline.ts';
+import {
+  extractActionItems,
+  generateMeetingMinutes,
+  generateSummary,
+  generateTitle,
+} from '../audio/gemini.ts';
 import type { Env, JobMessage, RecordingRow } from '../types.ts';
 
 const TEMP_PREFIX = 'uploads/tmp/';
 
+const AI_STEP = {
+  retries: { limit: 2, delay: '5 seconds', backoff: 'exponential' },
+  timeout: '5 minutes',
+} satisfies WorkflowStepConfig;
+
+// Proper-case names for native-language minutes output (parity with the
+// /:id/minutes route's label map).
+const LANG_LABELS: Record<string, string> = {
+  hindi: 'Hindi', tamil: 'Tamil', telugu: 'Telugu', bengali: 'Bengali',
+  kannada: 'Kannada', malayalam: 'Malayalam', marathi: 'Marathi',
+  gujarati: 'Gujarati', punjabi: 'Punjabi', odia: 'Odia',
+};
+
 export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
   override async run(event: WorkflowEvent<JobMessage>, step: WorkflowStep): Promise<void> {
-    const { recordingId, userId } = event.payload;
+    const { recordingId, userId, autoProcess } = event.payload;
 
     try {
       const transcribed = await step.do(
@@ -71,6 +102,16 @@ export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
           audio_key: isTemp ? null : undefined,
         });
       });
+
+      if (autoProcess) {
+        // Enrichment is best-effort: the transcript is already saved, so a
+        // summary/minutes failure must not flip the recording to "failed".
+        try {
+          await this.autoProcess(step, recordingId, userId, transcribed.text, title ?? transcribed.title);
+        } catch (e) {
+          await logError(this.env, 'autoprocess_failed', (e as Error).message, { userId, recordingId });
+        }
+      }
     } catch (err) {
       // Exhausted retries: mark failed + log (was the queue's DLQ behavior)
       await step.do('mark-failed', async () => {
@@ -82,5 +123,70 @@ export class TranscriptionWorkflow extends WorkflowEntrypoint<Env, JobMessage> {
       });
       throw err;
     }
+  }
+
+  /** Auto summary → minutes (gated) → actions (gated) → ready email. */
+  private async autoProcess(
+    step: WorkflowStep,
+    recordingId: string,
+    userId: string,
+    transcript: string,
+    title: string,
+  ): Promise<void> {
+    if (transcript.length >= 50) {
+      const summary = await step.do('auto-summary', AI_STEP, async () => {
+        const userRow = await getUserById(this.env, userId);
+        const english = await toEnglishTranscript(this.env, transcript, userRow);
+        const generated = await toPreferredLanguage(this.env, await generateSummary(this.env, english), userRow);
+        await putDerivedText(this.env, 'summary', userId, recordingId, generated);
+        await updateRow(this.env, 'recordings', recordingId, {
+          summary_chars: generated.length,
+          status: 'summarized',
+        });
+        return generated;
+      });
+
+      await step.do('auto-minutes', AI_STEP, async () => {
+        const userRow = await getUserById(this.env, userId);
+        const limits = await getEffectiveLimits(
+          this.env,
+          userRow ? userPlanView(userRow) : { plan: 'free', planExpiresAt: null, featureOverrides: null },
+        );
+        if (!limits.meetingMinutes) return;
+        const prefLang = userRow?.summary_language?.toLowerCase().trim();
+        const outputLanguage =
+          prefLang && prefLang !== 'english' && prefLang !== 'en' ? (LANG_LABELS[prefLang] ?? null) : null;
+        const minutes = await generateMeetingMinutes(this.env, transcript, summary, title, outputLanguage);
+        await putDerivedText(this.env, 'minutes', userId, recordingId, minutes);
+        await updateRow(this.env, 'recordings', recordingId, {
+          minutes_chars: minutes.length,
+          status: 'completed',
+        });
+      });
+
+      await step.do('auto-actions', AI_STEP, async () => {
+        const userRow = await getUserById(this.env, userId);
+        const limits = await getEffectiveLimits(
+          this.env,
+          userRow ? userPlanView(userRow) : { plan: 'free', planExpiresAt: null, featureOverrides: null },
+        );
+        if (!limits.actionItems) return;
+        const items = await extractActionItems(this.env, transcript);
+        const withIds = items.map((item) => ({ _id: newId(), completed: false, ...item }));
+        await updateRow(this.env, 'recordings', recordingId, { action_items: JSON.stringify(withIds) });
+      });
+    }
+
+    // Best-effort notification — never fail the workflow on an email error.
+    await step.do('notify-ready', async () => {
+      const userRow = await getUserById(this.env, userId);
+      if (!userRow?.email) return;
+      await sendRecordingReadyEmail(this.env, {
+        to: userRow.email,
+        name: userRow.name,
+        title,
+        recordingId,
+      }).catch((e) => console.warn('[notify-ready] email failed:', (e as Error).message));
+    });
   }
 }

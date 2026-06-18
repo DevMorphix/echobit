@@ -11,6 +11,8 @@ export interface PlanLimits {
   actionItems: boolean;
   pdfExport: boolean;
   priorityProcessing: boolean;
+  meetingBot: boolean; // can send a bot to record a Google Meet
+  botMinutesPerMonth: number; // monthly cap on bot recording minutes (0 = none)
 }
 
 export type PlanKey = 'free' | 'starter' | 'pro' | 'growth' | 'team';
@@ -26,6 +28,8 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     actionItems: false,
     pdfExport: false,
     priorityProcessing: false,
+    meetingBot: false,
+    botMinutesPerMonth: 0,
   },
   starter: {
     recordingsPerMonth: 15,
@@ -37,6 +41,8 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     actionItems: false,
     pdfExport: false,
     priorityProcessing: false,
+    meetingBot: false,
+    botMinutesPerMonth: 0,
   },
   pro: {
     recordingsPerMonth: 40,
@@ -48,6 +54,8 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     actionItems: true,
     pdfExport: true,
     priorityProcessing: true,
+    meetingBot: true,
+    botMinutesPerMonth: 600, // ~10 hrs of meetings (Container compute cap)
   },
   growth: {
     recordingsPerMonth: null, // unlimited
@@ -59,6 +67,8 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     actionItems: true,
     pdfExport: true,
     priorityProcessing: true,
+    meetingBot: true,
+    botMinutesPerMonth: 1800, // ~30 hrs of meetings
   },
   // kept for existing users; no longer sold
   team: {
@@ -71,6 +81,8 @@ export const PLAN_LIMITS: Record<PlanKey, PlanLimits> = {
     actionItems: true,
     pdfExport: true,
     priorityProcessing: true,
+    meetingBot: true,
+    botMinutesPerMonth: 1800,
   },
 };
 
@@ -79,9 +91,11 @@ export interface PlanGates {
   actionItems?: boolean | null;
   pdfExport?: boolean | null;
   indianLanguages?: boolean | null;
+  meetingBot?: boolean | null;
   recordingsPerMonth?: number | null; // null = plan default; 0 = unlimited
   maxDurationMins?: number | null;
   maxStorageGB?: number | null;
+  botMinutesPerMonth?: number | null;
 }
 
 export interface FeatureOverrides {
@@ -89,6 +103,7 @@ export interface FeatureOverrides {
   actionItems?: boolean | null;
   pdfExport?: boolean | null;
   indianLanguages?: boolean | null;
+  meetingBot?: boolean | null;
 }
 
 export interface PlanUserLike {
@@ -126,6 +141,7 @@ export const mergeEffectiveLimits = (
       actionItems: gates.actionItems ?? base.actionItems,
       pdfExport: gates.pdfExport ?? base.pdfExport,
       indianLanguages: gates.indianLanguages ?? base.indianLanguages,
+      meetingBot: gates.meetingBot ?? base.meetingBot,
       recordingsPerMonth:
         gates.recordingsPerMonth != null
           ? gates.recordingsPerMonth === 0
@@ -136,6 +152,7 @@ export const mergeEffectiveLimits = (
         gates.maxDurationMins != null ? gates.maxDurationMins * 60 : base.maxDurationSecs,
       maxStorageBytes:
         gates.maxStorageGB != null ? gates.maxStorageGB * 1_073_741_824 : base.maxStorageBytes,
+      botMinutesPerMonth: gates.botMinutesPerMonth ?? base.botMinutesPerMonth,
     };
   }
 
@@ -145,6 +162,7 @@ export const mergeEffectiveLimits = (
     if (ov.actionItems != null) limits = { ...limits, actionItems: ov.actionItems };
     if (ov.pdfExport != null) limits = { ...limits, pdfExport: ov.pdfExport };
     if (ov.indianLanguages != null) limits = { ...limits, indianLanguages: ov.indianLanguages };
+    if (ov.meetingBot != null) limits = { ...limits, meetingBot: ov.meetingBot };
   }
 
   return limits;

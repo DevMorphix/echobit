@@ -60,6 +60,20 @@
         </svg>
         <span>Upload File</span>
       </button>
+      <button
+        @click="mode = 'meeting'"
+        :class="[
+          'flex-1 py-2.5 sm:py-3 px-3 sm:px-4 rounded-xl font-medium transition flex items-center justify-center gap-2 text-sm sm:text-base',
+          mode === 'meeting'
+            ? 'bg-primary text-primary-fg'
+            : 'bg-surface-2 text-muted hover:text-content'
+        ]"
+      >
+        <svg class="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span>Record a Meeting</span>
+      </button>
     </div>
 
     <!-- Recording Card -->
@@ -125,7 +139,7 @@
       </div>
 
       <!-- FILE UPLOAD MODE -->
-      <div v-else class="py-4 sm:py-8">
+      <div v-else-if="mode === 'upload'" class="py-4 sm:py-8">
         <!-- Drop Zone -->
         <div
           @dragover.prevent="!limitReached && (isDragging = true)"
@@ -184,6 +198,102 @@
         </div>
       </div>
 
+      <!-- RECORD A MEETING MODE -->
+      <div v-else-if="mode === 'meeting'" class="py-4 sm:py-6">
+        <!-- Locked: needs Pro/Growth -->
+        <div v-if="!meetingBotAllowed" class="text-center py-6">
+          <div class="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg class="w-7 h-7 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <p class="text-base sm:text-lg font-semibold text-content">Auto-record your Google Meet calls</p>
+          <p class="text-muted mt-2 text-sm max-w-md mx-auto">
+            Send the Echobit bot to a Meet link — it joins, records the call, and gives you the transcript,
+            summary, minutes and action items automatically. Available on Pro and Growth.
+          </p>
+          <router-link to="/upgrade" class="btn-primary inline-flex mt-5 px-6 py-3">Upgrade to unlock</router-link>
+        </div>
+
+        <!-- Schedule / join now form -->
+        <div v-else>
+          <div class="space-y-4">
+            <div>
+              <label class="block text-sm font-medium text-content mb-1.5">Google Meet link</label>
+              <input
+                v-model="meetingUrl"
+                type="url"
+                placeholder="https://meet.google.com/abc-defg-hij"
+                class="w-full px-4 py-3 bg-surface-2 border border-line rounded-xl text-content placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-content mb-1.5">Title <span class="text-faint font-normal">(optional)</span></label>
+              <input
+                v-model="meetingTitle"
+                type="text"
+                placeholder="Weekly standup"
+                class="w-full px-4 py-3 bg-surface-2 border border-line rounded-xl text-content placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+            <div>
+              <label class="block text-sm font-medium text-content mb-1.5">When <span class="text-faint font-normal">(leave blank to join now)</span></label>
+              <input
+                v-model="meetingWhen"
+                type="datetime-local"
+                class="w-full px-4 py-3 bg-surface-2 border border-line rounded-xl text-content focus:outline-none focus:ring-2 focus:ring-primary/40"
+              />
+            </div>
+          </div>
+
+          <div class="mt-4 flex items-start gap-3 bg-primary/10 border border-primary/20 rounded-xl p-4">
+            <svg class="w-5 h-5 text-primary shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <p class="text-sm text-primary">"Echobit Notetaker" will ask to join the call — admit it so it can record. You'll get an email when the recording is ready.</p>
+          </div>
+
+          <div class="mt-5 flex justify-end">
+            <button @click="scheduleMeeting" :disabled="meetingSaving || !meetingUrl" class="btn-primary px-6 py-3">
+              <Spinner v-if="meetingSaving" size="sm" />
+              <span>{{ meetingSaving ? 'Scheduling…' : (meetingWhen ? 'Schedule bot' : 'Join now') }}</span>
+            </button>
+          </div>
+
+          <!-- Recent / upcoming bots -->
+          <div v-if="meetingsList.length" class="mt-8">
+            <h3 class="text-sm font-semibold text-content mb-3">Your meeting bots</h3>
+            <div class="space-y-2">
+              <div
+                v-for="m in meetingsList"
+                :key="m.id"
+                class="flex items-center gap-3 p-3 bg-surface-2 rounded-xl"
+              >
+                <span :class="['px-2 py-0.5 rounded-full text-xs font-medium capitalize', statusClass(m.status)]">{{ m.status }}</span>
+                <div class="min-w-0 flex-1">
+                  <p class="text-sm font-medium text-content truncate">{{ m.title || 'Meeting recording' }}</p>
+                  <p class="text-xs text-muted truncate">{{ m.scheduledAt ? formatWhen(m.scheduledAt) : 'Join now' }}</p>
+                </div>
+                <router-link
+                  v-if="m.recordingId"
+                  :to="`/dashboard/recordings/${m.recordingId}`"
+                  class="shrink-0 text-xs font-medium text-primary hover:underline"
+                >
+                  Open
+                </router-link>
+                <button
+                  v-else-if="['scheduled','joining','waiting','recording'].includes(m.status)"
+                  @click="cancelMeeting(m.id)"
+                  class="shrink-0 text-xs font-medium text-muted hover:text-red-600"
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Audio Playback -->
       <div v-if="audioUrl" class="mt-6 p-4 bg-surface-2 rounded-xl">
         <p class="text-sm font-medium text-content mb-2">Preview Recording</p>
@@ -215,7 +325,7 @@
       </div>
 
       <!-- Action Buttons -->
-      <div class="mt-8 flex items-center justify-end gap-4">
+      <div v-if="mode !== 'meeting'" class="mt-8 flex items-center justify-end gap-4">
         <button
           @click="$router.push('/dashboard')"
           class="px-6 py-3 text-muted hover:text-content font-medium transition"
@@ -238,7 +348,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
-import { recordingsApi } from '../api';
+import { recordingsApi, meetingsApi } from '../api';
 import Spinner from '../components/ui/Spinner.vue';
 
 const router = useRouter();
@@ -264,14 +374,75 @@ onMounted(async () => {
     usageCount.value = data.usage.recordingsThisMonth;
     limitCount.value = data.limits.recordingsPerMonth;
     maxDurationSecs.value = data.limits.maxDurationSecs ?? null;
+    meetingBotAllowed.value = !!data.limits.meetingBot;
     planLabel.value = data.plan.charAt(0).toUpperCase() + data.plan.slice(1);
   } catch {
     // non-critical — page still works, backend will block at save
   }
+  loadMeetings();
 });
 
-// Mode: 'record' or 'upload'
+// Mode: 'record' | 'upload' | 'meeting'
 const mode = ref('record');
+
+// ── Meeting bot ──
+const meetingBotAllowed = ref(false);
+const meetingUrl = ref('');
+const meetingTitle = ref('');
+const meetingWhen = ref('');
+const meetingSaving = ref(false);
+const meetingsList = ref([]);
+
+const loadMeetings = async () => {
+  try {
+    const { meetings } = await meetingsApi.list();
+    meetingsList.value = meetings || [];
+  } catch {
+    // non-critical
+  }
+};
+
+const scheduleMeeting = async () => {
+  if (!meetingUrl.value) return;
+  meetingSaving.value = true;
+  try {
+    const payload = { meetingUrl: meetingUrl.value.trim(), title: meetingTitle.value.trim() || undefined };
+    if (meetingWhen.value) payload.scheduledAt = new Date(meetingWhen.value).toISOString();
+    await meetingsApi.create(payload);
+    meetingUrl.value = '';
+    meetingTitle.value = '';
+    meetingWhen.value = '';
+    await loadMeetings();
+  } catch (error) {
+    alert(error.message || 'Failed to schedule the meeting bot. Please try again.');
+  } finally {
+    meetingSaving.value = false;
+  }
+};
+
+const cancelMeeting = async (id) => {
+  try {
+    await meetingsApi.cancel(id);
+    await loadMeetings();
+  } catch (error) {
+    alert(error.message || 'Failed to cancel.');
+  }
+};
+
+const statusClass = (status) => {
+  if (['done', 'processing'].includes(status)) return 'bg-primary/15 text-primary';
+  if (status === 'failed') return 'bg-red-500/15 text-red-600 dark:text-red-400';
+  if (status === 'cancelled') return 'bg-surface text-muted';
+  return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+};
+
+const formatWhen = (iso) => {
+  try {
+    return new Date(iso).toLocaleString([], { dateStyle: 'medium', timeStyle: 'short' });
+  } catch {
+    return iso;
+  }
+};
 
 const isRecording = ref(false);
 const recordingTime = ref(0);

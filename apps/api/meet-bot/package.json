@@ -1,0 +1,14 @@
+{
+  "name": "echobit-meet-bot",
+  "private": true,
+  "type": "module",
+  "version": "0.1.0",
+  "description": "Headless Google Meet recording bot (Cloudflare Container sidecar)",
+  "main": "server.js",
+  "scripts": {
+    "start": "./start.sh"
+  },
+  "dependencies": {
+    "playwright": "1.49.1"
+  }
+}

@@ -56,6 +56,43 @@ export async function sendOTPEmail(
   });
 }
 
+export async function sendRecordingReadyEmail(
+  env: Env,
+  params: { to: string; name: string; title: string; recordingId: string },
+): Promise<void> {
+  const esc = (s: string) =>
+    s.replace(/[&<>"]/g, (m) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[m] as string);
+  const name = esc(params.name || 'there');
+  const title = esc(params.title || 'Your recording');
+  const base = (env.BETTER_AUTH_URL ?? '').replace(/\/+$/, '');
+  const link = base ? `${base}/dashboard/recordings/${params.recordingId}` : '';
+
+  await sendHtml(env, {
+    to: params.to,
+    subject: `Your meeting recording is ready — ${params.title}`,
+    html: `
+      <div style="font-family: Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 32px; background: #f9fafb; border-radius: 12px;">
+        <h2 style="color: #059669; margin: 0 0 8px;">Your recording is ready</h2>
+        <p style="color: #374151; margin: 0 0 16px;">Hi ${name},</p>
+        <p style="color: #374151; margin: 0 0 16px;">
+          We finished processing <strong>${title}</strong>. The transcript, summary, meeting minutes
+          and action items are all set.
+        </p>
+        ${
+          link
+            ? `<div style="text-align: center; margin: 24px 0;">
+                 <a href="${link}" style="display: inline-block; background: #059669; color: white; text-decoration: none; padding: 12px 28px; border-radius: 10px; font-weight: 700;">Open recording</a>
+               </div>`
+            : ''
+        }
+        <p style="color: #9ca3af; font-size: 12px; margin: 24px 0 0; text-align: center;">
+          Echobit — AI Meeting Companion &nbsp;·&nbsp; Developed by Devmorphix
+        </p>
+      </div>
+    `,
+  });
+}
+
 export async function sendContactEmail(
   env: Env,
   params: { name: string; email: string; subject: string; message: string },

@@ -8,6 +8,8 @@ export interface Env {
   AI: Ai;
   TRANSCRIBE_WF: Workflow<JobMessage>;
   FFMPEG: DurableObjectNamespace<import('./audio/transcode.ts').FfmpegContainer>;
+  MEETING_BOT: DurableObjectNamespace<import('./meet/bot-do.ts').MeetingBot>;
+  MEET_BOT_CONTAINER: DurableObjectNamespace<import('./meet/container.ts').MeetBotContainer>;
   EMAIL: SendEmail;
   RL_LOGIN: RateLimitBinding;
   RL_OTP: RateLimitBinding;
@@ -67,6 +69,9 @@ export interface JobMessage {
   task: 'transcribe';
   recordingId: string;
   userId: string;
+  // When true, the workflow also auto-runs summary/minutes/actions (gated by
+  // plan) after transcription and emails the user. Used by the Meet bot.
+  autoProcess?: boolean;
 }
 
 export interface HonoEnv {
@@ -137,6 +142,32 @@ export interface RecordingRow {
     | 'failed';
   tags: string;
   metadata: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export type MeetingBotStatus =
+  | 'scheduled'
+  | 'joining'
+  | 'waiting'
+  | 'recording'
+  | 'uploading'
+  | 'processing'
+  | 'done'
+  | 'failed'
+  | 'cancelled';
+
+export interface MeetingBotRow {
+  id: string;
+  user_id: string;
+  meeting_url: string;
+  provider: string;
+  title: string | null;
+  scheduled_at: string | null;
+  status: MeetingBotStatus;
+  recording_id: string | null;
+  duration_secs: number;
+  error: string | null;
   created_at: string;
   updated_at: string;
 }

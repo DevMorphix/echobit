@@ -37,16 +37,16 @@ export const DEFAULT_FEATURES: Record<keyof typeof DEFAULT_PRICES, PlanFeature[]
     { text: 'AI transcription (15+ languages)', included: true },
     { text: 'AI summary + meeting minutes', included: true },
     { text: 'Action item extraction', included: true },
+    { text: 'Auto-record Google Meet calls (10 hrs/mo)', included: true },
     { text: 'PDF export', included: true },
-    { text: 'Priority processing', included: true },
   ],
   growth: [
     { text: 'Unlimited recordings', included: true },
     { text: 'AI transcription (20+ languages)', included: true },
     { text: 'Everything in Pro', included: true },
+    { text: 'Auto-record Google Meet calls (30 hrs/mo)', included: true },
     { text: 'Priority processing + support', included: true },
     { text: '25 GB storage', included: true },
-    { text: 'Team workspace', included: true },
   ],
   team: [
     { text: 'Unlimited recordings', included: true },

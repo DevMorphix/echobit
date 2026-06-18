@@ -5,6 +5,7 @@
 import { Hono } from 'hono';
 import authRoutes from './routes/auth.ts';
 import recordingsRoutes from './routes/recordings.ts';
+import meetingsRoutes from './routes/meetings.ts';
 import paymentsRoutes from './routes/payments.ts';
 import adminRoutes from './routes/admin.ts';
 import plansRoutes from './routes/plans.ts';
@@ -16,6 +17,8 @@ import type { Env, HonoEnv } from './types.ts';
 
 export { TranscriptionWorkflow } from './workflows/transcribe.ts';
 export { FfmpegContainer } from './audio/transcode.ts';
+export { MeetingBot } from './meet/bot-do.ts';
+export { MeetBotContainer } from './meet/container.ts';
 
 const app = new Hono<HonoEnv>();
 
@@ -61,6 +64,8 @@ app.route('/api/v1/plans', plansRoutes);
 // Protected routes — requireUser accepts a Better Auth session or a legacy JWT.
 app.use('/api/v1/recordings/*', requireUser);
 app.route('/api/v1/recordings', recordingsRoutes);
+app.use('/api/v1/meetings/*', requireUser);
+app.route('/api/v1/meetings', meetingsRoutes);
 app.route('/api/v1/payments', paymentsRoutes);
 app.route('/api/v1/admin', adminRoutes);
 

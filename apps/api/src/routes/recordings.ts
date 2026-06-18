@@ -16,13 +16,13 @@ import {
   countRecordingsThisMonth,
   getRecordingForUser,
   getUserById,
-  nowIso,
   sumStorageUsed,
   updateRow,
 } from '../lib/db.ts';
 import { getEffectiveLimits, userPlanView } from '../lib/limits.ts';
 import { canResolveAudioUrl, deleteAudio, getAudioUrl, getUploadUrl, uploadAudio } from '../lib/storage.ts';
 import { getDerivedText, getDerivedTexts, putDerivedText, deleteDerivedTexts } from '../lib/derived.ts';
+import { insertRecording } from '../lib/recording-create.ts';
 import { logError } from '../lib/log-error.ts';
 import { parseBody, schemas } from '../lib/validate.ts';
 import {
@@ -101,56 +101,9 @@ const checkCreateLimits = async (
   return { ok: true, limits };
 };
 
-// ─── Row insert helper ──────────────────────────────────────────────────────
-
-interface NewRecording {
-  userId: string;
-  title: string;
-  audioKey?: string | null;
-  audioSize?: number;
-  audioMimeType?: string;
-  duration?: number;
-  transcript?: string;
-  status?: RecordingRow['status'];
-}
-
-const insertRecording = async (env: Env, r: NewRecording): Promise<RecordingRow> => {
-  const ts = nowIso();
-  const id = newId();
-  const transcript = r.transcript ?? '';
-  const row: RecordingRow = {
-    id,
-    user_id: r.userId,
-    title: r.title,
-    audio_key: r.audioKey ?? null,
-    audio_size: r.audioSize ?? 0,
-    audio_mime_type: r.audioMimeType ?? 'audio/webm',
-    duration: Math.round(r.duration ?? 0),
-    transcript_chars: transcript.length,
-    summary_chars: 0,
-    minutes_chars: 0,
-    action_items: '[]',
-    status: r.status ?? 'pending',
-    tags: '[]',
-    metadata: '{}',
-    created_at: ts,
-    updated_at: ts,
-  };
-  await env.DB.prepare(
-    `INSERT INTO recordings (
-      id, user_id, title, audio_key, audio_size, audio_mime_type, duration,
-      transcript_chars, action_items, status, tags, metadata, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-  )
-    .bind(
-      row.id, row.user_id, row.title, row.audio_key, row.audio_size,
-      row.audio_mime_type, row.duration, row.transcript_chars,
-      row.action_items, row.status, row.tags, row.metadata, row.created_at, row.updated_at,
-    )
-    .run();
-  if (transcript) await putDerivedText(env, 'transcript', r.userId, id, transcript);
-  return row;
-};
+// ─── Recording helpers ──────────────────────────────────────────────────────
+// insertRecording / NewRecording live in lib/recording-create.ts so the Meet
+// bot shares the same insert + workflow seam.
 
 const defaultTitle = (): string =>
   `Recording ${new Date().toLocaleDateString()} ${new Date().toLocaleTimeString()}`;
@@ -271,6 +224,8 @@ recordings.get('/limits', async (c) => {
         meetingMinutes: limits.meetingMinutes,
         actionItems: limits.actionItems,
         pdfExport: limits.pdfExport,
+        meetingBot: limits.meetingBot,
+        botMinutesPerMonth: limits.botMinutesPerMonth,
       },
     });
   } catch (error) {

@@ -12,7 +12,7 @@
 // - Dates are ISO-8601 strings with milliseconds (stored as such in D1).
 // - `__v` is emitted as 0 (no client reads it).
 
-import type { CouponRow, ErrorLogRow, RecordingRow, UserRow } from '../types.ts';
+import type { CouponRow, ErrorLogRow, MeetingBotRow, RecordingRow, UserRow } from '../types.ts';
 
 const bool = (v: number | boolean | null | undefined): boolean => !!v;
 
@@ -122,6 +122,21 @@ export const serializeRecordingLean = (row: RecordingRow) => ({
   transcriptChars: row.transcript_chars,
   summaryChars: row.summary_chars,
   minutesChars: row.minutes_chars,
+});
+
+export const serializeMeetingBot = (row: MeetingBotRow) => ({
+  _id: row.id,
+  id: row.id,
+  meetingUrl: row.meeting_url,
+  provider: row.provider,
+  title: row.title,
+  scheduledAt: row.scheduled_at,
+  status: row.status,
+  recordingId: row.recording_id,
+  durationSecs: row.duration_secs,
+  error: row.error,
+  createdAt: row.created_at,
+  updatedAt: row.updated_at,
 });
 
 export const serializeCoupon = (row: CouponRow) => ({
