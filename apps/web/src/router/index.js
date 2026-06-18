@@ -26,8 +26,11 @@ const routes = [
   {
     path: '/admin',
     name: 'AdminPanel',
+    // Authorization is enforced by Cloudflare Access at the edge (and on every
+    // /api/v1/admin/* call), not an in-app role. requiresAuth just ensures the
+    // app session is initialized for the panel UI.
     component: () => import('../views/AdminPanel.vue'),
-    meta: { requiresAuth: true, requiresAdmin: true },
+    meta: { requiresAuth: true },
   },
   {
     path: '/login',
@@ -77,13 +80,10 @@ initAuth()
 // Navigation guards
 router.beforeEach((to, from, next) => {
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresAdmin = to.matched.some(record => record.meta.requiresAdmin)
   const isGuestRoute = to.matched.some(record => record.meta.guest)
 
   if (requiresAuth && !authState.isAuthenticated) {
     next('/login')
-  } else if (requiresAdmin && authState.user?.role !== 'admin') {
-    next('/dashboard')
   } else if (isGuestRoute && authState.isAuthenticated) {
     next('/dashboard')
   } else {

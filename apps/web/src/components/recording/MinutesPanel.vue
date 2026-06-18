@@ -5,16 +5,13 @@
       <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 pb-4 border-b border-line">
         <div class="flex items-center gap-2">
           <label class="text-sm text-muted">Template:</label>
-          <select
-            :value="selectedTemplate"
-            @change="$emit('update:selectedTemplate', $event.target.value)"
+          <CustomSelect
+            :model-value="selectedTemplate"
+            :options="templateOptions"
             aria-label="Minutes template"
-            class="text-sm bg-surface border border-line rounded-lg px-3 py-1.5 text-content focus:outline-none focus:ring-2 focus:ring-primary"
-          >
-            <option v-for="(template, key) in templates" :key="key" :value="key">
-              {{ template.name }}
-            </option>
-          </select>
+            class="w-44"
+            @update:model-value="$emit('update:selectedTemplate', $event)"
+          />
           <button @click="$emit('edit-template', selectedTemplate)" aria-label="Edit template"
             class="p-1.5 text-muted hover:text-content hover:bg-surface-2 rounded-lg transition" title="Edit template">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -113,6 +110,7 @@ import { computed } from 'vue';
 import { formatMarkdown } from '../../services/markdown.js';
 import { formatDate } from '../../services/format.js';
 import Spinner from '../ui/Spinner.vue';
+import CustomSelect from '../ui/CustomSelect.vue';
 
 const props = defineProps({
   recording: { type: Object, required: true },
@@ -125,4 +123,6 @@ const props = defineProps({
 defineEmits(['generate', 'download-pdf', 'download-md', 'edit-template', 'update:selectedTemplate']);
 
 const activeTemplate = computed(() => props.templates[props.selectedTemplate]);
+const templateOptions = computed(() =>
+  Object.entries(props.templates).map(([key, t]) => ({ value: key, label: t.name })));
 </script>

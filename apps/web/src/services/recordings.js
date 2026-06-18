@@ -5,6 +5,14 @@ export const recordingsApi = {
     return apiRequest('/recordings');
   },
 
+  // Server-paginated list. Returns { recordings, total, page, pages, limit }.
+  async list({ page = 1, limit = 12, status = '', q = '' } = {}) {
+    const params = new URLSearchParams({ page: String(page), limit: String(limit) });
+    if (status) params.set('status', status);
+    if (q) params.set('q', q);
+    return apiRequest(`/recordings?${params.toString()}`);
+  },
+
   async getLimits() {
     return apiRequest('/recordings/limits');
   },

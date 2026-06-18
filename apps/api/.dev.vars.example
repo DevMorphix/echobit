@@ -15,3 +15,7 @@ R2_SECRET_ACCESS_KEY=
 # AI Gateway (optional) — leave unset to call providers directly
 #AI_GATEWAY_URL=https://gateway.ai.cloudflare.com/v1/<account_id>/echobit
 #AI_GATEWAY_ID=echobit
+# Bypass Cloudflare Access on the admin routes locally (Access only runs at the
+# edge, never in front of `wrangler dev`). Overrides ENVIRONMENT=production from
+# wrangler.jsonc. Never set this to "development" in production.
+ENVIRONMENT=development

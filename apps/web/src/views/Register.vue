@@ -85,37 +85,12 @@
 
           <div>
             <label class="block text-muted text-sm font-medium mb-1.5">Country</label>
-            <select v-model="country" :disabled="loading" class="field text-sm sm:text-base">
-              <option value="">Select your country</option>
-              <option value="India">🇮🇳 India</option>
-              <option value="United States">🇺🇸 United States</option>
-              <option value="United Kingdom">🇬🇧 United Kingdom</option>
-              <option value="Canada">🇨🇦 Canada</option>
-              <option value="Australia">🇦🇺 Australia</option>
-              <option value="Germany">🇩🇪 Germany</option>
-              <option value="France">🇫🇷 France</option>
-              <option value="Japan">🇯🇵 Japan</option>
-              <option value="Singapore">🇸🇬 Singapore</option>
-              <option value="UAE">🇦🇪 UAE</option>
-              <option value="Other">🌍 Other</option>
-            </select>
+            <CustomSelect v-model="country" :options="countryOptions" :disabled="loading" placeholder="Select your country" aria-label="Country" />
           </div>
 
           <div v-if="country === 'India'">
             <label class="block text-muted text-sm font-medium mb-1.5">Preferred Language</label>
-            <select v-model="preferredLanguage" :disabled="loading" class="field text-sm sm:text-base">
-              <option value="English">English</option>
-              <option value="Hindi">Hindi (हिन्दी)</option>
-              <option value="Bengali">Bengali (বাংলা)</option>
-              <option value="Tamil">Tamil (தமிழ்)</option>
-              <option value="Telugu">Telugu (తెలుగు)</option>
-              <option value="Kannada">Kannada (ಕನ್ನಡ)</option>
-              <option value="Malayalam">Malayalam (മലയാളം)</option>
-              <option value="Marathi">Marathi (मराठी)</option>
-              <option value="Gujarati">Gujarati (ગુજરાતી)</option>
-              <option value="Punjabi">Punjabi (ਪੰਜਾਬੀ)</option>
-              <option value="Odia">Odia (ଓଡ଼ିଆ)</option>
-            </select>
+            <CustomSelect v-model="preferredLanguage" :options="languageOptions" :disabled="loading" aria-label="Preferred language" />
           </div>
 
           <div>
@@ -160,6 +135,35 @@ import { authApi } from '../api';
 import TurnstileWidget from '../components/TurnstileWidget.vue';
 import ThemeToggle from '../components/ui/ThemeToggle.vue';
 import Spinner from '../components/ui/Spinner.vue';
+import CustomSelect from '../components/ui/CustomSelect.vue';
+
+const countryOptions = [
+  { value: 'India', label: '🇮🇳 India' },
+  { value: 'United States', label: '🇺🇸 United States' },
+  { value: 'United Kingdom', label: '🇬🇧 United Kingdom' },
+  { value: 'Canada', label: '🇨🇦 Canada' },
+  { value: 'Australia', label: '🇦🇺 Australia' },
+  { value: 'Germany', label: '🇩🇪 Germany' },
+  { value: 'France', label: '🇫🇷 France' },
+  { value: 'Japan', label: '🇯🇵 Japan' },
+  { value: 'Singapore', label: '🇸🇬 Singapore' },
+  { value: 'UAE', label: '🇦🇪 UAE' },
+  { value: 'Other', label: '🌍 Other' },
+];
+
+const languageOptions = [
+  { value: 'English', label: 'English' },
+  { value: 'Hindi', label: 'Hindi (हिन्दी)' },
+  { value: 'Bengali', label: 'Bengali (বাংলা)' },
+  { value: 'Tamil', label: 'Tamil (தமிழ்)' },
+  { value: 'Telugu', label: 'Telugu (తెలుగు)' },
+  { value: 'Kannada', label: 'Kannada (ಕನ್ನಡ)' },
+  { value: 'Malayalam', label: 'Malayalam (മലയാളം)' },
+  { value: 'Marathi', label: 'Marathi (मराठी)' },
+  { value: 'Gujarati', label: 'Gujarati (ગુજરાતી)' },
+  { value: 'Punjabi', label: 'Punjabi (ਪੰਜਾਬੀ)' },
+  { value: 'Odia', label: 'Odia (ଓଡ଼ିଆ)' },
+];
 
 const router = useRouter();
 const name = ref('');

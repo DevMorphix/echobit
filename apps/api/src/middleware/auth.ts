@@ -23,21 +23,5 @@ export const authenticateToken = createMiddleware<HonoEnv>(async (c, next) => {
   await next();
 });
 
-export const requireAdmin = createMiddleware<HonoEnv>(async (c, next) => {
-  const authHeader = c.req.header('authorization');
-  const token = authHeader?.split(' ')[1];
-  if (!token) return c.json({ error: 'Access token required' }, 401);
-
-  const decoded = await verifyToken(c.env.JWT_SECRET, token);
-  if (!decoded) return c.json({ error: 'Invalid or expired token' }, 403);
-
-  const row = await c.env.DB.prepare('SELECT role FROM users WHERE id = ?')
-    .bind(decoded.id)
-    .first<{ role: string }>();
-  if (!row || row.role !== 'admin') {
-    return c.json({ error: 'Admin access required' }, 403);
-  }
-
-  c.set('user', decoded);
-  await next();
-});
+// Admin authorization is no longer an in-app role check — the admin surface is
+// gated by Cloudflare Access. See middleware/cfAccess.ts (requireCfAccess).

@@ -41,6 +41,15 @@ export interface Env {
   // AI Gateway (optional) — unset routes AI calls directly to providers
   AI_GATEWAY_URL?: string;
   AI_GATEWAY_ID?: string;
+  // Cloudflare Access (Zero Trust) — gates the admin surface. TEAM_DOMAIN is
+  // "<team>.cloudflareaccess.com"; AUD is the Access application audience tag
+  // (comma-separate to allow several). ADMIN_EMAILS is an optional extra
+  // allowlist on top of the Access policy. ENVIRONMENT="development" bypasses
+  // Access locally (it never runs in front of `wrangler dev`).
+  CF_ACCESS_TEAM_DOMAIN?: string;
+  CF_ACCESS_AUD?: string;
+  ADMIN_EMAILS?: string;
+  ENVIRONMENT?: string;
 }
 
 /** JWT payload — exact claims the old backend issued (middleware/auth.js). */
@@ -61,6 +70,8 @@ export interface HonoEnv {
   Bindings: Env;
   Variables: {
     user: AuthUser;
+    // Verified email from the Cloudflare Access JWT (admin routes only).
+    adminEmail?: string;
   };
 }
 

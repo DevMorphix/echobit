@@ -588,10 +588,7 @@
             </div>
             <div>
               <label class="text-xs mb-1 block" :class="thm.textFaint">Type *</label>
-              <select v-model="couponForm.discountType" :class="['w-full text-sm px-3 py-2 rounded-lg border', thm.input]">
-                <option value="percent">Percent (%)</option>
-                <option value="flat">Flat (₹ paise)</option>
-              </select>
+              <CustomSelect v-model="couponForm.discountType" :options="discountTypeOptions" aria-label="Discount type" class="w-full" />
             </div>
             <div>
               <label class="text-xs mb-1 block" :class="thm.textFaint">Value * {{ couponForm.discountType === 'percent' ? '(%)' : '(paise)' }}</label>
@@ -837,15 +834,14 @@
                 <div v-for="f in overrideFields" :key="f.key"
                      :class="[thm.cardInner, 'px-4 py-2.5 flex items-center justify-between gap-3']">
                   <span class="text-sm" :class="thm.text">{{ f.label }}</span>
-                  <select
-                    :value="selectedUser.user.featureOverrides?.[f.key] == null ? 'default' : String(selectedUser.user.featureOverrides[f.key])"
-                    @change="applyOverride(f.key, $event.target.value)"
+                  <CustomSelect
+                    :model-value="selectedUser.user.featureOverrides?.[f.key] == null ? 'default' : String(selectedUser.user.featureOverrides[f.key])"
+                    :options="overrideOptions"
                     :disabled="overrideSaving"
-                    :class="['text-xs rounded-lg px-2 py-1 border cursor-pointer', thm.input]">
-                    <option value="default">Default (plan)</option>
-                    <option value="true">Force ON</option>
-                    <option value="false">Force OFF</option>
-                  </select>
+                    aria-label="Feature override"
+                    class="w-40 shrink-0"
+                    @update:model-value="applyOverride(f.key, $event)"
+                  />
                 </div>
               </div>
             </div>
@@ -888,6 +884,17 @@ import { adminApi, couponsApi, plansApi, authState } from '@/api';
 import { useAdminTheme } from '../components/admin/theme.js';
 import { StatCard, DetailRow, BarChart, AuthDonut, CostBarChart } from '../components/admin/widgets.js';
 import { useTheme } from '../composables/useTheme';
+import CustomSelect from '../components/ui/CustomSelect.vue';
+
+const discountTypeOptions = [
+  { value: 'percent', label: 'Percent (%)' },
+  { value: 'flat', label: 'Flat (₹ paise)' },
+];
+const overrideOptions = [
+  { value: 'default', label: 'Default (plan)' },
+  { value: 'true', label: 'Force ON' },
+  { value: 'false', label: 'Force OFF' },
+];
 
 const adminEmail = computed(() => authState.user?.email || '');
 const globalError = ref('');

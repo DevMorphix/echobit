@@ -105,7 +105,14 @@
     "SUPPORT_EMAIL": "support@echobits.xyz",
     "R2_BUCKET_NAME": "echobit",
     "R2_PUBLIC_URL": "https://cdn.echobits.xyz",
-    "ALLOWED_ORIGINS": "https://echobits.xyz,https://echobits.devmorphix.com,http://localhost:5173"
+    "ALLOWED_ORIGINS": "https://echobits.xyz,https://echobits.devmorphix.com,http://localhost:5173",
+    "ENVIRONMENT": "production",
+
+    // Cloudflare Access (Zero Trust) for the admin surface. After creating the
+    // self-hosted Access application, paste your team domain + the application's
+    // Audience (AUD) tag here. Until both are set, /api/v1/admin/* returns 503.
+    "CF_ACCESS_TEAM_DOMAIN": "devmorphix.cloudflareaccess.com",
+    "CF_ACCESS_AUD": ""
 
     // AI Gateway (optional): create a gateway named "echobit" in the dashboard
     // (AI > AI Gateway), then set both vars. Unset, AI calls go directly to the

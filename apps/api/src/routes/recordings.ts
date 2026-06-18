@@ -283,11 +283,40 @@ recordings.get('/limits', async (c) => {
 
 recordings.get('/', async (c) => {
   try {
-    const rows = await c.env.DB.prepare(
-      'SELECT * FROM recordings WHERE user_id = ? ORDER BY created_at DESC',
-    )
-      .bind(c.get('user').id)
-      .all<RecordingRow>();
+    const pageParam = c.req.query('page');
+    const limitParam = c.req.query('limit');
+    // Opt-in pagination: only when page/limit is passed. Without them this stays
+    // backward-compatible (returns all rows) so the dashboard counts and the
+    // published mobile app keep working unchanged.
+    const paginated = pageParam !== undefined || limitParam !== undefined;
+    const status = c.req.query('status')?.trim();
+    const q = c.req.query('q')?.trim();
+
+    const where = ['user_id = ?'];
+    const binds: unknown[] = [c.get('user').id];
+    if (status) { where.push('status = ?'); binds.push(status); }
+    if (q) { where.push('title LIKE ?'); binds.push(`%${q}%`); }
+    const whereSql = where.join(' AND ');
+
+    let sql = `SELECT * FROM recordings WHERE ${whereSql} ORDER BY created_at DESC`;
+    let page = 1;
+    let limit = 0;
+    let pages = 1;
+    let total: number | undefined;
+
+    if (paginated) {
+      page = Math.max(1, parseInt(pageParam ?? '1', 10) || 1);
+      limit = Math.min(100, Math.max(1, parseInt(limitParam ?? '12', 10) || 12));
+      const countRow = await c.env.DB.prepare(`SELECT COUNT(*) AS n FROM recordings WHERE ${whereSql}`)
+        .bind(...binds)
+        .first<{ n: number }>();
+      total = countRow?.n ?? 0;
+      pages = Math.max(1, Math.ceil(total / limit));
+      sql += ' LIMIT ? OFFSET ?';
+      binds.push(limit, (page - 1) * limit);
+    }
+
+    const rows = await c.env.DB.prepare(sql).bind(...binds).all<RecordingRow>();
 
     const list = await Promise.all(
       (rows.results ?? []).map(async (row) => {
@@ -303,7 +332,7 @@ recordings.get('/', async (c) => {
       }),
     );
 
-    return c.json({ recordings: list });
+    return c.json(paginated ? { recordings: list, total, page, pages, limit } : { recordings: list });
   } catch (error) {
     console.error('Error fetching recordings:', error);
     return c.json({ error: 'Failed to fetch recordings' }, 500);

@@ -1,9 +1,9 @@
 // Admin routes — port of backend/routes/admin.js with Mongo aggregations
-// rewritten as SQL. All routes require the admin role (requireAdmin).
+// rewritten as SQL. The whole surface is gated by Cloudflare Access (requireCfAccess).
 
 import { Hono } from 'hono';
 import { newId } from '@echobit/shared/ids';
-import { requireAdmin } from '../middleware/auth.ts';
+import { requireCfAccess } from '../middleware/cfAccess.ts';
 import { serializeCoupon, serializeUser } from '../lib/serialize.ts';
 import { nowIso, updateRow } from '../lib/db.ts';
 import { deleteAudio } from '../lib/storage.ts';
@@ -11,7 +11,7 @@ import { parseBody, schemas } from '../lib/validate.ts';
 import type { CouponRow, HonoEnv, PlanConfigRow, UserRow } from '../types.ts';
 
 const admin = new Hono<HonoEnv>();
-admin.use('*', requireAdmin);
+admin.use('*', requireCfAccess);
 
 const bool = (v: number | null): boolean => !!v;
 
