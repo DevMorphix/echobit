@@ -21,7 +21,7 @@ import {
   updateRow,
 } from '../lib/db.ts';
 import { getEffectiveLimits, userPlanView } from '../lib/limits.ts';
-import { deleteAudio, getAudioUrl, getUploadUrl, hasR2Credentials, uploadAudio } from '../lib/storage.ts';
+import { canResolveAudioUrl, deleteAudio, getAudioUrl, getUploadUrl, uploadAudio } from '../lib/storage.ts';
 import { getDerivedText, getDerivedTexts, putDerivedText, deleteDerivedTexts } from '../lib/derived.ts';
 import { logError } from '../lib/log-error.ts';
 import { parseBody, schemas } from '../lib/validate.ts';
@@ -219,7 +219,7 @@ recordings.post('/finalize-upload', async (c) => {
       meta.totalChunks,
       mimeType || 'audio/wav',
     );
-    const audioUrl = hasR2Credentials(c.env) ? await getAudioUrl(c.env, key, 604_800) : null;
+    const audioUrl = canResolveAudioUrl(c.env) ? await getAudioUrl(c.env, key, 604_800) : null;
 
     const recording = await insertRecording(c.env, {
       userId,
@@ -292,7 +292,7 @@ recordings.get('/', async (c) => {
     const list = await Promise.all(
       (rows.results ?? []).map(async (row) => {
         const item = serializeRecordingLean(row);
-        if (row.audio_key && hasR2Credentials(c.env)) {
+        if (row.audio_key && canResolveAudioUrl(c.env)) {
           try {
             item.audioUrl = await getAudioUrl(c.env, row.audio_key);
           } catch {
@@ -316,7 +316,7 @@ recordings.get('/:id', async (c) => {
     if (!row) return c.json({ error: 'Recording not found' }, 404);
 
     const recording = await serializeWithDerived(c.env, row);
-    if (row.audio_key && hasR2Credentials(c.env)) {
+    if (row.audio_key && canResolveAudioUrl(c.env)) {
       try {
         recording.audioUrl = await getAudioUrl(c.env, row.audio_key);
       } catch {
@@ -381,7 +381,7 @@ recordings.post('/', async (c) => {
     if (audioKey) {
       // Option 1: file already uploaded via presigned URL
       audioInfo.audioKey = audioKey;
-      audioInfo.audioUrl = hasR2Credentials(c.env) ? await getAudioUrl(c.env, audioKey) : null;
+      audioInfo.audioUrl = canResolveAudioUrl(c.env) ? await getAudioUrl(c.env, audioKey) : null;
       const head = await c.env.BUCKET.head(audioKey);
       audioInfo.audioSize = head?.size ?? clientAudioSize ?? 0;
     } else if (audioData) {

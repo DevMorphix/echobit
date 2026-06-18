@@ -34,6 +34,9 @@ export interface Env {
   EMAIL_FROM: string;
   SUPPORT_EMAIL: string;
   R2_BUCKET_NAME: string;
+  // Public R2 custom domain (e.g. https://cdn.echobits.xyz). When set, audio read
+  // URLs are served directly from it instead of presigned S3 GET URLs.
+  R2_PUBLIC_URL?: string;
   ALLOWED_ORIGINS?: string;
   // AI Gateway (optional) — unset routes AI calls directly to providers
   AI_GATEWAY_URL?: string;
