@@ -58,14 +58,10 @@
       "instance_type": "basic",
       "max_instances": 5
     },
-    // Meeting bot: headless Chromium + PulseAudio + ffmpeg joins a Google Meet
-    // and records the call audio. Heavier than the ffmpeg sidecar (a live
-    // WebRTC session for the whole meeting), so a custom 2 vCPU / 4 GiB instance.
-    // Needs `wrangler login` + Docker to build/deploy the image.
     {
       "class_name": "MeetBotContainer",
       "image": "./meet-bot/Dockerfile",
-      "instance_type": { "vcpu": 2, "memory_mib": 4096, "disk_mb": 4000 },
+      "instance_type": { "vcpu": 1, "memory_mib": 3072, "disk_mb": 4000 },
       "max_instances": 3
     }
   ],
