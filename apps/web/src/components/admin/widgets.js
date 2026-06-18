@@ -1,5 +1,4 @@
-// Render-function widgets for the admin panel (stat cards + SVG charts).
-// Extracted verbatim from the old inline defineComponent blocks in AdminPanel.vue.
+// Render-function widgets shared across the admin pages (stat cards + SVG charts).
 
 import { defineComponent, h } from 'vue';
 

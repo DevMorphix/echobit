@@ -24,13 +24,23 @@ const routes = [
     meta: { title: 'Upgrade – Echobit' },
   },
   {
+    // Admin surface — gated entirely by Cloudflare Access (edge login + every
+    // /api/v1/admin/* call). `admin: true` keeps the user-login guard off it;
+    // AdminLayout confirms the Access identity (via /admin/me) before rendering.
     path: '/admin',
-    name: 'AdminPanel',
-    // Authorization is enforced by Cloudflare Access at the edge (and on every
-    // /api/v1/admin/* call), not an in-app role. requiresAuth just ensures the
-    // app session is initialized for the panel UI.
-    component: () => import('../views/AdminPanel.vue'),
-    meta: { requiresAuth: true },
+    component: () => import('../components/admin/AdminLayout.vue'),
+    meta: { admin: true },
+    redirect: '/admin/overview',
+    children: [
+      { path: 'overview',    name: 'AdminOverview',      component: () => import('../views/admin/AdminOverview.vue') },
+      { path: 'users',       name: 'AdminUsers',         component: () => import('../views/admin/AdminUsers.vue') },
+      { path: 'recordings',  name: 'AdminRecordings',    component: () => import('../views/admin/AdminRecordings.vue') },
+      { path: 'analytics',   name: 'AdminAnalytics',     component: () => import('../views/admin/AdminAnalytics.vue') },
+      { path: 'financials',  name: 'AdminFinancials',    component: () => import('../views/admin/AdminFinancials.vue') },
+      { path: 'revenue',     name: 'AdminSubscriptions', component: () => import('../views/admin/AdminSubscriptions.vue') },
+      { path: 'coupons',     name: 'AdminCoupons',       component: () => import('../views/admin/AdminCoupons.vue') },
+      { path: 'plans',       name: 'AdminPlans',         component: () => import('../views/admin/AdminPlans.vue') },
+    ],
   },
   {
     path: '/login',
