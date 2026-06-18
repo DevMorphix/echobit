@@ -114,8 +114,15 @@ export const serializeRecording = (row: RecordingRow, derived: DerivedText = {})
   formattedDuration: formattedDuration(row.duration),
 });
 
-/** Mongoose .lean() shape (list route) — no virtuals, no transcript/summary/minutes. */
-export const serializeRecordingLean = (row: RecordingRow) => recordingBase(row);
+/** Mongoose .lean() shape (list route) — no virtuals. Derived text lives in R2, so the
+ *  list exposes only the char counts (lets clients tell which recordings have a
+ *  transcript/summary/minutes without fetching R2). */
+export const serializeRecordingLean = (row: RecordingRow) => ({
+  ...recordingBase(row),
+  transcriptChars: row.transcript_chars,
+  summaryChars: row.summary_chars,
+  minutesChars: row.minutes_chars,
+});
 
 export const serializeCoupon = (row: CouponRow) => ({
   _id: row.id,

@@ -119,10 +119,11 @@ const loading = ref(true);
 
 const userName = computed(() => authState.user?.name?.split(' ')[0] || 'User');
 
+// List omits derived text (R2) — tally from the char counts it returns instead.
 const stats = computed(() => ({
   total: recordings.value.length,
-  summarized: recordings.value.filter(r => r.summary).length,
-  minutes: recordings.value.filter(r => r.minutes).length
+  summarized: recordings.value.filter(r => (r.summaryChars ?? 0) > 0).length,
+  minutes: recordings.value.filter(r => (r.minutesChars ?? 0) > 0).length
 }));
 
 const statCards = computed(() => [
