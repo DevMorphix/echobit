@@ -113,7 +113,7 @@
     // self-hosted Access application, paste your team domain + the application's
     // Audience (AUD) tag here. Until both are set, /api/v1/admin/* returns 503.
     "CF_ACCESS_TEAM_DOMAIN": "devmorphix.cloudflareaccess.com",
-    "CF_ACCESS_AUD": ""
+    "CF_ACCESS_AUD": "7a6311ed254b0680ab00fbc82ac4f9ed4113f691b0fb52f7f4049f91ed0dd176"
 
     // AI Gateway (optional): create a gateway named "echobit" in the dashboard
     // (AI > AI Gateway), then set both vars. Unset, AI calls go directly to the
