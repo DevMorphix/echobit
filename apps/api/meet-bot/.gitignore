@@ -1,0 +1,5 @@
+# Bot Google account session — secret, never commit
+cookies.json
+cookies.txt
+google-session.json
+node_modules/

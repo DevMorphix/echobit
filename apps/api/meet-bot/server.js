@@ -39,7 +39,7 @@ const dismissDialogs = async (page) => {
   }
 };
 
-const joinMeeting = async (meetingUrl, botName) => {
+const joinMeeting = async (meetingUrl, botName, storageState) => {
   browser = await chromium.launch({
     headless: false,
     args: [
@@ -52,11 +52,13 @@ const joinMeeting = async (meetingUrl, botName) => {
       '--disable-dev-shm-usage',
     ],
   });
-  const context = await browser.newContext({
-    userAgent: UA,
-    permissions: ['microphone', 'camera'],
-    locale: 'en-US',
-  });
+  const contextOpts = { userAgent: UA, permissions: ['microphone', 'camera'], locale: 'en-US' };
+  // Signed-in bot session (a dedicated Google account's cookies) lets the bot
+  // join meetings that require sign-in. Absent → guest join.
+  if (storageState) {
+    try { contextOpts.storageState = JSON.parse(storageState); } catch { /* fall back to guest */ }
+  }
+  const context = await browser.newContext(contextOpts);
   const page = await context.newPage();
   await page.goto(meetingUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.waitForTimeout(4000);
@@ -102,9 +104,9 @@ const stopRecording = async () => {
   if (state.startedAt) state.durationSecs = Math.round((Date.now() - state.startedAt) / 1000);
 };
 
-const run = async (meetingUrl, botName, maxDurationSecs) => {
+const run = async (meetingUrl, botName, maxDurationSecs, storageState) => {
   try {
-    const page = await joinMeeting(meetingUrl, botName);
+    const page = await joinMeeting(meetingUrl, botName, storageState);
     startRecording();
 
     const deadline = Date.now() + maxDurationSecs * 1000;
@@ -147,11 +149,11 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === 'POST' && url.pathname === '/join') {
     if (state.phase !== 'idle') { res.writeHead(409).end('already active'); return; }
-    const { meetingUrl, botName, maxDurationSecs } = await readJson(req);
+    const { meetingUrl, botName, maxDurationSecs, storageState } = await readJson(req);
     if (!meetingUrl) { res.writeHead(400).end('meetingUrl required'); return; }
     state.phase = 'joining';
     stopRequested = false;
-    run(meetingUrl, botName || 'Echobit Notetaker', Number(maxDurationSecs) || 10_800);
+    run(meetingUrl, botName || 'Echobit Notetaker', Number(maxDurationSecs) || 10_800, storageState);
     res.writeHead(202, { 'content-type': 'application/json' }).end(JSON.stringify({ ok: true }));
     return;
   }

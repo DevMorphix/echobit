@@ -48,6 +48,17 @@ export class MeetingBot extends DurableObject<Env> {
     return this.env.MEET_BOT_CONTAINER.getByName(this.ctx.id.toString());
   }
 
+  // Persisted Google session for the dedicated bot account (Playwright
+  // storageState), uploaded once to R2. Absent → the bot joins as a guest.
+  private async loadSession(): Promise<string> {
+    try {
+      const obj = await this.env.BUCKET.get('meet-bot/google-session.json');
+      return obj ? await obj.text() : '';
+    } catch {
+      return '';
+    }
+  }
+
   private async setDbStatus(id: string, status: MeetingBotStatus, extra: Record<string, string | number | null> = {}) {
     await updateRow(this.env, 'meeting_bots', id, { status, ...extra });
   }
@@ -83,6 +94,8 @@ export class MeetingBot extends DurableObject<Env> {
     await this.ctx.storage.put('joinAttempts', attempts);
     await this.setDbStatus(params.meetingBotId, 'joining');
 
+    const storageState = await this.loadSession();
+
     try {
       const res = await this.container().fetch(
         new Request('http://meet/join', {
@@ -92,6 +105,7 @@ export class MeetingBot extends DurableObject<Env> {
             meetingUrl: params.meetingUrl,
             botName: params.botName,
             maxDurationSecs: params.maxDurationSecs,
+            storageState,
           }),
         }),
       );
