@@ -13,4 +13,4 @@ pactl load-module module-null-sink sink_name=meetsink sink_properties=device.des
 pactl set-default-sink meetsink
 
 export PULSE_SINK=meetsink
-exec node server.js
+exec xvfb-run -a --server-args="-screen 0 1280x720x24" node server.js

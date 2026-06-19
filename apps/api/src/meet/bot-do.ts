@@ -79,8 +79,9 @@ export class MeetingBot extends DurableObject<Env> {
     const params = await this.ctx.storage.get<BotParams>('params');
     if (!params) return;
 
+    const attempts = ((await this.ctx.storage.get<number>('joinAttempts')) ?? 0) + 1;
+    await this.ctx.storage.put('joinAttempts', attempts);
     await this.setDbStatus(params.meetingBotId, 'joining');
-    await this.ctx.storage.put('startedAt', Date.now());
 
     try {
       const res = await this.container().fetch(
@@ -96,9 +97,15 @@ export class MeetingBot extends DurableObject<Env> {
       );
       if (!res.ok) throw new Error(`join failed (${res.status}): ${await res.text().catch(() => '')}`);
     } catch (e) {
+      // The container may still be cold/provisioning — retry before giving up.
+      if (attempts < 6) {
+        await this.ctx.storage.setAlarm(Date.now() + 30_000);
+        return;
+      }
       return this.fail(params, `Could not start the meeting bot: ${(e as Error).message}`);
     }
 
+    await this.ctx.storage.put('startedAt', Date.now());
     await this.ctx.storage.put('phase', 'poll');
     await this.ctx.storage.setAlarm(Date.now() + POLL_MS);
   }

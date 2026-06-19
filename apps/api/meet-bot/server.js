@@ -1,13 +1,7 @@
 // Meeting bot control server (runs inside the Cloudflare Container).
-//
-// Joins a Google Meet with a headless Chromium (Playwright), lets Chromium play
-// the call audio into a PulseAudio null sink (set up in start.sh), and records
-// that sink's monitor to a 16 kHz mono WAV with ffmpeg. The MeetingBot Durable
-// Object polls /status and pulls /audio when the call ends.
-//
-// SPIKE NOTE: the Google Meet join selectors and the WebRTC media path (UDP vs
-// Meet's TCP/443 fallback from inside Container egress) are the parts the
-// Phase-0 spike must validate. Selectors are intentionally isolated below.
+// Joins a Google Meet with Chromium (Playwright, headful under Xvfb), routes the
+// call audio into a PulseAudio null sink, and records it to a 16 kHz mono WAV
+// with ffmpeg. The MeetingBot Durable Object polls /status and pulls /audio.
 
 import http from 'node:http';
 import { spawn } from 'node:child_process';
@@ -16,7 +10,9 @@ import { chromium } from 'playwright';
 
 const PORT = 8080;
 const OUT_PATH = '/tmp/out.wav';
+const SHOT_PATH = '/tmp/fail.png';
 const PULSE_MONITOR = 'meetsink.monitor';
+const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36';
 
 const state = {
   phase: 'idle', // idle | joining | waiting | recording | done | error
@@ -29,57 +25,70 @@ let browser = null;
 let ffmpeg = null;
 let stopRequested = false;
 
-// ─── Meet automation (the brittle, spike-validated part) ─────────────────────
+const pageText = async (page) => {
+  try {
+    return (await page.locator('body').innerText({ timeout: 2000 })).replace(/\s+/g, ' ').slice(0, 400);
+  } catch {
+    return '';
+  }
+};
 
-const SEL = {
-  nameInput: 'input[aria-label="Your name"], input[placeholder="Your name"]',
-  joinButton: 'button:has-text("Ask to join"), button:has-text("Join now")',
-  inCall: '[aria-label*="Leave call"], button[aria-label*="Leave call"]',
-  waiting: 'text=/Asking to be let in|You.ll join when someone lets you in/i',
-  ended: 'text=/You.ve left the meeting|removed from the meeting|Return to home screen/i',
+const dismissDialogs = async (page) => {
+  for (const re of [/^Got it$/i, /^I agree$/i, /^Accept all$/i, /^Dismiss$/i, /^No thanks$/i]) {
+    await page.getByRole('button', { name: re }).first().click({ timeout: 1500 }).catch(() => {});
+  }
 };
 
 const joinMeeting = async (meetingUrl, botName) => {
   browser = await chromium.launch({
-    headless: true,
+    headless: false,
     args: [
-      '--use-fake-ui-for-media-stream', // auto-accept the mic/cam permission prompt
-      '--use-fake-device-for-media-stream', // no real devices in the container
+      '--use-fake-ui-for-media-stream',
+      '--use-fake-device-for-media-stream',
       '--autoplay-policy=no-user-gesture-required',
-      '--disable-gpu',
+      '--disable-blink-features=AutomationControlled',
+      '--no-first-run',
       '--no-sandbox',
       '--disable-dev-shm-usage',
     ],
   });
-  const context = await browser.newContext({ permissions: ['microphone', 'camera'] });
+  const context = await browser.newContext({
+    userAgent: UA,
+    permissions: ['microphone', 'camera'],
+    locale: 'en-US',
+  });
   const page = await context.newPage();
-  await page.goto(meetingUrl, { waitUntil: 'networkidle', timeout: 60_000 });
+  await page.goto(meetingUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
+  await page.waitForTimeout(4000);
+  await dismissDialogs(page);
 
-  // Guest name (when not signed in)
-  const nameInput = page.locator(SEL.nameInput).first();
+  // A signed-out bot can't join meetings that require a Google account.
+  const body = await pageText(page);
+  if (/sign in|you can.?t join|not allowed|check your meeting code/i.test(body)) {
+    throw new Error(`Meet blocked the bot at ${page.url()} — "${body.slice(0, 160)}"`);
+  }
+
+  const nameInput = page.getByRole('textbox', { name: /your name/i });
   if (await nameInput.isVisible().catch(() => false)) {
     await nameInput.fill(botName);
   }
 
-  // Best-effort: turn the bot's own mic/cam off before joining
-  for (const label of ['Turn off microphone', 'Turn off camera']) {
-    await page.locator(`[aria-label*="${label}"]`).first().click({ timeout: 2000 }).catch(() => {});
+  for (const re of [/turn off microphone/i, /turn off camera/i]) {
+    await page.getByRole('button', { name: re }).first().click({ timeout: 1500 }).catch(() => {});
   }
 
-  await page.locator(SEL.joinButton).first().click({ timeout: 30_000 });
+  const joinBtn = page.getByRole('button', { name: /join now|ask to join|join anyway/i });
+  await joinBtn.first().click({ timeout: 30_000 });
 
-  // Either we land in the call or we wait in the lobby for admission.
   state.phase = 'waiting';
-  await page.waitForSelector(SEL.inCall, { timeout: 5 * 60_000 });
+  await page.getByRole('button', { name: /leave call/i }).first().waitFor({ timeout: 5 * 60_000 });
   return page;
 };
 
 const startRecording = () => {
   ffmpeg = spawn('ffmpeg', [
-    '-y',
-    '-f', 'pulse', '-i', PULSE_MONITOR,
-    '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le',
-    OUT_PATH,
+    '-y', '-f', 'pulse', '-i', PULSE_MONITOR,
+    '-ar', '16000', '-ac', '1', '-c:a', 'pcm_s16le', OUT_PATH,
   ], { stdio: ['pipe', 'ignore', 'ignore'] });
   state.phase = 'recording';
   state.startedAt = Date.now();
@@ -87,8 +96,7 @@ const startRecording = () => {
 
 const stopRecording = async () => {
   if (ffmpeg && !ffmpeg.killed) {
-    // 'q' lets ffmpeg finalize the WAV header (vs SIGKILL truncating it)
-    try { ffmpeg.stdin.write('q'); } catch { /* already gone */ }
+    try { ffmpeg.stdin.write('q'); } catch { /* gone */ }
     await new Promise((r) => { ffmpeg.on('exit', r); setTimeout(r, 5000); });
   }
   if (state.startedAt) state.durationSecs = Math.round((Date.now() - state.startedAt) / 1000);
@@ -101,25 +109,32 @@ const run = async (meetingUrl, botName, maxDurationSecs) => {
 
     const deadline = Date.now() + maxDurationSecs * 1000;
     while (!stopRequested && Date.now() < deadline) {
-      // Call ended (kicked, everyone left, or meeting closed)?
-      if (await page.locator(SEL.ended).first().isVisible().catch(() => false)) break;
-      if (await page.locator(SEL.inCall).first().isVisible().catch(() => false) === false) break;
+      const ended = await page.getByText(/You.ve left|removed from the meeting|Return to home screen/i).first().isVisible().catch(() => false);
+      const inCall = await page.getByRole('button', { name: /leave call/i }).first().isVisible().catch(() => false);
+      if (ended || !inCall) break;
       await new Promise((r) => setTimeout(r, 5000));
     }
 
     await stopRecording();
     state.phase = 'done';
   } catch (e) {
-    state.error = (e && e.message) ? e.message : String(e);
+    let diag = '';
+    try {
+      const p = browser?.contexts()[0]?.pages()[0];
+      if (p) {
+        await p.screenshot({ path: SHOT_PATH }).catch(() => {});
+        diag = ` [page: ${p.url()}] ${await pageText(p)}`;
+      }
+    } catch { /* diagnostics are best-effort */ }
+    state.error = `${(e && e.message) || e}${diag}`;
     state.phase = 'error';
+    console.error('[meet-bot] join failed:', state.error);
     await stopRecording().catch(() => {});
   } finally {
     await browser?.close().catch(() => {});
     browser = null;
   }
 };
-
-// ─── Control API ─────────────────────────────────────────────────────────────
 
 const readJson = (req) => new Promise((resolve) => {
   let body = '';
@@ -131,10 +146,7 @@ const server = http.createServer(async (req, res) => {
   const url = new URL(req.url, 'http://meet');
 
   if (req.method === 'POST' && url.pathname === '/join') {
-    if (state.phase !== 'idle') {
-      res.writeHead(409).end('already active');
-      return;
-    }
+    if (state.phase !== 'idle') { res.writeHead(409).end('already active'); return; }
     const { meetingUrl, botName, maxDurationSecs } = await readJson(req);
     if (!meetingUrl) { res.writeHead(400).end('meetingUrl required'); return; }
     state.phase = 'joining';
@@ -157,6 +169,13 @@ const server = http.createServer(async (req, res) => {
     if (!fs.existsSync(OUT_PATH)) { res.writeHead(404).end('no audio'); return; }
     res.writeHead(200, { 'content-type': 'audio/wav' });
     fs.createReadStream(OUT_PATH).pipe(res);
+    return;
+  }
+
+  if (req.method === 'GET' && url.pathname === '/debug') {
+    if (!fs.existsSync(SHOT_PATH)) { res.writeHead(404).end('no screenshot'); return; }
+    res.writeHead(200, { 'content-type': 'image/png' });
+    fs.createReadStream(SHOT_PATH).pipe(res);
     return;
   }
 
