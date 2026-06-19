@@ -40,6 +40,7 @@ const dismissDialogs = async (page) => {
 };
 
 const joinMeeting = async (meetingUrl, botName, storageState) => {
+  console.log('[meet-bot] launching browser');
   browser = await chromium.launch({
     headless: false,
     args: [
@@ -60,9 +61,11 @@ const joinMeeting = async (meetingUrl, botName, storageState) => {
   }
   const context = await browser.newContext(contextOpts);
   const page = await context.newPage();
+  console.log(`[meet-bot] browser up (signed-in=${!!contextOpts.storageState}); opening ${meetingUrl}`);
   await page.goto(meetingUrl, { waitUntil: 'domcontentloaded', timeout: 60_000 });
   await page.waitForTimeout(4000);
   await dismissDialogs(page);
+  console.log(`[meet-bot] page loaded: ${page.url()}`);
 
   // A signed-out bot can't join meetings that require a Google account.
   const body = await pageText(page);
@@ -79,11 +82,14 @@ const joinMeeting = async (meetingUrl, botName, storageState) => {
     await page.getByRole('button', { name: re }).first().click({ timeout: 1500 }).catch(() => {});
   }
 
+  console.log('[meet-bot] clicking join');
   const joinBtn = page.getByRole('button', { name: /join now|ask to join|join anyway/i });
   await joinBtn.first().click({ timeout: 30_000 });
 
   state.phase = 'waiting';
+  console.log('[meet-bot] clicked join — waiting to be admitted');
   await page.getByRole('button', { name: /leave call/i }).first().waitFor({ timeout: 5 * 60_000 });
+  console.log('[meet-bot] in call — recording');
   return page;
 };
 
@@ -106,7 +112,12 @@ const stopRecording = async () => {
 
 const run = async (meetingUrl, botName, maxDurationSecs, storageState) => {
   try {
-    const page = await joinMeeting(meetingUrl, botName, storageState);
+    // A hang (e.g. Chromium never loading) must surface as an error with page
+    // diagnostics rather than sitting in "joining" forever.
+    const page = await Promise.race([
+      joinMeeting(meetingUrl, botName, storageState),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Timed out before joining the call (180s)')), 180_000)),
+    ]);
     startRecording();
 
     const deadline = Date.now() + maxDurationSecs * 1000;

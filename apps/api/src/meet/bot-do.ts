@@ -17,6 +17,7 @@ import type { Env, MeetingBotStatus } from '../types.ts';
 
 const POLL_MS = 60_000; // status poll cadence (also keeps the container warm)
 const ADMIT_TIMEOUT_MS = 5 * 60_000; // give up if not admitted from the waiting room
+const CONNECT_DEADLINE_MS = 4 * 60_000; // must reach "recording" by here, else the container is stuck
 const FINALIZE_BUFFER_MS = 60_000; // grace past max duration before forcing a stop
 
 interface BotParams {
@@ -156,6 +157,9 @@ export class MeetingBot extends DurableObject<Env> {
 
     if (status.state === 'waiting' && elapsed > ADMIT_TIMEOUT_MS) {
       return this.fail(params, 'The bot was not admitted to the meeting in time. Make sure to admit "' + params.botName + '".');
+    }
+    if ((status.state === 'joining' || status.state === 'waiting') && elapsed > CONNECT_DEADLINE_MS) {
+      return this.fail(params, `Bot never reached the call — stuck in "${status.state}" for ${Math.round(elapsed / 1000)}s (container likely hung loading Meet).`);
     }
     if (elapsed > (params.maxDurationSecs * 1000) + FINALIZE_BUFFER_MS) {
       return this.finalize(params, params.maxDurationSecs);
