@@ -1,0 +1,24 @@
+# Meeting bot for the VM: the bot itself + a Cloudflare Tunnel that exposes it
+# to the Worker. No host ports are published — only cloudflared reaches the bot,
+# over the private compose network (http://meetbot:8080). Config comes from .env
+# (copy .env.example → .env).
+services:
+  meetbot:
+    build: .
+    restart: unless-stopped
+    init: true # reap Xvfb/pulseaudio/ffmpeg/chromium child processes
+    shm_size: "2gb" # headful Chromium is unhappy with a tiny /dev/shm
+    expose:
+      - "8080"
+    environment:
+      MEET_BOT_SECRET: ${MEET_BOT_SECRET:?set MEET_BOT_SECRET in .env}
+      MAX_SESSIONS: ${MAX_SESSIONS:-6}
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run
+    environment:
+      TUNNEL_TOKEN: ${TUNNEL_TOKEN:?set TUNNEL_TOKEN in .env}
+    depends_on:
+      - meetbot

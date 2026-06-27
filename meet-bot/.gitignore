@@ -2,4 +2,8 @@
 cookies.json
 cookies.txt
 google-session.json
+
+# VM deploy secrets (MEET_BOT_SECRET, TUNNEL_TOKEN)
+.env
+
 node_modules/

@@ -9,7 +9,6 @@ export interface Env {
   TRANSCRIBE_WF: Workflow<JobMessage>;
   FFMPEG: DurableObjectNamespace<import('./audio/transcode.ts').FfmpegContainer>;
   MEETING_BOT: DurableObjectNamespace<import('./meet/bot-do.ts').MeetingBot>;
-  MEET_BOT_CONTAINER: DurableObjectNamespace<import('./meet/container.ts').MeetBotContainer>;
   EMAIL: SendEmail;
   RL_LOGIN: RateLimitBinding;
   RL_OTP: RateLimitBinding;
@@ -28,6 +27,8 @@ export interface Env {
   GOOGLE_CLIENT_ID?: string;
   GOOGLE_CLIENT_SECRET?: string;
   TURNSTILE_SECRET?: string;
+  // Shared bearer token for the VM meeting bot (must match the bot's .env).
+  MEET_BOT_SECRET?: string;
   BETTER_AUTH_SECRET?: string;
   BETTER_AUTH_URL?: string;
   // R2 S3 credentials only for presigned upload URLs (contract parity)
@@ -43,6 +44,9 @@ export interface Env {
   // URLs are served directly from it instead of presigned S3 GET URLs.
   R2_PUBLIC_URL?: string;
   ALLOWED_ORIGINS?: string;
+  // Base URL of the VM meeting bot (Cloudflare Tunnel hostname). Unset disables
+  // the Meet recording bot (MeetingBot fails the job with a clear message).
+  MEET_BOT_URL?: string;
   // AI Gateway (optional) — unset routes AI calls directly to providers
   AI_GATEWAY_URL?: string;
   AI_GATEWAY_ID?: string;

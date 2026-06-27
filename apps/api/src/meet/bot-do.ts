@@ -1,12 +1,13 @@
 // MeetingBot orchestrator (Durable Object). Owns one meeting bot's lifecycle:
-// schedules the join (alarm), drives the headless-Chrome container (meet/
-// container.ts), and on completion streams the captured WAV into R2 and hands
-// off to the shared recording pipeline with autoProcess (transcript → summary →
-// minutes → actions → email).
+// schedules the join (alarm), drives the headless-Chrome recording bot (a
+// dockerized service on a VM, reached over a Cloudflare Tunnel at MEET_BOT_URL),
+// and on completion streams the captured WAV into R2 and hands off to the shared
+// recording pipeline with autoProcess (transcript → summary → minutes → actions
+// → email).
 //
 // Single alarm, polling model: the alarm fires the scheduled join, then polls
-// the container's /status every POLL_MS. Each poll is also what keeps the
-// container instance warm for the duration of the call.
+// the bot's /status every POLL_MS. The bot runs many meetings at once, keyed by
+// this DO's id (the session id); requests are authed with MEET_BOT_SECRET.
 
 import { DurableObject } from 'cloudflare:workers';
 import { updateRow } from '../lib/db.ts';
@@ -45,8 +46,18 @@ const CONTAINER_TO_DB: Record<ContainerState, MeetingBotStatus | null> = {
 };
 
 export class MeetingBot extends DurableObject<Env> {
-  private container() {
-    return this.env.MEET_BOT_CONTAINER.getByName(this.ctx.id.toString());
+  // Stable per-meeting session id the VM bot keys its sessions by.
+  private sessionId(): string {
+    return this.ctx.id.toString();
+  }
+
+  // Call the VM bot (over the Cloudflare Tunnel) with the shared bearer token.
+  private botFetch(path: string, init: RequestInit = {}): Promise<Response> {
+    const base = (this.env.MEET_BOT_URL || '').replace(/\/$/, '');
+    if (!base) throw new Error('MEET_BOT_URL is not configured');
+    const headers = new Headers(init.headers);
+    if (this.env.MEET_BOT_SECRET) headers.set('authorization', `Bearer ${this.env.MEET_BOT_SECRET}`);
+    return fetch(`${base}${path}`, { ...init, headers });
   }
 
   // Persisted Google session for the dedicated bot account (Playwright
@@ -77,7 +88,7 @@ export class MeetingBot extends DurableObject<Env> {
     const params = await this.ctx.storage.get<BotParams>('params');
     await this.ctx.storage.deleteAlarm();
     await this.ctx.storage.put('phase', 'done');
-    await this.stopContainer();
+    await this.stopBot();
     if (params) await this.setDbStatus(params.meetingBotId, 'cancelled');
   }
 
@@ -91,6 +102,10 @@ export class MeetingBot extends DurableObject<Env> {
     const params = await this.ctx.storage.get<BotParams>('params');
     if (!params) return;
 
+    if (!this.env.MEET_BOT_URL) {
+      return this.fail(params, 'Meeting bot service is not configured (MEET_BOT_URL unset).');
+    }
+
     const attempts = ((await this.ctx.storage.get<number>('joinAttempts')) ?? 0) + 1;
     await this.ctx.storage.put('joinAttempts', attempts);
     await this.setDbStatus(params.meetingBotId, 'joining');
@@ -98,21 +113,20 @@ export class MeetingBot extends DurableObject<Env> {
     const storageState = await this.loadSession();
 
     try {
-      const res = await this.container().fetch(
-        new Request('http://meet/join', {
-          method: 'POST',
-          headers: { 'content-type': 'application/json' },
-          body: JSON.stringify({
-            meetingUrl: params.meetingUrl,
-            botName: params.botName,
-            maxDurationSecs: params.maxDurationSecs,
-            storageState,
-          }),
+      const res = await this.botFetch('/join', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({
+          id: this.sessionId(),
+          meetingUrl: params.meetingUrl,
+          botName: params.botName,
+          maxDurationSecs: params.maxDurationSecs,
+          storageState,
         }),
-      );
+      });
       if (!res.ok) throw new Error(`join failed (${res.status}): ${await res.text().catch(() => '')}`);
     } catch (e) {
-      // The container may still be cold/provisioning — retry before giving up.
+      // The VM may be momentarily full (503) or unreachable — retry before giving up.
       if (attempts < 6) {
         await this.ctx.storage.setAlarm(Date.now() + 30_000);
         return;
@@ -133,10 +147,10 @@ export class MeetingBot extends DurableObject<Env> {
 
     let status: ContainerStatus;
     try {
-      const res = await this.container().fetch(new Request('http://meet/status'));
+      const res = await this.botFetch(`/status?id=${encodeURIComponent(this.sessionId())}`);
       status = (await res.json()) as ContainerStatus;
     } catch (e) {
-      // Transient container error — keep polling unless we've blown the cap.
+      // Transient bot/network error — keep polling unless we've blown the cap.
       if (elapsed > (params.maxDurationSecs * 1000) + FINALIZE_BUFFER_MS) {
         return this.fail(params, `Lost contact with the meeting bot: ${(e as Error).message}`);
       }
@@ -174,7 +188,7 @@ export class MeetingBot extends DurableObject<Env> {
 
     try {
       await this.setDbStatus(params.meetingBotId, 'uploading');
-      const audioRes = await this.container().fetch(new Request('http://meet/audio'));
+      const audioRes = await this.botFetch(`/audio?id=${encodeURIComponent(this.sessionId())}`);
       if (!audioRes.ok || !audioRes.body) {
         throw new Error(`no audio (${audioRes.status})`);
       }
@@ -199,23 +213,23 @@ export class MeetingBot extends DurableObject<Env> {
     } catch (e) {
       return this.fail(params, `Could not save the recording: ${(e as Error).message}`);
     } finally {
-      await this.stopContainer();
+      await this.stopBot();
     }
   }
 
   private async fail(params: BotParams, message: string): Promise<void> {
     await this.ctx.storage.put('phase', 'done');
     await this.ctx.storage.deleteAlarm();
-    await this.stopContainer();
+    await this.stopBot();
     await this.setDbStatus(params.meetingBotId, 'failed', { error: message.slice(0, 500) });
     await logError(this.env, 'meeting_bot_failed', message, { userId: params.userId });
   }
 
-  private async stopContainer(): Promise<void> {
+  private async stopBot(): Promise<void> {
     try {
-      await this.container().fetch(new Request('http://meet/stop', { method: 'POST' }));
+      await this.botFetch(`/stop?id=${encodeURIComponent(this.sessionId())}`, { method: 'POST' });
     } catch {
-      // best-effort — the container scales to zero on its own
+      // best-effort — the bot reaps idle sessions on its own (TTL sweep)
     }
   }
 }

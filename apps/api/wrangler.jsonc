@@ -57,26 +57,22 @@
       "image": "./container/Dockerfile",
       "instance_type": "basic",
       "max_instances": 5
-    },
-    {
-      "class_name": "MeetBotContainer",
-      "image": "./meet-bot/Dockerfile",
-      "instance_type": { "vcpu": 1, "memory_mib": 3072, "disk_mb": 4000 },
-      "max_instances": 3
     }
   ],
 
   "durable_objects": {
     "bindings": [
       { "name": "FFMPEG", "class_name": "FfmpegContainer" },
-      { "name": "MEETING_BOT", "class_name": "MeetingBot" },
-      { "name": "MEET_BOT_CONTAINER", "class_name": "MeetBotContainer" }
+      { "name": "MEETING_BOT", "class_name": "MeetingBot" }
     ]
   },
 
+  // The Meet recording bot moved off Cloudflare Containers to a dockerized VM
+  // service (reached via MEET_BOT_URL); v3 tears down the old container class.
   "migrations": [
     { "tag": "v1", "new_sqlite_classes": ["FfmpegContainer"] },
-    { "tag": "v2", "new_sqlite_classes": ["MeetingBot", "MeetBotContainer"] }
+    { "tag": "v2", "new_sqlite_classes": ["MeetingBot", "MeetBotContainer"] },
+    { "tag": "v3", "deleted_classes": ["MeetBotContainer"] }
   ],
 
   "workflows": [
@@ -121,6 +117,10 @@
     "ALLOWED_ORIGINS": "https://echobits.xyz,https://echobits.devmorphix.com,http://localhost:5173",
     "ENVIRONMENT": "production",
     "BETTER_AUTH_URL": "https://echobits.xyz",
+
+    // VM meeting bot, reached over a Cloudflare Tunnel. The shared bearer token
+    // (MEET_BOT_SECRET) is a secret — `wrangler secret put MEET_BOT_SECRET`.
+    "MEET_BOT_URL": "https://meetbot.echobits.xyz",
 
     // Cloudflare Access (Zero Trust) for the admin surface. After creating the
     // self-hosted Access application, paste your team domain + the application's

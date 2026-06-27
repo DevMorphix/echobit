@@ -3,7 +3,7 @@
   "private": true,
   "type": "module",
   "version": "0.1.0",
-  "description": "Headless Google Meet recording bot (Cloudflare Container sidecar)",
+  "description": "Headless Google Meet recording bot (standalone VM service, behind a Cloudflare Tunnel)",
   "main": "server.js",
   "scripts": {
     "start": "./start.sh"

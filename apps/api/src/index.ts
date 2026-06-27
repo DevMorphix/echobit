@@ -18,7 +18,6 @@ import type { Env, HonoEnv } from './types.ts';
 export { TranscriptionWorkflow } from './workflows/transcribe.ts';
 export { FfmpegContainer } from './audio/transcode.ts';
 export { MeetingBot } from './meet/bot-do.ts';
-export { MeetBotContainer } from './meet/container.ts';
 
 const app = new Hono<HonoEnv>();
 
